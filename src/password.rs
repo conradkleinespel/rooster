@@ -44,6 +44,33 @@ pub struct Password {
     updated_at: ffi::time_t
 }
 
+trait ScrubMemory {
+    fn scrub_memory(&mut self);
+}
+
+impl ScrubMemory for String {
+    fn scrub_memory(&mut self) {
+        unsafe { self.as_mut_vec() }.set_memory(0);
+        self.clear();
+    }
+}
+
+impl ScrubMemory for [u8] {
+    fn scrub_memory(&mut self) {
+        for c in self.iter_mut() {
+            *c = 0;
+        }
+    }
+}
+
+impl ScrubMemory for Vec<Password> {
+    fn scrub_memory(&mut self) {
+        for p in self.as_mut_slice().iter_mut() {
+            p.scrub_memory();
+        }
+    }
+}
+
 impl Password {
     pub fn new(name: &str, username: &str, password: &str) -> Password {
         let timestamp = ffi::time();
@@ -55,6 +82,26 @@ impl Password {
             created_at: timestamp,
             updated_at: timestamp
         }
+    }
+
+    /// Set the memory to `0` everywhere in the structure.
+    ///
+    /// This is used when a password is no longer needed, in which case we
+    /// don't want the memory to leak out to another program that could try to
+    /// see its contents.
+    pub fn scrub_memory(&mut self) {
+        self.name.scrub_memory();
+        match self.domain {
+            Some(ref mut s) => {
+                s.scrub_memory();
+            },
+            None => {}
+        }
+        self.domain = None;
+        self.username.scrub_memory();
+        self.password.scrub_memory();
+        self.created_at = 0;
+        self.updated_at = 0;
     }
 }
 
@@ -76,13 +123,13 @@ fn generate_encryption_key(master_password: &str) -> Vec<u8> {
 
     // Clear the memory so no other program can see it once freed.
     let out = key.to_vec();
-    key.set_memory(0);
+    key.scrub_memory();
 
     out
 }
 
 /// Adds a password to the file.
-pub fn add_password(master_password: &str, password: &Password, file: &mut File) -> IoResult<()> {
+pub fn add_password(master_password: &str, password: &mut Password, file: &mut File) -> IoResult<()> {
     // Go to the start of the file and read it.
     try!(file.seek(0, SeekStyle::SeekSet));
     let encrypted = try!(file.read_to_end());
@@ -101,19 +148,22 @@ pub fn add_password(master_password: &str, password: &Password, file: &mut File)
 
         // Decrypt and decode the data (JSON).
         let decrypted = aes::decrypt(encrypted, key.as_slice(), &iv).unwrap();
-        let encoded: String = String::from_utf8(decrypted).unwrap();
+        let mut encoded = String::from_utf8(decrypted).unwrap();
+
+        let passwords = json::decode(encoded.as_slice()).unwrap();
 
         // Clear the memory so no other program can see it once freed.
-        key.set_memory(0);
+        key.scrub_memory();
+        encoded.scrub_memory();
 
-        json::decode(encoded.as_slice()).unwrap()
+        passwords
     } else {
         Vec::new()
     };
 
     passwords.push(password.clone());
 
-    let encoded_after = json::encode(&passwords).unwrap();
+    let mut encoded_after = json::encode(&passwords).unwrap();
 
     // Encrypt the data.
     let mut key = generate_encryption_key(master_password);
@@ -125,7 +175,10 @@ pub fn add_password(master_password: &str, password: &Password, file: &mut File)
     encrypted_after.push_all(&iv);
 
     // Clear the memory so no other program can see it once freed.
-    key.set_memory(0);
+    key.scrub_memory();
+    encoded_after.scrub_memory();
+    passwords.scrub_memory();
+    password.scrub_memory();
 
     // Save the data to the password file.
     try!(file.seek(0, SeekStyle::SeekSet));

@@ -39,7 +39,7 @@ pub fn callback(args: &[String], file: &mut File) {
     print!("What password do you want for {}? ", app_name);
     match read_password() {
         Ok(password) => {
-            let password = password::Password::new(
+            let mut password = password::Password::new(
                 app_name,
                 username,
                 password.as_slice()
@@ -50,7 +50,7 @@ pub fn callback(args: &[String], file: &mut File) {
                 Ok(master_password) => {
                     password::add_password(
                         master_password.as_slice(),
-                        &password,
+                        &mut password,
                         file
                     ).unwrap();
 

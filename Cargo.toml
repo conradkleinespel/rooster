@@ -1,8 +1,13 @@
 [package]
-
 name = "pwm"
 version = "0.0.1"
 authors = ["Conrad Kleinespel <conradk@conradk.com>"]
 
 [dependencies]
-rust-crypto = "*"
+rust-crypto = "0.2.14"
+
+[dependencies.rpassword]
+git = "https://github.com/conradkleinespel/rustastic-password.git"
+
+[dependencies.xlib]
+git = "https://github.com/servo/rust-xlib.git"

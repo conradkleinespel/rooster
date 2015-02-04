@@ -12,45 +12,91 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#![allow(unstable)]
-
+extern crate libc;
+extern crate getopts;
+extern crate serialize;
 extern crate crypto;
+extern crate rpassword;
 
-use std::rand::{ Rng, OsRng };
-use crypto::digest::Digest;
+use std::slice::AsSlice;
+use std::old_io::fs::File;
+use std::old_io::{ FileMode, FileAccess };
 
 mod aes;
+mod commands;
+mod ffi;
+mod password;
+mod color;
 
-fn main() {
-    let message = "Hello World!".as_bytes().to_vec();
-    let password = "secret";
+macro_rules! println_stderr(
+    ($($arg:tt)*) => (
+        match writeln!(&mut ::std::old_io::stdio::stderr(), $($arg)* ) {
+            Ok(_) => {},
+            Err(x) => panic!("Unable to write to stderr: {}", x),
+        }
+    )
+);
 
-    // Create a random IV. It does not need to be secret. As such, it will be
-    // appended to the encrypted blob and saved in clear. This will allow us
-    // to retrieve the IV when decrypting our data.
-    let mut iv: [u8; 16] = [0; 16];
-    let mut rng = OsRng::new().ok().unwrap();
-    rng.fill_bytes(&mut iv);
+struct Command {
+    name: &'static str,
+    callback: fn(&[String], &mut File) -> ()
+}
 
-    // Derive a 256 bits encryption key from the password.
-    let mut key: [u8; 32] = [0; 32];
-    let mut hash = crypto::sha2::Sha256::new();
-    hash.input(password.as_bytes());
-    hash.result(&mut key);
+static COMMANDS: &'static [Command] = &[
+    Command { name: "get", callback: commands::get::callback },
+    Command { name: "add", callback: commands::add::callback },
+    Command { name: "del", callback: commands::del::callback },
+    Command { name: "gen", callback: commands::gen::callback }
+];
 
-    // Encrypt the data.
-    let mut encrypted_data = aes::encrypt(message.as_slice(), &key, &iv).ok().unwrap();
-    encrypted_data.push_all(&iv);
+fn command_from_name(name: &str) -> Option<&'static Command> {
+    for c in COMMANDS.iter() {
+        if c.name == name {
+            return Some(&c);
+        }
+    }
+    None
+}
 
-    // Separate the IV from the encrypted blob.
-    let iv_index = encrypted_data.len() - iv.len();
-    let (encrypted_data, iv) = (
-        &encrypted_data[.. iv_index],
-        &encrypted_data[iv_index ..]
+fn execute_command(args: &[String], command: &Command) {
+    let filename = "/tmp/passwords";
+
+    let mut file_maybe = File::open_mode(
+        &Path::new(filename),
+        FileMode::Open,
+        FileAccess::ReadWrite
     );
 
-    // Decrypt the data.
-    let decrypted_data = aes::decrypt(encrypted_data, &key, &iv).ok().unwrap();
+    match file_maybe {
+        Ok(ref mut file) => {
+            (command.callback)(args.as_slice(), file);
+        },
+        Err(_) => {
+            println_stderr!("error: could not open file `{}`", filename);
+            std::os::set_exit_status(3);
+        }
+    }
 
-    assert!(message.as_slice() == &decrypted_data[]);
+}
+
+fn main() {
+    let args = std::os::args();
+
+    match args.as_slice().get(1) {
+        Some(command_name) => {
+            match command_from_name(command_name.as_slice()) {
+                Some(command) => {
+                    execute_command(args.as_slice(), command);
+                },
+                None => {
+                    println_stderr!("error: unknown command: `{}`", command_name);
+                    std::os::set_exit_status(2);
+                }
+            }
+        },
+        None => {
+            println_stderr!("error: usage: {} <command> [options] [args]", args[0]);
+            std::os::set_exit_status(1);
+        }
+    }
 }

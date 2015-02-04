@@ -20,7 +20,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "rpassword"
 version = "0.0.1"
-source = "git+https://github.com/conradkleinespel/rustastic-password.git#8d1de24239a77b236eab7321a31d9369d58c299b"
+source = "git+https://github.com/conradkleinespel/rustastic-password.git#cada435e93fd9bf5de5c0b6950deac1962d9eb46"
 dependencies = [
  "termios 0.0.1 (git+https://github.com/conradkleinespel/termios-rs.git)",
 ]

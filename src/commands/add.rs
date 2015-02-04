@@ -14,6 +14,7 @@
 
 use super::super::color::Color;
 use super::super::password;
+use super::super::password::ScrubMemory;
 use super::super::rpassword::read_password;
 use std::old_io::fs::File;
 
@@ -38,24 +39,32 @@ pub fn callback(args: &[String], file: &mut File) {
 
     print!("What password do you want for {}? ", app_name);
     match read_password() {
-        Ok(password) => {
+        Ok(ref mut password_as_string) => {
             let mut password = password::Password::new(
                 app_name,
                 username,
-                password.as_slice()
+                password_as_string.as_slice()
             );
 
             print!("Type your master password: ");
             match read_password() {
-                Ok(master_password) => {
-                    password::add_password(
-                        master_password.as_slice(),
-                        &mut password,
+                Ok(ref mut master_password) => {
+                    let password_added = password::add_password(
+                        master_password,
+                        &password,
                         file
-                    ).unwrap();
+                    );
+                    match password_added {
+                        Ok(_) => {
+                            println!("{}", fgcolor!(Color::Green, "Alright! Your password for {} has been added.", app_name));
+                        },
+                        Err(err) => {
+                            println_stderr!("{}", fgcolor!(Color::Red, "error: could not add the password: {:?}", err));
+                        }
+                    }
 
-                    // read the domain name
-                    println!("{}", fgcolor!(Color::Green, "Alright! Your password for {} has been added.", app_name));
+                    // Clean up memory so no one can re-use it.
+                    master_password.scrub_memory();
                 },
                 Err(_) => {
                     println_stderr!("");
@@ -63,6 +72,9 @@ pub fn callback(args: &[String], file: &mut File) {
                 }
             }
 
+            // Clean up memory so no one can re-use it.
+            password_as_string.scrub_memory();
+            password.scrub_memory();
         },
         Err(_) => {
             println_stderr!("");

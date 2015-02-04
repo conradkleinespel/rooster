@@ -21,6 +21,7 @@ use serialize::json;
 use std::old_io::fs::File;
 use std::old_io::{ IoResult, SeekStyle };
 use std::borrow::ToOwned;
+use std::slice::bytes::MutableByteVector;
 
 /// The IV is 128 bits long.
 ///
@@ -66,12 +67,18 @@ fn generate_random_iv() -> [u8; IV_LEN] {
 }
 
 /// Derives a 256 bits encryption key from the password.
-fn generate_encryption_key(master_password: &str) -> [u8; KEY_LEN] {
+fn generate_encryption_key(master_password: &str) -> Vec<u8> {
+    // Generate the key.
     let mut key: [u8; KEY_LEN] = [0; KEY_LEN];
     let mut hash = crypto::sha2::Sha256::new();
     hash.input(master_password.as_bytes());
     hash.result(&mut key);
-    key
+
+    // Clear the memory so no other program can see it once freed.
+    let out = key.to_vec();
+    key.set_memory(0);
+
+    out
 }
 
 /// Adds a password to the file.
@@ -87,14 +94,17 @@ pub fn add_password(master_password: &str, password: &Password, file: &mut File)
         let iv = &encrypted[encrypted.len() - IV_LEN ..];
 
         // Derive a 256 bits encryption key from the password.
-        let key = generate_encryption_key(master_password);
+        let mut key = generate_encryption_key(master_password);
 
         // Remove the IV before decoding, otherwise, we cant decrypt the data.
         let encrypted = &encrypted[.. encrypted.len() - IV_LEN];
 
         // Decrypt and decode the data (JSON).
-        let decrypted = aes::decrypt(encrypted, &key, &iv).unwrap();
+        let decrypted = aes::decrypt(encrypted, key.as_slice(), &iv).unwrap();
         let encoded: String = String::from_utf8(decrypted).unwrap();
+
+        // Clear the memory so no other program can see it once freed.
+        key.set_memory(0);
 
         json::decode(encoded.as_slice()).unwrap()
     } else {
@@ -106,13 +116,16 @@ pub fn add_password(master_password: &str, password: &Password, file: &mut File)
     let encoded_after = json::encode(&passwords).unwrap();
 
     // Encrypt the data.
-    let key = generate_encryption_key(master_password);
+    let mut key = generate_encryption_key(master_password);
     let iv = generate_random_iv();
-    let mut encrypted_after = aes::encrypt(encoded_after.as_slice().as_bytes(), &key, &iv).unwrap();
+    let mut encrypted_after = aes::encrypt(encoded_after.as_slice().as_bytes(), key.as_slice(), &iv).unwrap();
 
     // Append the IV to the encrypted data so it can be retrieved later when
     // we want to decrypt said data.
     encrypted_after.push_all(&iv);
+
+    // Clear the memory so no other program can see it once freed.
+    key.set_memory(0);
 
     // Save the data to the password file.
     try!(file.seek(0, SeekStyle::SeekSet));
@@ -122,49 +135,3 @@ pub fn add_password(master_password: &str, password: &Password, file: &mut File)
 
     Ok(())
 }
-
-/*
-fn example() {
-    let message = "Hello World!".as_bytes().to_vec();
-    let password = "secret";
-
-    // Create a random initialization vector (IV). It does not need to be
-    // secret. As such, it will be appended to the encrypted blob and saved in
-    // clear. This will allow us to retrieve the IV when decrypting our data.
-    let mut iv: [u8; 16] = [0; 16];
-    let mut rng = OsRng::new().ok().unwrap();
-    rng.fill_bytes(&mut iv);
-
-    // Derive a 256 bits encryption key from the password.
-    let mut key: [u8; 32] = [0; 32];
-    let mut hash = crypto::sha2::Sha256::new();
-    hash.input(password.as_bytes());
-    hash.result(&mut key);
-
-    // Encrypt the data.
-    let mut encrypted_data = aes::encrypt(message.as_slice(), &key, &iv).ok().unwrap();
-    encrypted_data.push_all(&iv);
-
-    // Separate the IV from the encrypted blob.
-    let iv_index = encrypted_data.len() - iv.len();
-    let (encrypted_data, iv) = (
-        &encrypted_data[.. iv_index],
-        &encrypted_data[iv_index ..]
-    );
-
-    // Decrypt the data.
-    let decrypted_data = aes::decrypt(encrypted_data, &key, &iv).ok().unwrap();
-
-    assert!(message.as_slice() == &decrypted_data[]);
-
-    print!("Please provide a password: ");
-    match read_password() {
-        Ok(password) => {
-            println!("Alright, here we go: '{}'", password);
-        },
-        Err(_) => {
-            println!("Could not read password.");
-        }
-    }
-}
-*/

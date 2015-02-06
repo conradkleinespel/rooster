@@ -13,7 +13,8 @@
 // limitations under the License.
 
 use std::old_io::fs::File;
+use super::super::color::Color;
 
 pub fn callback(args: &[String], file: &mut File) {
-
+    println_stderr!("{}", fgcolor!(Color::Blue, "This command is not yet implemented. But it's coming soon! :-)"));
 }

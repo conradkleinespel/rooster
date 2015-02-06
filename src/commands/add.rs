@@ -18,21 +18,6 @@ use super::super::password::ScrubMemory;
 use super::super::rpassword::read_password;
 use std::old_io::fs::File;
 
-macro_rules! println_stderr(
-    ($($arg:tt)*) => (
-        match writeln!(&mut ::std::old_io::stdio::stderr(), $($arg)* ) {
-            Ok(_) => {},
-            Err(x) => panic!("Unable to write to stderr: {}", x),
-        }
-    )
-);
-
-macro_rules! fgcolor(
-    ($c:expr, $($args:tt)*) => (
-        format!("{}{}\x1b[39m", $c.to_color_code(), format!($($args)*))
-    )
-);
-
 pub fn callback(args: &[String], file: &mut File) {
     let app_name = args[2].as_slice();
     let username = args[3].as_slice();

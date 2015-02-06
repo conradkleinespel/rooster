@@ -18,24 +18,17 @@ extern crate serialize;
 extern crate crypto;
 extern crate rpassword;
 
+use color::Color;
 use std::slice::AsSlice;
 use std::old_io::fs::File;
 use std::old_io::{ FileMode, FileAccess };
 
+mod macros;
 mod aes;
 mod commands;
 mod ffi;
 mod password;
 mod color;
-
-macro_rules! println_stderr(
-    ($($arg:tt)*) => (
-        match writeln!(&mut ::std::old_io::stdio::stderr(), $($arg)* ) {
-            Ok(_) => {},
-            Err(x) => panic!("Unable to write to stderr: {}", x),
-        }
-    )
-);
 
 struct Command {
     name: &'static str,
@@ -72,7 +65,7 @@ fn execute_command(args: &[String], command: &Command) {
             (command.callback)(args.as_slice(), file);
         },
         Err(_) => {
-            println_stderr!("error: could not open file `{}`", filename);
+            println_stderr!("{}", fgcolor!(Color::Red, "error: could not open file `{}`", filename));
             std::os::set_exit_status(3);
         }
     }
@@ -89,13 +82,13 @@ fn main() {
                     execute_command(args.as_slice(), command);
                 },
                 None => {
-                    println_stderr!("error: unknown command: `{}`", command_name);
+                    println_stderr!("{}", fgcolor!(Color::Red, "error: unknown command: `{}`", command_name));
                     std::os::set_exit_status(2);
                 }
             }
         },
         None => {
-            println_stderr!("error: usage: {} <command> [options] [args]", args[0]);
+            println_stderr!("{}", fgcolor!(Color::Red, "error: usage: {} <command> [options] [args]", args[0]));
             std::os::set_exit_status(1);
         }
     }

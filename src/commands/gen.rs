@@ -13,7 +13,17 @@
 // limitations under the License.
 
 use std::old_io::fs::File;
+use std::rand::{ Rng, OsRng };
+use serialize::hex::ToHex;
+
+const PASSWORD_LEN: usize = 32;
 
 pub fn callback(args: &[String], file: &mut File) {
-
+    let mut buffer: [u8; PASSWORD_LEN] = [0; PASSWORD_LEN];
+    let mut rng = OsRng::new().unwrap();
+    for i in 0 .. PASSWORD_LEN - 1 {
+        buffer[i] = rng.gen_range(33, 126);
+    }
+    let password = String::from_utf8_lossy(&buffer).into_owned();
+    println!("{}", password);
 }

@@ -36,12 +36,12 @@ pub const KEY_LEN: usize = 32;
 
 #[derive(Clone, Debug, Decodable, Encodable)]
 pub struct Password {
-    name: String,
-    domain: Option<String>,
-    username: String,
-    password: String,
-    created_at: ffi::time_t,
-    updated_at: ffi::time_t
+    pub name: String,
+    pub domain: Option<String>,
+    pub username: String,
+    pub password: String,
+    pub created_at: ffi::time_t,
+    pub updated_at: ffi::time_t
 }
 
 pub trait ScrubMemory {
@@ -135,8 +135,7 @@ pub enum PasswordError {
     SyncError,
 }
 
-/// Adds a password to the file.
-pub fn add_password(master_password: &String, password: &Password, file: &mut File) -> Result<(), PasswordError> {
+fn get_all_passwords(master_password: &String, file: &mut File) -> Result<Vec<Password>, PasswordError> {
     // Go to the start of the file and read it.
     let encrypted = match file.seek(0, SeekStyle::SeekSet).and_then(|_| { file.read_to_end() }) {
         Ok(val) => { val },
@@ -145,7 +144,7 @@ pub fn add_password(master_password: &String, password: &Password, file: &mut Fi
 
     // If there were already some password, we'll decrypt them. Otherwise, we'll
     // start off with an empty list of passwords.
-    let mut passwords: Vec<Password> = if encrypted.len() > 0 {
+    let passwords: Vec<Password> = if encrypted.len() > 0 {
         // Get previous IV. It is located after the encrypted data in the file.
         let iv = &encrypted[encrypted.len() - IV_LEN ..];
 
@@ -179,13 +178,12 @@ pub fn add_password(master_password: &String, password: &Password, file: &mut Fi
         Vec::new()
     };
 
-    passwords.push(password.clone());
+    Ok(passwords)
+}
 
+fn save_all_passwords(master_password: &String, passwords: &Vec<Password>, file: &mut File) -> Result<(), PasswordError> {
     // This should never fail. The structs are all encodable.
-    let mut encoded_after = json::encode(&passwords).unwrap();
-
-    // Clear the memory so no other program can see it once freed.
-    passwords.scrub_memory();
+    let mut encoded_after = json::encode(passwords).unwrap();
 
     // Encrypt the data.
     let mut key = generate_encryption_key(master_password);
@@ -212,13 +210,34 @@ pub fn add_password(master_password: &String, password: &Password, file: &mut Fi
         .and_then(|_| { file.datasync() });
 
     match sync {
-        Ok(_) => {},
-        Err(_) => { return Err(PasswordError::SyncError) }
+        Ok(_) => { Ok(()) },
+        Err(_) => { Err(PasswordError::SyncError) }
     }
+}
+
+/// Adds a password to the file.
+pub fn add_password(master_password: &String, password: &Password, file: &mut File) -> Result<(), PasswordError> {
+    let mut passwords = try!(get_all_passwords(master_password, file));
+
+    passwords.push(password.clone());
+
+    let saved = save_all_passwords(master_password, &passwords, file);
+
+    // Clear the memory so no other program can see it once freed.
+    passwords.scrub_memory();
+
+    saved
+}
+
+pub fn delete_password(master_password: &String, id: usize, file: &mut File)  -> Result<(), PasswordError> {
+    let mut passwords = try!(get_all_passwords(master_password, file));
+
+    // Clear the memory so no other program can see it once freed.
+    passwords.scrub_memory();
 
     Ok(())
 }
 
-pub fn delete_password(master_password: &String, app_name: &String, file: &mut File)  -> Result<(), PasswordError> {
-    Ok(())
+pub fn get_passwords(master_password: &String, app_name: &String, file: &mut File)  -> Result<Vec<Password>, PasswordError> {
+    get_all_passwords(master_password, file)
 }

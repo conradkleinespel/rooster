@@ -24,13 +24,24 @@ pub fn callback(args: &[String], file: &mut File) {
     print!("Type your master password: ");
     match read_password() {
         Ok(ref mut master_password) => {
-            let password_deleted = password::delete_password(master_password, app_name, file);
-            match password_deleted {
+            let passwords = password::get_passwords(master_password, app_name, file);
+            match passwords {
                 Ok(_) => {
-                    println!("{}", fgcolor!(Color::Green, "Alright! The password for {} has been removed.", app_name));
+                    println!("{}", fgcolor!(Color::Green, "Alright! We have a password for this app."));
+
+                    // We know exactly which password to delete. Delete it now.
+                    let password_deleted: Result<(), String> = Ok(());
+                    match password_deleted {
+                        Ok(_) => {
+                            println!("{}", fgcolor!(Color::Green, "Alright! The password for {} has been removed.", app_name));
+                        },
+                        Err(err) => {
+                            println_stderr!("{}", fgcolor!(Color::Red, "error: could not remove the password: {:?}", err));
+                        }
+                    }
                 },
                 Err(err) => {
-                    println_stderr!("{}", fgcolor!(Color::Red, "error: could not remove the password: {:?}", err));
+                    println_stderr!("{}", fgcolor!(Color::Red, "error: could not find passwords: {:?}", err));
                 }
             }
 

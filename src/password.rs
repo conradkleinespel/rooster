@@ -218,3 +218,7 @@ pub fn add_password(master_password: &String, password: &Password, file: &mut Fi
 
     Ok(())
 }
+
+pub fn delete_password(master_password: &String, app_name: &String, file: &mut File)  -> Result<(), PasswordError> {
+    Ok(())
+}

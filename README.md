@@ -16,7 +16,7 @@ p get <approximate-app-name>
 p add <app-name> <username>
 
 # Removes an entry.
-p del <app-name>
+p del <approximate-app-name>
 
 # Adds a new entry with an automatically generated password.
 p gen <app-name> <username>

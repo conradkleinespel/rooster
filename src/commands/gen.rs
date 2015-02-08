@@ -14,7 +14,6 @@
 
 use std::old_io::fs::File;
 use std::rand::{ Rng, OsRng };
-use serialize::hex::ToHex;
 use super::super::color::Color;
 use super::super::password;
 use super::super::password::ScrubMemory;

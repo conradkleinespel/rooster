@@ -14,7 +14,32 @@
 
 use std::old_io::fs::File;
 use super::super::color::Color;
+use super::super::password;
+use super::super::password::ScrubMemory;
+use super::super::rpassword::read_password;
 
 pub fn callback(args: &[String], file: &mut File) {
-    println_stderr!("{}", fgcolor!(Color::Blue, "This command is not yet implemented. But it's coming soon! :-)"));
+    let ref app_name = args[2];
+
+    print!("Type your master password: ");
+    match read_password() {
+        Ok(ref mut master_password) => {
+            let password_deleted = password::delete_password(master_password, app_name, file);
+            match password_deleted {
+                Ok(_) => {
+                    println!("{}", fgcolor!(Color::Green, "Alright! The password for {} has been removed.", app_name));
+                },
+                Err(err) => {
+                    println_stderr!("{}", fgcolor!(Color::Red, "error: could not remove the password: {:?}", err));
+                }
+            }
+
+            // Clean up memory so no one can re-use it.
+            master_password.scrub_memory();
+        },
+        Err(_) => {
+            println_stderr!("");
+            println_stderr!("{}", fgcolor!(Color::Red, "error: could not read the master password"));
+        }
+    }
 }

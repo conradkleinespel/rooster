@@ -13,7 +13,6 @@
 // limitations under the License.
 
 use std::old_io::fs::File;
-use std::old_io::stdio::stdin;
 use super::super::color::Color;
 use super::super::password;
 use super::super::password::ScrubMemory;
@@ -22,53 +21,25 @@ use super::super::rpassword::read_password;
 pub fn callback(args: &[String], file: &mut File) {
     let ref app_name = args[2];
 
-    print!("Type your master password: ");
+    // We print this to STDERR instead of STDOUT so that the output of the
+    // command contains *only* the password. This makes it easy to pipe it
+    // to something like "xclip" which would save the password in the clipboard.
+    print_stderr!("Type your master password: ");
     match read_password() {
         Ok(ref mut master_password) => {
-            match password::get_passwords(master_password, app_name, file) {
-                Ok(ref mut passwords) => {
-                    let border: String = range(0, 92).map(|_| '-').collect();
-
-                    println!("");
-
-                    println!("{}", border);
-                    println!("| {:2} | {:15} | {:30} | {:32} |", "id", "app", "username", "password");
-                    println!("{}", border);
-                    let mut i = 0;
-                    for p in passwords.as_slice().iter() {
-                        println!("| {:2?} | {:15} | {:30} | {:32} |", i, p.name, p.username, p.password);
-                        i += 1;
-                    }
-                    println!("{}", border);
-
-                    println!("");
-
-                    print!("These passwords match your search. Type the id of the password you want: ");
-                    match stdin().read_line() {
-                        Ok(ref mut line) => {
-                            // Remove the \n from the line.
-                            line.pop().unwrap();
-
-                            // We're all good !
-                            println_stderr!("{}", fgcolor!(Color::Green, "OK {}", line));
-                        },
-                        Err(_) => {
-                            println!("");
-                            println_stderr!("{}", fgcolor!(Color::Red, "error: could not read the password ID"));
-                        }
-                    }
-
-                    passwords.scrub_memory();
+            match password::get_password(master_password, app_name, file) {
+                Ok(ref mut password) => {
+                    println!("{}", password.password);
+                    password.scrub_memory();
                 },
                 Err(err) => {
-                    println_stderr!("{}", fgcolor!(Color::Red, "error: could not read passwords: {:?}", err));
+                    errln!("I couldn't find a password for this app ({:?}).", err);
                 }
             }
             master_password.scrub_memory();
         },
         Err(_) => {
-            println_stderr!("");
-            println_stderr!("{}", fgcolor!(Color::Red, "error: could not read the master password"));
+            errln!("\nThe master password could not be read.");
         }
     }
 }

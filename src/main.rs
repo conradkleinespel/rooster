@@ -67,7 +67,7 @@ fn execute_command(args: &[String], command: &Command) {
             (command.callback)(args.as_slice(), file);
         },
         Err(_) => {
-            println_stderr!("{}", fgcolor!(Color::Red, "error: could not open file `{}`", filename));
+            errln!("error: could not open file `{}`", filename);
             std::env::set_exit_status(3);
         }
     }
@@ -84,13 +84,13 @@ fn main() {
                     execute_command(args.as_slice(), command);
                 },
                 None => {
-                    println_stderr!("{}", fgcolor!(Color::Red, "error: unknown command: `{}`", command_name));
+                    errln!("error: unknown command: `{}`", command_name);
                     std::env::set_exit_status(2);
                 }
             }
         },
         None => {
-            println_stderr!("{}", fgcolor!(Color::Red, "error: usage: {} <command> [options] [args]", args[0]));
+            errln!("error: usage: {} <command> [options] [args]", args[0]);
             std::env::set_exit_status(1);
         }
     }

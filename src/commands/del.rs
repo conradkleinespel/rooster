@@ -24,33 +24,18 @@ pub fn callback(args: &[String], file: &mut File) {
     print!("Type your master password: ");
     match read_password() {
         Ok(ref mut master_password) => {
-            let passwords = password::get_passwords(master_password, app_name, file);
-            match passwords {
+            match password::delete_password(master_password, app_name, file) {
                 Ok(_) => {
-                    println!("{}", fgcolor!(Color::Green, "Alright! We have a password for this app."));
-
-                    // We know exactly which password to delete. Delete it now.
-                    let password_deleted: Result<(), String> = Ok(());
-                    match password_deleted {
-                        Ok(_) => {
-                            println!("{}", fgcolor!(Color::Green, "Alright! The password for {} has been removed.", app_name));
-                        },
-                        Err(err) => {
-                            println_stderr!("{}", fgcolor!(Color::Red, "error: could not remove the password: {:?}", err));
-                        }
-                    }
+                    okln!("OK, deleted {}!", app_name);
                 },
                 Err(err) => {
-                    println_stderr!("{}", fgcolor!(Color::Red, "error: could not find passwords: {:?}", err));
+                    errln!("I couldn't find a password for this app ({:?}).", err);
                 }
             }
-
-            // Clean up memory so no one can re-use it.
             master_password.scrub_memory();
         },
         Err(_) => {
-            println_stderr!("");
-            println_stderr!("{}", fgcolor!(Color::Red, "error: could not read the master password"));
+            errln!("\nThe master password could not be read.");
         }
     }
 }

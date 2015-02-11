@@ -133,6 +133,7 @@ pub enum PasswordError {
     DecryptionError,
     EncryptionError,
     SyncError,
+    NoSuchAppError
 }
 
 fn get_all_passwords(master_password: &String, file: &mut File) -> Result<Vec<Password>, PasswordError> {
@@ -229,7 +230,7 @@ pub fn add_password(master_password: &String, password: &Password, file: &mut Fi
     saved
 }
 
-pub fn delete_password(master_password: &String, id: usize, file: &mut File)  -> Result<(), PasswordError> {
+pub fn delete_password(master_password: &String, app_name: &String, file: &mut File)  -> Result<(), PasswordError> {
     let mut passwords = try!(get_all_passwords(master_password, file));
 
     // Clear the memory so no other program can see it once freed.
@@ -238,6 +239,11 @@ pub fn delete_password(master_password: &String, id: usize, file: &mut File)  ->
     Ok(())
 }
 
-pub fn get_passwords(master_password: &String, app_name: &String, file: &mut File)  -> Result<Vec<Password>, PasswordError> {
-    get_all_passwords(master_password, file)
+pub fn get_password(master_password: &String, app_name: &String, file: &mut File)  -> Result<Password, PasswordError> {
+    let mut passwords = try!(get_all_passwords(master_password, file));
+
+    // Clear the memory so no other program can see it once freed.
+    passwords.scrub_memory();
+
+    Err(PasswordError::NoSuchAppError)
 }

@@ -50,10 +50,10 @@ pub fn callback(args: &[String], file: &mut File) {
             );
             match password_added {
                 Ok(_) => {
-                    println!("{}", fgcolor!(Color::Green, "Alright! Your password for {} has been added.", app_name));
+                    okln!("Alright! Your password for {} has been added.", app_name);
                 },
                 Err(err) => {
-                    println_stderr!("{}", fgcolor!(Color::Red, "error: could not add the password: {:?}", err));
+                    errln!("error: could not add the password: {:?}", err);
                 }
             }
 
@@ -61,8 +61,7 @@ pub fn callback(args: &[String], file: &mut File) {
             master_password.scrub_memory();
         },
         Err(_) => {
-            println_stderr!("");
-            println_stderr!("{}", fgcolor!(Color::Red, "error: could not read the master password"));
+            errln!("\nerror: could not read the master password");
         }
     }
 

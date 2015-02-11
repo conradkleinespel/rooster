@@ -1,10 +1,11 @@
 [package]
-name = "pwm"
+name = "peevee-cli"
 version = "0.0.1"
 authors = ["Conrad Kleinespel <conradk@conradk.com>"]
 
 [dependencies]
 rust-crypto = "0.2.14"
+rustc-serialize = "0.2.12"
 
 [dependencies.rpassword]
 git = "https://github.com/conradkleinespel/rustastic-password.git"

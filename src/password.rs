@@ -17,7 +17,7 @@ use super::crypto;
 use super::crypto::digest::Digest;
 use super::aes;
 use std::rand::{ Rng, OsRng };
-use serialize::json;
+use rustc_serialize::json;
 use std::old_io::fs::File;
 use std::old_io::{ SeekStyle };
 use std::borrow::ToOwned;
@@ -34,7 +34,7 @@ const IV_LEN: usize = 16;
 /// The key is 256 bits long, which is 32 bytes.
 pub const KEY_LEN: usize = 32;
 
-#[derive(Clone, Debug, Decodable, Encodable)]
+#[derive(Clone, Debug, RustcDecodable, RustcEncodable)]
 pub struct Password {
     pub name: String,
     pub domain: Option<String>,

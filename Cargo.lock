@@ -3,9 +3,15 @@ name = "pwm"
 version = "0.0.1"
 dependencies = [
  "rpassword 0.0.1 (git+https://github.com/conradkleinespel/rustastic-password.git)",
- "rust-crypto 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rust-crypto 0.2.15 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustc-serialize 0.2.12 (registry+https://github.com/rust-lang/crates.io-index)",
  "xlib 0.1.0 (git+https://github.com/servo/rust-xlib.git)",
 ]
+
+[[package]]
+name = "bitflags"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "gcc"
@@ -14,8 +20,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "libc"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "log"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "rand"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "libc 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
 [[package]]
 name = "rpassword"
@@ -27,16 +47,17 @@ dependencies = [
 
 [[package]]
 name = "rust-crypto"
-version = "0.2.14"
+version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "rustc-serialize 0.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "time 0.1.15 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rand 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustc-serialize 0.2.12 (registry+https://github.com/rust-lang/crates.io-index)",
+ "time 0.1.16 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "rustc-serialize"
-version = "0.2.10"
+version = "0.2.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
@@ -46,15 +67,18 @@ source = "git+https://github.com/conradkleinespel/termios-rs.git#545043cf3a011dc
 
 [[package]]
 name = "time"
-version = "0.1.15"
+version = "0.1.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "gcc 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
- "libc 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libc 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "xlib"
 version = "0.1.0"
-source = "git+https://github.com/servo/rust-xlib.git#138b0e281b9fd64f7d2e17080fa9a2d4a8554313"
+source = "git+https://github.com/servo/rust-xlib.git#7558b1b41304292955b3c081dba23d291458fde9"
+dependencies = [
+ "bitflags 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 

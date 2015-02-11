@@ -14,7 +14,7 @@
 
 extern crate libc;
 extern crate getopts;
-extern crate serialize;
+extern crate "rustc-serialize" as rustc_serialize;
 extern crate crypto;
 extern crate rpassword;
 
@@ -22,6 +22,7 @@ use color::Color;
 use std::slice::AsSlice;
 use std::old_io::fs::File;
 use std::old_io::{ FileMode, FileAccess };
+use std::iter::{ Iterator, IteratorExt, FromIterator };
 
 mod macros;
 mod aes;
@@ -66,14 +67,14 @@ fn execute_command(args: &[String], command: &Command) {
         },
         Err(_) => {
             println_stderr!("{}", fgcolor!(Color::Red, "error: could not open file `{}`", filename));
-            std::os::set_exit_status(3);
+            std::env::set_exit_status(3);
         }
     }
 
 }
 
 fn main() {
-    let args = std::os::args();
+    let args: Vec<String> = std::env::args().map(|s| s.into_string().unwrap()).collect();
 
     match args.as_slice().get(1) {
         Some(command_name) => {
@@ -83,13 +84,13 @@ fn main() {
                 },
                 None => {
                     println_stderr!("{}", fgcolor!(Color::Red, "error: unknown command: `{}`", command_name));
-                    std::os::set_exit_status(2);
+                    std::env::set_exit_status(2);
                 }
             }
         },
         None => {
             println_stderr!("{}", fgcolor!(Color::Red, "error: usage: {} <command> [options] [args]", args[0]));
-            std::os::set_exit_status(1);
+            std::env::set_exit_status(1);
         }
     }
 }

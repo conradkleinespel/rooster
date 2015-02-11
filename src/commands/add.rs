@@ -22,48 +22,56 @@ pub fn callback(args: &[String], file: &mut File) {
     let app_name = args[2].as_slice();
     let username = args[3].as_slice();
 
-    print!("What password do you want for {}? ", app_name);
-    match read_password() {
-        Ok(ref mut password_as_string) => {
-            let mut password = password::Password::new(
-                app_name,
-                username,
-                password_as_string.as_slice()
-            );
 
-            print!("Type your master password: ");
-            match read_password() {
-                Ok(ref mut master_password) => {
-                    let password_added = password::add_password(
-                        master_password,
-                        &password,
-                        file
-                    );
-                    match password_added {
-                        Ok(_) => {
-                            println!("{}", fgcolor!(Color::Green, "Alright! Your password for {} has been added.", app_name));
+    print!("Type your master password: ");
+    match read_password() {
+        Ok(ref mut master_password) => {
+            match password::has_password(master_password, app_name, file) {
+                Ok(false) => {
+                    print!("What password do you want for {}? ", app_name);
+                    match read_password() {
+                        Ok(ref mut password_as_string) => {
+                            let mut password = password::Password::new(
+                                app_name,
+                                username,
+                                password_as_string.as_slice()
+                            );
+                            let password_added = password::add_password(
+                                master_password,
+                                &password,
+                                file
+                            );
+                            match password_added {
+                                Ok(_) => {
+                                    okln!("Alright! Your password for {} has been added.", app_name);
+                                },
+                                Err(err) => {
+                                    errln!("error: could not add the password: {:?}", err);
+                                }
+                            }
+
+                            // Clean up memory so no one can re-use it.
+                            password_as_string.scrub_memory();
+                            password.scrub_memory();
                         },
-                        Err(err) => {
-                            println_stderr!("{}", fgcolor!(Color::Red, "error: could not add the password: {:?}", err));
+                        Err(_) => {
+                            errln!("\nerror: could not read the master password");
                         }
                     }
-
-                    // Clean up memory so no one can re-use it.
-                    master_password.scrub_memory();
                 },
-                Err(_) => {
-                    println_stderr!("");
-                    println_stderr!("{}", fgcolor!(Color::Red, "error: could not read the master password"));
+                Ok(true) => {
+                    errln!("There is already an app with that name.");
+                },
+                Err(err) => {
+                    errln!("error: could not add the password: {:?}", err);
                 }
             }
 
             // Clean up memory so no one can re-use it.
-            password_as_string.scrub_memory();
-            password.scrub_memory();
+            master_password.scrub_memory();
         },
         Err(_) => {
-            println_stderr!("");
-            println_stderr!("{}", fgcolor!(Color::Red, "error: could not read the password"));
+            errln!("\nerror: could not read the password");
         }
     }
 }

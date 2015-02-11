@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use std::old_io::fs::File;
+use std::old_io::stdio::stdin;
 use super::super::color::Color;
 use super::super::password;
 use super::super::password::ScrubMemory;
@@ -26,11 +27,37 @@ pub fn callback(args: &[String], file: &mut File) {
         Ok(ref mut master_password) => {
             match password::get_passwords(master_password, app_name, file) {
                 Ok(ref mut passwords) => {
+                    let border: String = range(0, 92).map(|_| '-').collect();
+
+                    println!("");
+
+                    println!("{}", border);
+                    println!("| {:2} | {:15} | {:30} | {:32} |", "id", "app", "username", "password");
+                    println!("{}", border);
                     let mut i = 0;
                     for p in passwords.as_slice().iter() {
-                        println!("{:?} {} {} '{}'", i, p.name, p.username, p.password);
+                        println!("| {:2?} | {:15} | {:30} | {:32} |", i, p.name, p.username, p.password);
                         i += 1;
                     }
+                    println!("{}", border);
+
+                    println!("");
+
+                    print!("These passwords match your search. Type the id of the password you want: ");
+                    match stdin().read_line() {
+                        Ok(ref mut line) => {
+                            // Remove the \n from the line.
+                            line.pop().unwrap();
+
+                            // We're all good !
+                            println_stderr!("{}", fgcolor!(Color::Green, "OK {}", line));
+                        },
+                        Err(_) => {
+                            println!("");
+                            println_stderr!("{}", fgcolor!(Color::Red, "error: could not read the password ID"));
+                        }
+                    }
+
                     passwords.scrub_memory();
                 },
                 Err(err) => {

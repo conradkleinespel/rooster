@@ -7,9 +7,4 @@ authors = ["Conrad Kleinespel <conradk@conradk.com>"]
 rust-crypto = "0.2.14"
 rustc-serialize = "0.2.12"
 rand = "0.1.2"
-
-[dependencies.rpassword]
-git = "https://github.com/conradkleinespel/rustastic-password.git"
-
-[dependencies.xlib]
-git = "https://github.com/servo/rust-xlib.git"
+rpassword = "0.0.1"

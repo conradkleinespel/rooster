@@ -38,8 +38,8 @@ pub fn callback(args: &[String], file: &mut File) {
             }
             master_password.scrub_memory();
         },
-        Err(_) => {
-            errln!("\nThe master password could not be read.");
+        Err(err) => {
+            errln!("\nI couldn't read the master password ({:?}).", err);
         }
     }
 }

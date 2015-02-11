@@ -55,7 +55,7 @@ pub fn callback(args: &[String], file: &mut File) {
                             okln!("Alright! Your password for {} has been added.", app_name);
                         },
                         Err(err) => {
-                            errln!("error: could not add the password: {:?}", err);
+                            errln!("\nI couldn't add this password ({:?}).", err);
                         }
                     }
                 },
@@ -63,15 +63,15 @@ pub fn callback(args: &[String], file: &mut File) {
                     errln!("There is already an app with that name.");
                 },
                 Err(err) => {
-                    errln!("error: could not add the password: {:?}", err);
+                    errln!("\nI couldn't add this password ({:?}).", err);
                 }
             }
 
             // Clean up memory so no one can re-use it.
             master_password.scrub_memory();
         },
-        Err(_) => {
-            errln!("\nerror: could not read the master password");
+        Err(err) => {
+            errln!("\nI couldn't read the master password ({:?}).", err);
         }
     }
 

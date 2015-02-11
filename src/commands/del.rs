@@ -26,7 +26,7 @@ pub fn callback(args: &[String], file: &mut File) {
         Ok(ref mut master_password) => {
             match password::delete_password(master_password, app_name, file) {
                 Ok(_) => {
-                    okln!("OK, deleted {}!", app_name);
+                    okln!("Done! I've deleted the password for {}.", app_name);
                 },
                 Err(err) => {
                     errln!("I couldn't find a password for this app ({:?}).", err);
@@ -34,8 +34,8 @@ pub fn callback(args: &[String], file: &mut File) {
             }
             master_password.scrub_memory();
         },
-        Err(_) => {
-            errln!("\nThe master password could not be read.");
+        Err(err) => {
+            errln!("\nI couldn't read the master password ({:?}).", err);
         }
     }
 }

@@ -43,14 +43,24 @@ pub fn callback(args: &[String], file: &mut File) {
     print!("Type your master password: ");
     match read_password() {
         Ok(ref mut master_password) => {
-            let password_added = password::add_password(
-                master_password,
-                &password,
-                file
-            );
-            match password_added {
-                Ok(_) => {
-                    okln!("Alright! Your password for {} has been added.", app_name);
+            match password::has_password(master_password, app_name, file) {
+                Ok(false) => {
+                    let password_added = password::add_password(
+                        master_password,
+                        &password,
+                        file
+                    );
+                    match password_added {
+                        Ok(_) => {
+                            okln!("Alright! Your password for {} has been added.", app_name);
+                        },
+                        Err(err) => {
+                            errln!("error: could not add the password: {:?}", err);
+                        }
+                    }
+                },
+                Ok(true) => {
+                    errln!("There is already an app with that name.");
                 },
                 Err(err) => {
                     errln!("error: could not add the password: {:?}", err);

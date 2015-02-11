@@ -136,7 +136,7 @@ pub enum PasswordError {
     NoSuchAppError
 }
 
-fn get_all_passwords(master_password: &String, file: &mut File) -> Result<Vec<Password>, PasswordError> {
+fn get_all_passwords(master_password: &str, file: &mut File) -> Result<Vec<Password>, PasswordError> {
     // Go to the start of the file and read it.
     let encrypted = match file.seek(0, SeekStyle::SeekSet).and_then(|_| { file.read_to_end() }) {
         Ok(val) => { val },
@@ -182,7 +182,7 @@ fn get_all_passwords(master_password: &String, file: &mut File) -> Result<Vec<Pa
     Ok(passwords)
 }
 
-fn save_all_passwords(master_password: &String, passwords: &Vec<Password>, file: &mut File) -> Result<(), PasswordError> {
+fn save_all_passwords(master_password: &str, passwords: &Vec<Password>, file: &mut File) -> Result<(), PasswordError> {
     // This should never fail. The structs are all encodable.
     let mut encoded_after = json::encode(passwords).unwrap();
 
@@ -217,7 +217,7 @@ fn save_all_passwords(master_password: &String, passwords: &Vec<Password>, file:
 }
 
 /// Adds a password to the file.
-pub fn add_password(master_password: &String, password: &Password, file: &mut File) -> Result<(), PasswordError> {
+pub fn add_password(master_password: &str, password: &Password, file: &mut File) -> Result<(), PasswordError> {
     let mut passwords = try!(get_all_passwords(master_password, file));
 
     passwords.push(password.clone());
@@ -230,16 +230,44 @@ pub fn add_password(master_password: &String, password: &Password, file: &mut Fi
     saved
 }
 
-pub fn delete_password(master_password: &String, app_name: &String, file: &mut File)  -> Result<(), PasswordError> {
-    let mut passwords = try!(get_all_passwords(master_password, file));
-
-    // Clear the memory so no other program can see it once freed.
-    passwords.scrub_memory();
-
-    Ok(())
+pub fn delete_password(master_password: &str, app_name: &str, file: &mut File) -> Result<(), PasswordError> {
+    match get_password(master_password, app_name, file) {
+        Ok(ref mut p) => {
+            let mut result = Ok(());
+            match get_all_passwords(master_password, file) {
+                Ok(ref mut passwords) => {
+                    let mut i = 0;
+                    while i < passwords.len() {
+                        if passwords[i].name == p.name {
+                            break;
+                        }
+                        i += 1;
+                    }
+                    if i < passwords.len() {
+                        passwords.remove(i);
+                    } else {
+                        result = Err(PasswordError::NoSuchAppError);
+                    }
+                    match save_all_passwords(master_password, passwords, file) {
+                        Ok(_) => {},
+                        Err(err) => {
+                            result = Err(err);
+                        }
+                    }
+                    passwords.scrub_memory();
+                },
+                Err(err) => {
+                    result = Err(err)
+                }
+            }
+            p.scrub_memory();
+            result
+        },
+        Err(err) => Err(err)
+    }
 }
 
-pub fn get_password(master_password: &String, app_name: &String, file: &mut File)  -> Result<Password, PasswordError> {
+pub fn get_password(master_password: &str, app_name: &str, file: &mut File) -> Result<Password, PasswordError> {
     let mut passwords = try!(get_all_passwords(master_password, file));
     let mut result = Err(PasswordError::NoSuchAppError);
 
@@ -265,4 +293,19 @@ pub fn get_password(master_password: &String, app_name: &String, file: &mut File
     passwords.scrub_memory();
 
     result
+}
+
+pub fn has_password(master_password: &str, app_name: &str, file: &mut File) -> Result<bool, PasswordError> {
+    match get_password(master_password, app_name, file) {
+        Ok(ref mut password) => {
+            password.scrub_memory();
+            Ok(true)
+        },
+        Err(err) => {
+            match err {
+                PasswordError::NoSuchAppError => Ok(false),
+                _                             => Err(err)
+            }
+        }
+    }
 }

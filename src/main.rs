@@ -17,12 +17,13 @@ extern crate getopts;
 extern crate "rustc-serialize" as rustc_serialize;
 extern crate crypto;
 extern crate rpassword;
+extern crate rand;
 
 use color::Color;
 use std::slice::AsSlice;
 use std::old_io::fs::File;
 use std::old_io::{ FileMode, FileAccess };
-use std::iter::{ Iterator, IteratorExt, FromIterator };
+use std::iter::IteratorExt;
 
 mod macros;
 mod aes;

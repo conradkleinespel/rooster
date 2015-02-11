@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use std::old_io::fs::File;
-use std::rand::{ Rng, OsRng };
+use super::super::rand::{ Rng, OsRng };
 use super::super::color::Color;
 use super::super::password;
 use super::super::password::ScrubMemory;

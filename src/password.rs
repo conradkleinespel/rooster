@@ -16,7 +16,7 @@ use super::ffi;
 use super::crypto;
 use super::crypto::digest::Digest;
 use super::aes;
-use std::rand::{ Rng, OsRng };
+use super::rand::{ Rng, OsRng };
 use rustc_serialize::json;
 use std::old_io::fs::File;
 use std::old_io::{ SeekStyle };

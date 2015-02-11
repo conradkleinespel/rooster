@@ -1,7 +1,8 @@
 [root]
-name = "pwm"
+name = "peevee-cli"
 version = "0.0.1"
 dependencies = [
+ "rand 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "rpassword 0.0.1 (git+https://github.com/conradkleinespel/rustastic-password.git)",
  "rust-crypto 0.2.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustc-serialize 0.2.12 (registry+https://github.com/rust-lang/crates.io-index)",

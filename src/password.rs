@@ -241,9 +241,28 @@ pub fn delete_password(master_password: &String, app_name: &String, file: &mut F
 
 pub fn get_password(master_password: &String, app_name: &String, file: &mut File)  -> Result<Password, PasswordError> {
     let mut passwords = try!(get_all_passwords(master_password, file));
+    let mut result = Err(PasswordError::NoSuchAppError);
+
+    'passwords_loop: for p in passwords.as_slice().iter() {
+        // Since the app name must be the same, we need the same length.
+        if p.name.len() != app_name.len() {
+            continue 'passwords_loop;
+        }
+
+        // We're looking for the exact same app name, without regard to casing.
+        let mut i = 0us;
+        while i < p.name.len() {
+            if p.name.as_slice().char_at(i).to_lowercase() != app_name.as_slice().char_at(i).to_lowercase() {
+                continue 'passwords_loop;
+            }
+            i += 1;
+        }
+        result = Ok(p.clone());
+        break;
+    }
 
     // Clear the memory so no other program can see it once freed.
     passwords.scrub_memory();
 
-    Err(PasswordError::NoSuchAppError)
+    result
 }

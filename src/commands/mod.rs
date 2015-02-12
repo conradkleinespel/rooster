@@ -14,5 +14,6 @@
 
 pub mod get;
 pub mod add;
-pub mod del;
-pub mod gen;
+pub mod delete;
+pub mod generate;
+pub mod list;

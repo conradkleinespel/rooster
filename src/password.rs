@@ -133,10 +133,11 @@ pub enum PasswordError {
     DecryptionError,
     EncryptionError,
     SyncError,
-    NoSuchAppError
+    NoSuchAppError,
+    NoPasswordFileError
 }
 
-fn get_all_passwords(master_password: &str, file: &mut File) -> Result<Vec<Password>, PasswordError> {
+pub fn get_all_passwords(master_password: &str, file: &mut File) -> Result<Vec<Password>, PasswordError> {
     // Go to the start of the file and read it.
     let encrypted = match file.seek(0, SeekStyle::SeekSet).and_then(|_| { file.read_to_end() }) {
         Ok(val) => { val },

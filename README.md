@@ -10,16 +10,21 @@ I'm just getting started. The goal is to have the following commands available:
 
 ```
 # Tries to find the entry for the app you're most likely looking for.
-p get <approximate-app-name>
+# The app name is case insensitive.
+p get <app-name>
 
 # Adds an entry with this username. The password is retrieved via STDIN.
 p add <app-name> <username>
 
 # Removes an entry.
-p del <approximate-app-name>
+p delete <app-name>
 
 # Adds a new entry with an automatically generated password.
-p gen <app-name> <username>
+# The app name is case insensitive.
+p generate <app-name> <username>
+
+# List all passwords.
+p list
 ```
 
 Online sync is not planned at the moment. But I'm open to discussion in that

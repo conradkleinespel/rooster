@@ -40,8 +40,9 @@ struct Command {
 static COMMANDS: &'static [Command] = &[
     Command { name: "get", callback: commands::get::callback },
     Command { name: "add", callback: commands::add::callback },
-    Command { name: "del", callback: commands::del::callback },
-    Command { name: "gen", callback: commands::gen::callback }
+    Command { name: "delete", callback: commands::delete::callback },
+    Command { name: "generate", callback: commands::generate::callback },
+    Command { name: "list", callback: commands::list::callback }
 ];
 
 fn command_from_name(name: &str) -> Option<&'static Command> {

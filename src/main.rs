@@ -185,7 +185,7 @@ fn main() {
         },
         None => {
             errln!(
-                "I didn't understand that. YOu can check the documentation\
+                "I didn't understand that. You can check the documentation \
                 for Peevee at: https://github.com/conradkleinespel/peevee-cli"
             );
             std::env::set_exit_status(1);

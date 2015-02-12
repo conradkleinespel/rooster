@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::fs::File;
+use std::env;
 use super::super::color::Color;
 use super::super::password;
 use super::super::password::ScrubMemory;
 use super::super::rpassword::read_password;
-use std::old_io::fs::File;
 
 pub fn callback(args: &[String], file: &mut File) {
     let app_name = args[2].as_slice();
@@ -47,6 +48,7 @@ pub fn callback(args: &[String], file: &mut File) {
                                 },
                                 Err(err) => {
                                     errln!("I couldn't add the password ({:?}).", err);
+                                    env::set_exit_status(1);
                                 }
                             }
 
@@ -56,14 +58,17 @@ pub fn callback(args: &[String], file: &mut File) {
                         },
                         Err(err) => {
                             errln!("\nI couldn't read the app's password ({:?}).", err);
+                            env::set_exit_status(1);
                         }
                     }
                 },
                 Ok(true) => {
                     errln!("There is already an app with that name.");
+                    env::set_exit_status(1);
                 },
                 Err(err) => {
                     errln!("\nI couldn't add this password ({:?}).", err);
+                    env::set_exit_status(1);
                 }
             }
 
@@ -72,6 +77,7 @@ pub fn callback(args: &[String], file: &mut File) {
         },
         Err(err) => {
             errln!("\nI couldn't read the master password ({:?}).", err);
+            env::set_exit_status(1);
         }
     }
 }

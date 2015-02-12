@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::old_io::fs::File;
+use std::fs::File;
+use std::env;
 use super::super::color::Color;
 use super::super::password;
 use super::super::password::ScrubMemory;
@@ -30,12 +31,14 @@ pub fn callback(args: &[String], file: &mut File) {
                 },
                 Err(err) => {
                     errln!("I couldn't find a password for this app ({:?}).", err);
+                    env::set_exit_status(1);
                 }
             }
             master_password.scrub_memory();
         },
         Err(err) => {
             errln!("\nI couldn't read the master password ({:?}).", err);
+            env::set_exit_status(1);
         }
     }
 }

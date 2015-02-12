@@ -18,8 +18,8 @@ use super::crypto::digest::Digest;
 use super::aes;
 use super::rand::{ Rng, OsRng };
 use rustc_serialize::json;
-use std::old_io::fs::File;
-use std::old_io::{ SeekStyle };
+use std::fs::File;
+use std::io::{ Seek, SeekFrom, Read, Write };
 use std::borrow::ToOwned;
 use std::slice::bytes::MutableByteVector;
 
@@ -133,14 +133,14 @@ pub enum PasswordError {
     DecryptionError,
     EncryptionError,
     SyncError,
-    NoSuchAppError,
-    NoPasswordFileError
+    NoSuchAppError
 }
 
 pub fn get_all_passwords(master_password: &str, file: &mut File) -> Result<Vec<Password>, PasswordError> {
     // Go to the start of the file and read it.
-    let encrypted = match file.seek(0, SeekStyle::SeekSet).and_then(|_| { file.read_to_end() }) {
-        Ok(val) => { val },
+    let mut encrypted: Vec<u8> = Vec::new();
+    match file.seek(SeekFrom::Start(0)).and_then(|_| { file.read_to_end(&mut encrypted) }) {
+        Ok(_) => { },
         Err(_) => { return Err(PasswordError::ReadError) }
     };
 
@@ -206,10 +206,10 @@ fn save_all_passwords(master_password: &str, passwords: &Vec<Password>, file: &m
     encrypted_after.push_all(&iv);
 
     // Save the data to the password file.
-    let sync = file.seek(0, SeekStyle::SeekSet)
-        .and_then(|_| { file.truncate(0) })
+    let sync = file.seek(SeekFrom::Start(0))
+        .and_then(|_| { file.set_len(0) })
         .and_then(|_| { file.write_all(encrypted_after.as_slice()) })
-        .and_then(|_| { file.datasync() });
+        .and_then(|_| { file.sync_data() });
 
     match sync {
         Ok(_) => { Ok(()) },

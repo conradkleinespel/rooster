@@ -10,20 +10,20 @@ Here are a few examples of how to use Peevee:
 ```
 # Tries to find the entry for the app you're most likely looking for.
 # The app name is case insensitive.
-p get <app-name>
+peevee get <app-name>
 
 # Adds an entry with this username. The password is retrieved via STDIN.
-p add <app-name> <username>
+peevee add <app-name> <username>
 
 # Removes an entry.
-p delete <app-name>
+peevee delete <app-name>
 
 # Adds a new entry with an automatically generated password.
 # The app name is case insensitive.
-p generate <app-name> <username>
+peevee generate <app-name> <username>
 
-# List all passwords.
-p list
+# List all passwords (only app name and username).
+peevee list
 ```
 
 Please open an issue or a pull request for bug reports, ideas, etc.

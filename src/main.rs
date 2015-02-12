@@ -21,9 +21,15 @@ extern crate rand;
 
 use color::Color;
 use std::slice::AsSlice;
-use std::old_io::fs::File;
-use std::old_io::{ FileMode, FileAccess };
+use std::fs::File;
 use std::iter::IteratorExt;
+use std::env;
+use std::ffi::AsOsStr;
+use std::old_path::SEP as PATH_SEP;
+use std::io::Result as IoResult;
+use std::io::Error as IoError;
+use std::io::ErrorKind as IoErrorKind;
+use  std::old_io::stdio::stdin;
 
 mod macros;
 mod aes;
@@ -31,6 +37,8 @@ mod commands;
 mod ffi;
 mod password;
 mod color;
+
+const PEEVEE_FILE_DEFAULT: &'static str = ".peevee_passwords.aes";
 
 struct Command {
     name: &'static str,
@@ -54,25 +62,106 @@ fn command_from_name(name: &str) -> Option<&'static Command> {
     None
 }
 
-fn execute_command(args: &[String], command: &Command) {
-    let filename = "/tmp/passwords";
+fn open_password_file(filename: &str, create: bool) -> IoResult<File> {
+    let mut options = std::fs::OpenOptions::new();
+    options.read(true);
+    options.write(true);
+    options.create(create);
+    options.open(&Path::new(filename))
+}
 
-    let mut file_maybe = File::open_mode(
-        &Path::new(filename),
-        FileMode::Open,
-        FileAccess::ReadWrite
+fn get_password_file_from_input(filename: &str) -> IoResult<File> {
+    println_stderr!(
+        "I could not find the password file \"{}\". Would you like to create it now? [yes/no]",
+        filename
     );
-
-    match file_maybe {
-        Ok(ref mut file) => {
-            (command.callback)(args.as_slice(), file);
-        },
-        Err(_) => {
-            errln!("error: could not open file `{}`", filename);
-            std::env::set_exit_status(3);
+    loop {
+        match stdin().read_line() {
+            Ok(line) => {
+                if line.as_slice().starts_with("yes") {
+                    return open_password_file(filename, true);
+                } else if line.as_slice().starts_with("no") {
+                    return Err(IoError::last_os_error());
+                } else {
+                    errln!(
+                        "I did not understand that. Would you like to create \
+                        the password file \"{}\" now? [yes/no]",
+                        filename
+                    );
+                }
+            },
+            Err(_) => {
+                errln!(
+                    "I was not able to read your answer. Would you like to create \
+                    the password file \"{}\" now? [yes/no]",
+                    filename
+                );
+            }
         }
     }
+}
 
+fn get_password_file(filename: &str) -> IoResult<File> {
+    match open_password_file(filename, false) {
+        Ok(file) => Ok(file),
+        Err(err) => {
+            match err.kind() {
+                IoErrorKind::FileNotFound => get_password_file_from_input(filename),
+                _ => Err(err)
+            }
+        }
+    }
+}
+
+fn execute_command_from_filename(args: &[String], command: &Command, filename: &str) {
+    match get_password_file(filename) {
+        Ok(ref mut file) => {
+            (command.callback)(args, file);
+        },
+        Err(err) => {
+            match err.kind() {
+                // This was already handled before.
+                IoErrorKind::FileNotFound => {},
+                _ => {
+                    errln!("I could not open the password file \"{}\" :( ({})", filename, err);
+                }
+            }
+            std::env::set_exit_status(1);
+        }
+    }
+}
+
+fn execute_command(args: &[String], command: &Command) {
+    match env::var_string("PEEVEE_FILE") {
+        Ok(filename) => {
+            execute_command_from_filename(args, command, filename.as_slice());
+        },
+        Err(env::VarError::NotPresent) => {
+            match env::home_dir() {
+                Some(path) => {
+                    match path.as_os_str().to_os_string().into_string() {
+                        Ok(ref mut filename) => {
+                            filename.push(PATH_SEP);
+                            filename.push_str(PEEVEE_FILE_DEFAULT);
+                            execute_command_from_filename(args, command, filename.as_slice());
+                        },
+                        Err(oss) => {
+                            errln!("The password filename, {:?}, is invalid. It must be valid UTF8.", oss);
+                            std::env::set_exit_status(1);
+                        }
+                    }
+                },
+                None => {
+                    errln!("I couldn't figure out what file to use for the passwords.");
+                    std::env::set_exit_status(1);
+                }
+            }
+        },
+        Err(env::VarError::NotUnicode(oss)) => {
+            errln!("The password filename, {:?}, is invalid. It must be valid UTF8.", oss);
+            std::env::set_exit_status(1);
+        }
+    };
 }
 
 fn main() {
@@ -85,13 +174,20 @@ fn main() {
                     execute_command(args.as_slice(), command);
                 },
                 None => {
-                    errln!("error: unknown command: `{}`", command_name);
-                    std::env::set_exit_status(2);
+                    errln!(
+                        "I don't know the \"{}\" command. You can check \
+                        existing commands at: https://github.com/conradkleinespel/peevee-cli.",
+                        command_name
+                    );
+                    std::env::set_exit_status(1);
                 }
             }
         },
         None => {
-            errln!("error: usage: {} <command> [options] [args]", args[0]);
+            errln!(
+                "I didn't understand that. YOu can check the documentation\
+                for Peevee at: https://github.com/conradkleinespel/peevee-cli"
+            );
             std::env::set_exit_status(1);
         }
     }

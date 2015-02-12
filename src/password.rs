@@ -23,6 +23,26 @@ use std::io::{ Seek, SeekFrom, Read, Write };
 use std::borrow::ToOwned;
 use std::slice::bytes::MutableByteVector;
 
+/// The version of the JSON content in the password file.
+///
+/// The "version" key MUST be provided. It is used to determine which schema
+/// structure to use for encoding and decoding. This way, future versions of
+/// Peevee can interoperate with older password file formats.
+///
+/// Version 1 example:
+/// ```
+/// {
+///     "version": 1,
+///     "passwords": [
+///         "name": "YouTube",
+///         "username": "conradk",
+///         "password": "xxxxxxxx",
+///         "created_at": 23145436,
+///         "updated_at": 23145546,
+///     ]
+/// }
+/// ```
+
 /// The IV is 128 bits long.
 ///
 /// This should be enough for it to be unique. Also, the password storage file
@@ -33,6 +53,22 @@ const IV_LEN: usize = 16;
 
 /// The key is 256 bits long, which is 32 bytes.
 pub const KEY_LEN: usize = 32;
+
+/// The format of the encrypted JSON content in the password file v1.
+#[derive(RustcDecodable, RustcEncodable)]
+pub struct SchemaVersion1 {
+    version: usize,
+    passwords: Vec<Password>
+}
+
+impl SchemaVersion1 {
+    fn new(passwords: Vec<Password>) -> SchemaVersion1 {
+        SchemaVersion1 {
+            version: 1,
+            passwords: passwords
+        }
+    }
+}
 
 #[derive(Clone, Debug, RustcDecodable, RustcEncodable)]
 pub struct Password {
@@ -46,6 +82,12 @@ pub struct Password {
 
 pub trait ScrubMemory {
     fn scrub_memory(&mut self);
+}
+
+impl ScrubMemory for SchemaVersion1 {
+    fn scrub_memory(&mut self) {
+        self.passwords.scrub_memory();
+    }
 }
 
 impl ScrubMemory for String {
@@ -165,7 +207,7 @@ pub fn get_all_passwords(master_password: &str, file: &mut File) -> Result<Vec<P
 
                 // This should never fail. The file contents should always be
                 // valid JSON.
-                let passwords = json::decode(encoded.as_slice()).unwrap();
+                let passwords = json::decode::<SchemaVersion1>(encoded.as_slice()).unwrap().passwords;
 
                 // Clear the memory so no other program can see it once freed.
                 encoded.scrub_memory();
@@ -185,7 +227,9 @@ pub fn get_all_passwords(master_password: &str, file: &mut File) -> Result<Vec<P
 
 fn save_all_passwords(master_password: &str, passwords: &Vec<Password>, file: &mut File) -> Result<(), PasswordError> {
     // This should never fail. The structs are all encodable.
-    let mut encoded_after = json::encode(passwords).unwrap();
+    let mut schema = SchemaVersion1::new(passwords.clone());
+    let mut encoded_after = json::encode(&schema).unwrap();
+    schema.scrub_memory();
 
     // Encrypt the data.
     let mut key = generate_encryption_key(master_password);

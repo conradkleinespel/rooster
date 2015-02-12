@@ -95,7 +95,7 @@ cd peevee-cli
 cargo build
 ```
 
-You may see some yellow or green text appearing with all kinds of weird
+You may see some yellow, blue or green text appearing with all kinds of weird
 technical messages. As long as there is no red text, you're good to go.
 
 **That's it! You did it!**

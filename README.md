@@ -1,6 +1,6 @@
 # Peevee, the password manager
 
-A simple and secure, command-line based, offline password manager.
+A simple and secure password manager for the command line.
 
 Is it currently available on Linux and OSX. There is no official Windows support at the moment.
 See the FAQ below for more information.

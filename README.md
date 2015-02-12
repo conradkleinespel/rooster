@@ -2,6 +2,9 @@
 
 A simple and secure, command-line based, offline password manager.
 
+Is it currently available on Linux and OSX. There is no official Windows support at the moment.
+See the FAQ below for more information.
+
 Here are a few examples of how to use Peevee:
 
 ```

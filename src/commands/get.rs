@@ -18,6 +18,11 @@ use super::super::color::Color;
 use super::super::password;
 use super::super::password::ScrubMemory;
 use super::super::rpassword::read_password;
+use std::old_io::stdio;
+
+fn stdout_is_piped() -> bool {
+    true
+}
 
 pub fn callback(args: &[String], file: &mut File) {
     let ref app_name = args[2];
@@ -30,7 +35,12 @@ pub fn callback(args: &[String], file: &mut File) {
         Ok(ref mut master_password) => {
             match password::get_password(master_password, app_name, file) {
                 Ok(ref mut password) => {
-                    println!("{}", password.password);
+                    if stdout_is_piped() {
+                        print!("{}", password.password);
+                        stdio::flush();
+                    } else {
+                        println!("{}", password.password);
+                    }
                     password.scrub_memory();
                 },
                 Err(err) => {

@@ -29,7 +29,7 @@ pub fn callback(args: &[String], file: &mut File) {
     // Generate a random password.
     let mut buffer: [u8; PASSWORD_LEN] = [0; PASSWORD_LEN];
     let mut rng = OsRng::new().unwrap();
-    for i in 0 .. PASSWORD_LEN - 1 {
+    for i in 0 .. PASSWORD_LEN {
         buffer[i] = rng.gen_range(33, 126);
     }
     let mut password_as_string = String::from_utf8_lossy(&buffer).into_owned();

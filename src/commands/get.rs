@@ -20,8 +20,27 @@ use super::super::password::ScrubMemory;
 use super::super::rpassword::read_password;
 use std::old_io::stdio;
 
+// POSIX fstat related stuff.
+use libc::funcs::posix88::stat_::fstat;
+use libc::types::os::arch::posix01::stat as stat_struct;
+use libc::consts::os::posix88::S_IFIFO;
+use libc::consts::os::posix88::STDOUT_FILENO;
+use std::mem;
+
 fn stdout_is_piped() -> bool {
-    true
+    // We can safely use this struct uninitialized because `fstat` will
+    // initialize it for us.
+    let mut stat: stat_struct = unsafe { mem::uninitialized() };
+
+    // If there is an error, we'll just say that the output is piped.
+    // This should rarely, if ever, happen. And saying the output is piped is
+    // the least annoying because it allows piping.
+    if unsafe { fstat(STDOUT_FILENO, &mut stat) } != 0 {
+        true
+    } else {
+        // S_IFIFO is the type "Named pipe".
+        stat.st_mode & S_IFIFO == S_IFIFO
+    }
 }
 
 pub fn callback(args: &[String], file: &mut File) {

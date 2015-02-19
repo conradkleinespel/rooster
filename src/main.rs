@@ -132,7 +132,7 @@ fn execute_command_from_filename(args: &[String], command: &Command, filename: &
 }
 
 fn execute_command(args: &[String], command: &Command) {
-    match env::var_string("PEEVEE_FILE") {
+    match env::var("PEEVEE_FILE") {
         Ok(filename) => {
             execute_command_from_filename(args, command, filename.as_slice());
         },
@@ -165,7 +165,7 @@ fn execute_command(args: &[String], command: &Command) {
 }
 
 fn main() {
-    let args: Vec<String> = std::env::args().map(|s| s.into_string().unwrap()).collect();
+    let args: Vec<String> = std::env::args().collect();
 
     match args.as_slice().get(1) {
         Some(command_name) => {

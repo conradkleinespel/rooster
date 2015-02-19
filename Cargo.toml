@@ -5,6 +5,6 @@ authors = ["Conrad Kleinespel <conradk@conradk.com>"]
 
 [dependencies]
 rust-crypto = "0.2.14"
-rustc-serialize = "0.2.12"
+rustc-serialize = "0.2.14"
 rand = "0.1.2"
 rpassword = "0.0.1"

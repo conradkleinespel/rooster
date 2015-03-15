@@ -18,8 +18,8 @@ use super::super::color::Color;
 use super::super::password;
 use super::super::password::ScrubMemory;
 use super::super::rpassword::read_password;
-use std::old_io::stdio;
 use std::old_io::stdio::stdout;
+use std::io::Write;
 
 fn stdout_is_piped() -> bool {
     !stdout().get_ref().isatty()
@@ -38,7 +38,7 @@ pub fn callback(args: &[String], file: &mut File) {
                 Ok(ref mut password) => {
                     if stdout_is_piped() {
                         print!("{}", password.password);
-                        stdio::flush();
+                        ::std::io::stdout().flush().unwrap();
                     } else {
                         println!("{}", password.password);
                     }

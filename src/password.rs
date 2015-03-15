@@ -22,6 +22,7 @@ use std::fs::File;
 use std::io::{ Seek, SeekFrom, Read, Write };
 use std::borrow::ToOwned;
 use std::slice::bytes::MutableByteVector;
+use std::iter::IteratorExt;
 
 /// The version of the JSON content in the password file.
 ///
@@ -323,9 +324,11 @@ pub fn get_password(master_password: &str, app_name: &str, file: &mut File) -> R
         }
 
         // We're looking for the exact same app name, without regard to casing.
-        let mut i = 0us;
+        let mut i: usize = 0;
         while i < p.name.len() {
-            if p.name.as_slice().char_at(i).to_lowercase() != app_name.as_slice().char_at(i).to_lowercase() {
+            let c1 = p.name.as_slice().char_at(i).to_lowercase().nth(0).unwrap();
+            let c2 = app_name.as_slice().char_at(i).to_lowercase().nth(0).unwrap();
+            if c1 != c2 {
                 continue 'passwords_loop;
             }
             i += 1;

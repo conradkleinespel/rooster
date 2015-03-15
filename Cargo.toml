@@ -4,7 +4,7 @@ version = "0.0.1"
 authors = ["Conrad Kleinespel <conradk@conradk.com>"]
 
 [dependencies]
-rust-crypto = "0.2.14"
-rustc-serialize = "0.2.14"
-rand = "0.1.2"
-rpassword = "0.0.1"
+rust-crypto = "0.2.23"
+rustc-serialize = "0.3.3"
+rand = "0.2.0"
+rpassword = "0.0.2"

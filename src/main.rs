@@ -25,11 +25,13 @@ use std::fs::File;
 use std::iter::IteratorExt;
 use std::env;
 use std::ffi::AsOsStr;
-use std::old_path::SEP as PATH_SEP;
+use std::path::MAIN_SEPARATOR as PATH_SEP;
 use std::io::Result as IoResult;
 use std::io::Error as IoError;
 use std::io::ErrorKind as IoErrorKind;
-use  std::old_io::stdio::stdin;
+use std::io::stdin;
+use std::io::Write;
+use std::path::Path;
 
 mod macros;
 mod aes;
@@ -76,8 +78,9 @@ fn get_password_file_from_input(filename: &str) -> IoResult<File> {
         filename
     );
     loop {
-        match stdin().read_line() {
-            Ok(line) => {
+        let mut line = String::new();
+        match stdin().read_line(&mut line) {
+            Ok(_) => {
                 if line.as_slice().starts_with("yes") {
                     return open_password_file(filename, true);
                 } else if line.as_slice().starts_with("no") {

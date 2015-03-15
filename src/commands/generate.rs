@@ -19,6 +19,7 @@ use super::super::password;
 use super::super::password::ScrubMemory;
 use super::super::rpassword::read_password;
 use super::super::rand::{ Rng, OsRng };
+use std::io::Write;
 
 const PASSWORD_LEN: usize = 32;
 

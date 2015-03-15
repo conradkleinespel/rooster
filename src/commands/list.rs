@@ -18,6 +18,7 @@ use super::super::color::Color;
 use super::super::password;
 use super::super::password::ScrubMemory;
 use super::super::rpassword::read_password;
+use std::io::Write;
 
 pub fn callback(_: &[String], file: &mut File) {
     print!("Type your master password: ");

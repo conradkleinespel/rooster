@@ -22,7 +22,6 @@ use std::fs::File;
 use std::io::{ Seek, SeekFrom, Read, Write };
 use std::borrow::ToOwned;
 use std::slice::bytes::MutableByteVector;
-use std::iter::IteratorExt;
 
 /// The version of the JSON content in the password file.
 ///
@@ -108,7 +107,7 @@ impl ScrubMemory for [u8] {
 
 impl ScrubMemory for [Password] {
     fn scrub_memory(&mut self) {
-        for p in self.as_mut_slice().iter_mut() {
+        for p in self.iter_mut() {
             p.scrub_memory();
         }
     }

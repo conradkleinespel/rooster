@@ -33,7 +33,10 @@ pub fn callback(_: &[String], file: &mut File) {
                         _ => {
                             // We'll now print the password in a table.
                             // The table is delimited by borders.
-                            let horizontal_border: String = range(0, 57).map(|_| '-').collect();
+                            let mut horizontal_border = String::new();
+                            for i in 0..57 {
+                                horizontal_border.push('-');
+                            }
 
                             println!("{}", horizontal_border);
                             println!("| {:2} | {:15} | {:30} |", "id", "app", "username");

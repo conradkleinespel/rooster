@@ -27,7 +27,7 @@ mod internal {
 pub fn time() -> time_t {
     let retrieved_time = unsafe { internal::time(ptr::null_mut()) };
 
-    if retrieved_time == -1 as time_t {
+    if retrieved_time == (!0 as u32) {
         panic!("Could not get time from system");
     }
 

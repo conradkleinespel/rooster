@@ -7,6 +7,7 @@ authors = ["Conrad Kleinespel <conradk@conradk.com>"]
 rust-crypto = "*"
 rustc-serialize = "*"
 rand = "*"
+libc = "*"
 
 [dependencies.rpassword]
 # until rpassword is updated on crates.io, use the path

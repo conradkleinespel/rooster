@@ -2,6 +2,7 @@
 name = "peevee-cli"
 version = "0.0.1"
 dependencies = [
+ "libc 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.3.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "rpassword 0.0.4",
  "rust-crypto 0.2.31 (registry+https://github.com/rust-lang/crates.io-index)",

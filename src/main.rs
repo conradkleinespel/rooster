@@ -12,6 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#![feature(core)]
+#![feature(exit_status)]
+#![feature(convert)]
+#![feature(collections)]
+#![feature(old_io)]
+#![feature(std_misc)]
+#![feature(rustc_private)]
+#![feature(str_char)]
+
 extern crate libc;
 extern crate getopts;
 extern crate rustc_serialize;
@@ -22,7 +31,6 @@ extern crate rand;
 use color::Color;
 use std::slice::AsSlice;
 use std::fs::File;
-use std::iter::IteratorExt;
 use std::env;
 use std::ffi::AsOsStr;
 use std::path::MAIN_SEPARATOR as PATH_SEP;
@@ -109,7 +117,7 @@ fn get_password_file(filename: &str) -> IoResult<File> {
         Ok(file) => Ok(file),
         Err(err) => {
             match err.kind() {
-                IoErrorKind::FileNotFound => get_password_file_from_input(filename),
+                IoErrorKind::NotFound => get_password_file_from_input(filename),
                 _ => Err(err)
             }
         }
@@ -124,7 +132,7 @@ fn execute_command_from_filename(args: &[String], command: &Command, filename: &
         Err(err) => {
             match err.kind() {
                 // This was already handled before.
-                IoErrorKind::FileNotFound => {},
+                IoErrorKind::NotFound => {},
                 _ => {
                     errln!("I could not open the password file \"{}\" :( ({})", filename, err);
                 }

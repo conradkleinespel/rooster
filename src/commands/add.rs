@@ -21,8 +21,8 @@ use super::super::rpassword::read_password;
 use std::io::Write;
 
 pub fn callback(args: &[String], file: &mut File) {
-    let app_name = args[2].as_slice();
-    let username = args[3].as_slice();
+    let app_name = args[2].as_ref();
+    let username = args[3].as_ref();
 
 
     print!("Type your master password: ");
@@ -36,7 +36,7 @@ pub fn callback(args: &[String], file: &mut File) {
                             let mut password = password::Password::new(
                                 app_name,
                                 username,
-                                password_as_string.as_slice()
+                                password_as_string.as_ref()
                             );
                             let password_added = password::add_password(
                                 master_password,

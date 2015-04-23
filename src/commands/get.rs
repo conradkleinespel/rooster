@@ -18,11 +18,11 @@ use super::super::color::Color;
 use super::super::password;
 use super::super::password::ScrubMemory;
 use super::super::rpassword::read_password;
-use std::old_io::stdio::stdout;
 use std::io::Write;
+use super::super::libc;
 
 fn stdout_is_piped() -> bool {
-    !stdout().get_ref().isatty()
+    unsafe { libc::funcs::posix88::unistd::isatty(0) == 1 }
 }
 
 pub fn callback(args: &[String], file: &mut File) {

@@ -60,7 +60,7 @@ Peevee is built using [the Rust programming language](http://www.rust-lang.org/)
 which we'll need to install so we can compile the source code:
 
 ```sh
-curl static.rust-lang.org/rustup.sh | sudo sh
+curl static.rust-lang.org/rustup.sh | sudo sh -- --channel=nightly
 ```
 
 When you run this command, you will need to enter your administrator password.
@@ -70,14 +70,14 @@ When this is done, you can check that Rust was installed correctly:
 
 ```sh
 rustc -V
-cargo version
+cargo -V
 ```
 
 You should see two lines similar to (but not necessarily the same):
 
 ```
-rustc 1.0.0-nightly (a954663db 2015-02-10 22:08:30 +0000)
-cargo 0.0.1-pre-nightly (9404539 2015-02-09 20:54:26 +0000)
+rustc 1.1.0-nightly (90cc83015 2015-04-22) (built 2015-04-23)
+cargo 0.2.0-nightly (dac600c 2015-04-22) (built 2015-04-22)
 ```
 
 **Awesome ! We're almost there. Just two more steps :-)**
@@ -102,7 +102,7 @@ technical messages. As long as there is no red text, you're good to go.
 
 Peevee is ready to go. Here's how you can use it:
 ```
-./target/peevee-cli list
+./target/debug/peevee-cli list
 ```
 
 #### Pro tip
@@ -112,7 +112,7 @@ instead of `~/peevee-cli/target/peevee-cli list`. To do that, you'll need to
 make what's called a symbolic link. Here's how that might work:
 
 ```sh
-sudo ln -s $(pwd)/target/peevee-cli /usr/local/bin/peevee
+sudo ln -s $(pwd)/target/debug/peevee-cli /usr/local/bin/peevee
 ```
 
 Now you can use Peevee like this, from any directory:

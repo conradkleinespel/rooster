@@ -1,4 +1,5 @@
 #![macro_use]
+#[allow(unused_imports)]
 use std::io::Write;
 
 #[macro_export]

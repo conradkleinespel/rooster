@@ -199,15 +199,15 @@ pub fn get_all_passwords(master_password: &str, file: &mut File) -> Result<Vec<P
         let encrypted = &encrypted[.. encrypted.len() - IV_LEN];
 
         // Decrypt the data and remvoe the descryption key from memory.
-        let decrypted_maybe = aes::decrypt(encrypted, key.as_slice(), &iv);
+        let decrypted_maybe = aes::decrypt(encrypted, key.as_ref(), &iv);
         key.scrub_memory();
         match decrypted_maybe {
             Ok(decrypted) => {
-                let mut encoded = String::from_utf8_lossy(decrypted.as_slice()).into_owned();
+                let mut encoded = String::from_utf8_lossy(decrypted.as_ref()).into_owned();
 
                 // This should never fail. The file contents should always be
                 // valid JSON.
-                let passwords = json::decode::<SchemaVersion1>(encoded.as_slice()).unwrap().passwords;
+                let passwords = json::decode::<SchemaVersion1>(encoded.as_ref()).unwrap().passwords;
 
                 // Clear the memory so no other program can see it once freed.
                 encoded.scrub_memory();
@@ -234,7 +234,7 @@ fn save_all_passwords(master_password: &str, passwords: &Vec<Password>, file: &m
     // Encrypt the data.
     let mut key = generate_encryption_key(master_password);
     let iv = generate_random_iv();
-    let encrypted_after_maybe = aes::encrypt(encoded_after.as_slice().as_bytes(), key.as_slice(), &iv);
+    let encrypted_after_maybe = aes::encrypt(encoded_after.as_bytes(), key.as_ref(), &iv);
 
     // Clear the memory so no other program can see it once freed.
     key.scrub_memory();
@@ -252,7 +252,7 @@ fn save_all_passwords(master_password: &str, passwords: &Vec<Password>, file: &m
     // Save the data to the password file.
     let sync = file.seek(SeekFrom::Start(0))
         .and_then(|_| { file.set_len(0) })
-        .and_then(|_| { file.write_all(encrypted_after.as_slice()) })
+        .and_then(|_| { file.write_all(encrypted_after.as_ref()) })
         .and_then(|_| { file.sync_data() });
 
     match sync {
@@ -316,7 +316,7 @@ pub fn get_password(master_password: &str, app_name: &str, file: &mut File) -> R
     let mut passwords = try!(get_all_passwords(master_password, file));
     let mut result = Err(PasswordError::NoSuchAppError);
 
-    'passwords_loop: for p in passwords.as_slice().iter() {
+    'passwords_loop: for p in passwords.iter() {
         // Since the app name must be the same, we need the same length.
         if p.name.len() != app_name.len() {
             continue 'passwords_loop;
@@ -325,8 +325,8 @@ pub fn get_password(master_password: &str, app_name: &str, file: &mut File) -> R
         // We're looking for the exact same app name, without regard to casing.
         let mut i: usize = 0;
         while i < p.name.len() {
-            let c1 = p.name.as_slice().char_at(i).to_lowercase().nth(0).unwrap();
-            let c2 = app_name.as_slice().char_at(i).to_lowercase().nth(0).unwrap();
+            let c1 = p.name.char_at(i).to_lowercase().nth(0).unwrap();
+            let c2 = app_name.char_at(i).to_lowercase().nth(0).unwrap();
             if c1 != c2 {
                 continue 'passwords_loop;
             }

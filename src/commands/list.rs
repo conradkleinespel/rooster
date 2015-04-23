@@ -19,6 +19,8 @@ use super::super::password;
 use super::super::password::ScrubMemory;
 use super::super::rpassword::read_password;
 use std::io::Write;
+use std::iter::repeat;
+use std::iter::FromIterator;
 
 pub fn callback(_: &[String], file: &mut File) {
     print!("Type your master password: ");
@@ -33,16 +35,13 @@ pub fn callback(_: &[String], file: &mut File) {
                         _ => {
                             // We'll now print the password in a table.
                             // The table is delimited by borders.
-                            let mut horizontal_border = String::new();
-                            for i in 0..57 {
-                                horizontal_border.push('-');
-                            }
+                            let horizontal_border = String::from_iter(repeat('-').take(58));
 
                             println!("{}", horizontal_border);
                             println!("| {:2} | {:15} | {:30} |", "id", "app", "username");
                             println!("{}", horizontal_border);
                             let mut i = 0;
-                            for p in passwords.as_slice().iter() {
+                            for p in passwords.iter() {
                                 println!("| {:2?} | {:15} | {:30} |", i, p.name, p.username);
                                 i += 1;
                             }

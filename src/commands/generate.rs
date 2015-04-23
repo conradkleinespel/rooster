@@ -24,8 +24,8 @@ use std::io::Write;
 const PASSWORD_LEN: usize = 32;
 
 pub fn callback(args: &[String], file: &mut File) {
-    let app_name = args[2].as_slice();
-    let username = args[3].as_slice();
+    let app_name = args[2].as_ref();
+    let username = args[3].as_ref();
 
     // Generate a random password.
     let mut buffer: [u8; PASSWORD_LEN] = [0; PASSWORD_LEN];
@@ -39,7 +39,7 @@ pub fn callback(args: &[String], file: &mut File) {
     let mut password = password::Password::new(
         app_name,
         username,
-        password_as_string.as_slice()
+        password_as_string.as_ref()
     );
 
     print!("Type your master password: ");

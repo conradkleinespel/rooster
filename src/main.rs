@@ -14,10 +14,7 @@
 
 #![feature(core)]
 #![feature(exit_status)]
-#![feature(convert)]
 #![feature(collections)]
-#![feature(old_io)]
-#![feature(std_misc)]
 #![feature(rustc_private)]
 #![feature(str_char)]
 
@@ -29,10 +26,8 @@ extern crate rpassword;
 extern crate rand;
 
 use color::Color;
-use std::slice::AsSlice;
 use std::fs::File;
 use std::env;
-use std::ffi::AsOsStr;
 use std::path::MAIN_SEPARATOR as PATH_SEP;
 use std::io::Result as IoResult;
 use std::io::Error as IoError;
@@ -89,9 +84,9 @@ fn get_password_file_from_input(filename: &str) -> IoResult<File> {
         let mut line = String::new();
         match stdin().read_line(&mut line) {
             Ok(_) => {
-                if line.as_slice().starts_with("yes") {
+                if line.starts_with("yes") {
                     return open_password_file(filename, true);
-                } else if line.as_slice().starts_with("no") {
+                } else if line.starts_with("no") {
                     return Err(IoError::last_os_error());
                 } else {
                     errln!(
@@ -145,7 +140,7 @@ fn execute_command_from_filename(args: &[String], command: &Command, filename: &
 fn execute_command(args: &[String], command: &Command) {
     match env::var("PEEVEE_FILE") {
         Ok(filename) => {
-            execute_command_from_filename(args, command, filename.as_slice());
+            execute_command_from_filename(args, command, filename.as_ref());
         },
         Err(env::VarError::NotPresent) => {
             match env::home_dir() {
@@ -154,7 +149,7 @@ fn execute_command(args: &[String], command: &Command) {
                         Ok(ref mut filename) => {
                             filename.push(PATH_SEP);
                             filename.push_str(PEEVEE_FILE_DEFAULT);
-                            execute_command_from_filename(args, command, filename.as_slice());
+                            execute_command_from_filename(args, command, filename.as_ref());
                         },
                         Err(oss) => {
                             errln!("The password filename, {:?}, is invalid. It must be valid UTF8.", oss);
@@ -178,11 +173,11 @@ fn execute_command(args: &[String], command: &Command) {
 fn main() {
     let args: Vec<String> = std::env::args().collect();
 
-    match args.as_slice().get(1) {
+    match args.get(1) {
         Some(command_name) => {
-            match command_from_name(command_name.as_slice()) {
+            match command_from_name(command_name.as_ref()) {
                 Some(command) => {
-                    execute_command(args.as_slice(), command);
+                    execute_command(args.as_ref(), command);
                 },
                 None => {
                     errln!(

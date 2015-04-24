@@ -24,6 +24,7 @@ pub fn callback(args: &[String], file: &mut File) {
     let ref app_name = args[2];
 
     print!("Type your master password: ");
+    ::std::io::stdout().flush().unwrap();
     match read_password() {
         Ok(ref mut master_password) => {
             match password::delete_password(master_password, app_name, file) {

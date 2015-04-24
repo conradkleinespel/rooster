@@ -24,6 +24,7 @@ use std::iter::FromIterator;
 
 pub fn callback(_: &[String], file: &mut File) {
     print!("Type your master password: ");
+    ::std::io::stdout().flush().unwrap();
     match read_password() {
         Ok(ref mut master_password) => {
             match password::get_all_passwords(master_password, file) {
@@ -35,14 +36,14 @@ pub fn callback(_: &[String], file: &mut File) {
                         _ => {
                             // We'll now print the password in a table.
                             // The table is delimited by borders.
-                            let horizontal_border = String::from_iter(repeat('-').take(58));
+                            let horizontal_border = String::from_iter(repeat('-').take(73));
 
                             println!("{}", horizontal_border);
-                            println!("| {:2} | {:15} | {:30} |", "id", "app", "username");
+                            println!("| {:2} | {:30} | {:30} |", "id", "app", "username");
                             println!("{}", horizontal_border);
                             let mut i = 0;
                             for p in passwords.iter() {
-                                println!("| {:2?} | {:15} | {:30} |", i, p.name, p.username);
+                                println!("| {:2?} | {:30} | {:30} |", i, p.name, p.username);
                                 i += 1;
                             }
                             println!("{}", horizontal_border);

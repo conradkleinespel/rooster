@@ -26,11 +26,13 @@ pub fn callback(args: &[String], file: &mut File) {
 
 
     print!("Type your master password: ");
+    ::std::io::stdout().flush().unwrap();
     match read_password() {
         Ok(ref mut master_password) => {
             match password::has_password(master_password, app_name, file) {
                 Ok(false) => {
                     print!("What password do you want for {}? ", app_name);
+                    ::std::io::stdout().flush().unwrap();
                     match read_password() {
                         Ok(ref mut password_as_string) => {
                             let mut password = password::Password::new(

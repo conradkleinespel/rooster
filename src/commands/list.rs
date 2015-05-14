@@ -23,8 +23,7 @@ use std::iter::repeat;
 use std::iter::FromIterator;
 
 pub fn callback(_: &[String], file: &mut File) {
-    print!("Type your master password: ");
-    ::std::io::stdout().flush().unwrap();
+    print_now!("Type your master password: ");
     match read_password() {
         Ok(ref mut master_password) => {
             match password::get_all_passwords(master_password, file) {

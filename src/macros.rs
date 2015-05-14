@@ -5,7 +5,7 @@ use std::io::Write;
 #[macro_export]
 macro_rules! println_stderr(
     ($($arg:tt)*) => (
-        match writeln!(&mut ::std::io::stderr(), $($arg)* ) {
+        match writeln!(&mut ::std::io::stderr(), $($arg)*) {
             Ok(_) => {},
             Err(x) => panic!("Unable to write to stderr: {}", x),
         }
@@ -15,9 +15,21 @@ macro_rules! println_stderr(
 #[macro_export]
 macro_rules! print_stderr(
     ($($arg:tt)*) => (
-        match write!(&mut ::std::io::stderr(), $($arg)* ) {
+        match write!(&mut ::std::io::stderr(), $($arg)*) {
             Ok(_) => {},
             Err(x) => panic!("Unable to write to stderr: {}", x),
+        }
+    )
+);
+
+#[macro_export]
+macro_rules! print_now(
+    ($($arg:tt)*) => (
+        match write!(&mut ::std::io::stdout(), $($arg)*) {
+            Ok(_) => {
+                ::std::io::stdout().flush().unwrap();
+            },
+            Err(x) => panic!("{}", x),
         }
     )
 );

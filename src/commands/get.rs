@@ -37,8 +37,7 @@ pub fn callback(args: &[String], file: &mut File) {
             match password::get_password(master_password, app_name, file) {
                 Ok(ref mut password) => {
                     if stdout_is_piped() {
-                        print!("{}", password.password);
-                        ::std::io::stdout().flush().unwrap();
+                        print_now!("{}", password.password);
                     } else {
                         println!("{}", password.password);
                     }

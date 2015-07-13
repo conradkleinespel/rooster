@@ -58,7 +58,9 @@ pub fn encrypt(data: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>, symmetricc
         // from the writable buffer, create a new readable buffer which
         // contains all data that has been written, and then access all
         // of that data as a slice.
-        final_result.push_all(write_buffer.take_read_buffer().take_remaining());
+        for b in write_buffer.take_read_buffer().take_remaining() {
+            final_result.push(*b);
+        }
 
         match result {
             BufferResult::BufferUnderflow => break,
@@ -90,7 +92,9 @@ pub fn decrypt(encrypted_data: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>, 
 
     loop {
         let result = try!(decryptor.decrypt(&mut read_buffer, &mut write_buffer, true));
-        final_result.push_all(write_buffer.take_read_buffer().take_remaining());
+        for b in write_buffer.take_read_buffer().take_remaining() {
+            final_result.push(*b);
+        }
         match result {
             BufferResult::BufferUnderflow => break,
             BufferResult::BufferOverflow => { }

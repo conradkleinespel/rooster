@@ -12,12 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#![feature(core)]
-#![feature(exit_status)]
-#![feature(collections)]
-#![feature(rustc_private)]
-#![feature(str_char)]
-
 extern crate libc;
 extern crate getopts;
 extern crate rustc_serialize;
@@ -45,6 +39,8 @@ mod color;
 
 const PEEVEE_FILE_DEFAULT: &'static str = ".peevee_passwords.aes";
 
+static mut PEEVEE_EXIT: i32 = 0;
+
 struct Command {
     name: &'static str,
     callback: fn(&[String], &mut File) -> ()
@@ -57,6 +53,14 @@ static COMMANDS: &'static [Command] = &[
     Command { name: "generate", callback: commands::generate::callback },
     Command { name: "list", callback: commands::list::callback }
 ];
+
+fn set_exit_status(status: i32) {
+    unsafe { PEEVEE_EXIT = status; }
+}
+
+fn get_exit_status() -> i32 {
+    unsafe { PEEVEE_EXIT }
+}
 
 fn command_from_name(name: &str) -> Option<&'static Command> {
     for c in COMMANDS.iter() {
@@ -132,7 +136,7 @@ fn execute_command_from_filename(args: &[String], command: &Command, filename: &
                     errln!("I could not open the password file \"{}\" :( ({})", filename, err);
                 }
             }
-            std::env::set_exit_status(1);
+            set_exit_status(1);
         }
     }
 }
@@ -153,19 +157,19 @@ fn execute_command(args: &[String], command: &Command) {
                         },
                         Err(oss) => {
                             errln!("The password filename, {:?}, is invalid. It must be valid UTF8.", oss);
-                            std::env::set_exit_status(1);
+                            set_exit_status(1);
                         }
                     }
                 },
                 None => {
                     errln!("I couldn't figure out what file to use for the passwords.");
-                    std::env::set_exit_status(1);
+                    set_exit_status(1);
                 }
             }
         },
         Err(env::VarError::NotUnicode(oss)) => {
             errln!("The password filename, {:?}, is invalid. It must be valid UTF8.", oss);
-            std::env::set_exit_status(1);
+            set_exit_status(1);
         }
     };
 }
@@ -185,7 +189,7 @@ fn main() {
                         existing commands at: https://github.com/conradkleinespel/peevee-cli.",
                         command_name
                     );
-                    std::env::set_exit_status(1);
+                    set_exit_status(1);
                 }
             }
         },
@@ -194,7 +198,8 @@ fn main() {
                 "I didn't understand that. You can check the documentation \
                 for Peevee at: https://github.com/conradkleinespel/peevee-cli"
             );
-            std::env::set_exit_status(1);
+            set_exit_status(1);
         }
     }
+    std::process::exit(get_exit_status());
 }

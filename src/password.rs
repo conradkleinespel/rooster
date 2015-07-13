@@ -21,7 +21,6 @@ use rustc_serialize::json;
 use std::fs::File;
 use std::io::{ Seek, SeekFrom, Read, Write };
 use std::borrow::ToOwned;
-use std::slice::bytes::MutableByteVector;
 
 /// The version of the JSON content in the password file.
 ///
@@ -92,8 +91,10 @@ impl ScrubMemory for SchemaVersion1 {
 
 impl ScrubMemory for String {
     fn scrub_memory(&mut self) {
-        unsafe { self.as_mut_vec() }.set_memory(0);
         self.clear();
+        for _ in 0 .. self.capacity() {
+            self.push('0');
+        }
     }
 }
 
@@ -247,7 +248,9 @@ fn save_all_passwords(master_password: &str, passwords: &Vec<Password>, file: &m
 
     // Append the IV to the encrypted data so it can be retrieved later when
     // we want to decrypt said data.
-    encrypted_after.push_all(&iv);
+    for b in &iv {
+        encrypted_after.push(*b);
+    }
 
     // Save the data to the password file.
     let sync = file.seek(SeekFrom::Start(0))
@@ -325,8 +328,8 @@ pub fn get_password(master_password: &str, app_name: &str, file: &mut File) -> R
         // We're looking for the exact same app name, without regard to casing.
         let mut i: usize = 0;
         while i < p.name.len() {
-            let c1 = p.name.char_at(i).to_lowercase().nth(0).unwrap();
-            let c2 = app_name.char_at(i).to_lowercase().nth(0).unwrap();
+            let c1 = p.name.chars().nth(i).unwrap().to_lowercase().nth(0).unwrap();
+            let c2 = app_name.chars().nth(i).unwrap().to_lowercase().nth(0).unwrap();
             if c1 != c2 {
                 continue 'passwords_loop;
             }

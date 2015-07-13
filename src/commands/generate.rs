@@ -13,7 +13,6 @@
 // limitations under the License.
 
 use std::fs::File;
-use std::env;
 use super::super::color::Color;
 use super::super::password;
 use super::super::password::ScrubMemory;
@@ -58,17 +57,17 @@ pub fn callback(args: &[String], file: &mut File) {
                         },
                         Err(err) => {
                             errln!("\nI couldn't add this password ({:?}).", err);
-                            env::set_exit_status(1);
+                            ::set_exit_status(1);
                         }
                     }
                 },
                 Ok(true) => {
                     errln!("There is already an app with that name.");
-                    env::set_exit_status(1);
+                    ::set_exit_status(1);
                 },
                 Err(err) => {
                     errln!("\nI couldn't add this password ({:?}).", err);
-                    env::set_exit_status(1);
+                    ::set_exit_status(1);
                 }
             }
 
@@ -77,7 +76,7 @@ pub fn callback(args: &[String], file: &mut File) {
         },
         Err(err) => {
             errln!("\nI couldn't read the master password ({:?}).", err);
-            env::set_exit_status(1);
+            ::set_exit_status(1);
         }
     }
 

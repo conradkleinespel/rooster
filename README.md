@@ -76,8 +76,8 @@ cargo -V
 You should see two lines similar to (but not necessarily the same):
 
 ```
-rustc 1.1.0-nightly (90cc83015 2015-04-22) (built 2015-04-23)
-cargo 0.2.0-nightly (dac600c 2015-04-22) (built 2015-04-22)
+rustc 1.1.0 (35ceea399 2015-06-19)
+cargo 0.2.0-nightly (a483581 2015-05-14) (built 2015-05-15)
 ```
 
 **Awesome ! We're almost there. Just two more steps :-)**

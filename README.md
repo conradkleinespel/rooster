@@ -60,7 +60,7 @@ Peevee is built using [the Rust programming language](http://www.rust-lang.org/)
 which we'll need to install so we can compile the source code:
 
 ```sh
-curl static.rust-lang.org/rustup.sh | sudo sh -- --channel=nightly
+curl static.rust-lang.org/rustup.sh | sudo sh -- --channel=stable
 ```
 
 When you run this command, you will need to enter your administrator password.

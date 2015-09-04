@@ -22,7 +22,21 @@ use std::io::Write;
 use std::iter::repeat;
 use std::iter::FromIterator;
 
-pub fn callback(_: &getopts::Matches, file: &mut File) {
+fn usage() {
+    println!("Usage:");
+    println!("    peevee list -h");
+    println!("    peevee list");
+    println!("");
+    println!("Example:");
+    println!("    peevee list");
+}
+
+pub fn callback(matches: &getopts::Matches, file: &mut File) {
+    if matches.opt_present("help") {
+        usage();
+        return
+    }
+
     print_now!("Type your master password: ");
     match read_password() {
         Ok(ref mut master_password) => {

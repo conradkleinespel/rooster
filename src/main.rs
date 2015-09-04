@@ -180,9 +180,9 @@ fn usage() {
     println!("Welcome to Peevee, the simple password manager :-)");
     println!("");
     println!("Usage:");
-    println!("    peevee --help");
+    println!("    peevee -h");
     println!("    peevee [options] <command> [<args> ...]");
-    println!("    peevee --help <command>");
+    println!("    peevee <command> -h");
     println!("");
     println!("Options:");
     println!("    -h, --help        Display a help message");
@@ -233,9 +233,9 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
 
     let mut opts = Options::new();
-    opts.optflag("h", "help", "Display this help message.");
-    opts.optflag("a", "alnum", "Only use alphanumeric characters in the generated password.");
-    opts.optopt("l", "length", "Length of the generated password.", "32");
+    opts.optflag("h", "help", "Display a help message");
+    opts.optflag("a", "alnum", "Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords");
+    opts.optopt("l", "length", "Set a custom length for the generated password", "32");
 
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => { m },

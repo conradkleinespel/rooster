@@ -22,7 +22,28 @@ use super::super::rpassword::read_password;
 use std::fs::File;
 use std::io::Write;
 
+fn usage() {
+    println!("Usage:");
+    println!("    peevee regenerate -h");
+    println!("    peevee regenerate <app_name>");
+    println!("");
+    println!("Example:");
+    println!("    peevee regenerate youtube");
+}
+
 pub fn callback(matches: &getopts::Matches, file: &mut File) {
+    if matches.opt_present("help") {
+        usage();
+        return
+    }
+
+    if matches.free.len() < 2 {
+        errln!("Woops, seems like the app name is missing here. For help, try:");
+        errln!("    peevee regenerate -h");
+        ::set_exit_status(1);
+        return
+    }
+
     let app_name: &str = matches.free[1].as_ref();
 
     let password_spec = PasswordSpec::from_matches(matches);

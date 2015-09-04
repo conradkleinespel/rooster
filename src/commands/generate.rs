@@ -102,7 +102,28 @@ impl PasswordSpec {
     }
 }
 
+fn usage() {
+    println!("Usage:");
+    println!("    peevee generate -h");
+    println!("    peevee generate <app_name> <username>");
+    println!("");
+    println!("Example:");
+    println!("    peevee generate YouTube me@example.com");
+}
+
 pub fn callback(matches: &getopts::Matches, file: &mut File) {
+    if matches.opt_present("help") {
+        usage();
+        return
+    }
+
+    if matches.free.len() < 3 {
+        errln!("Woops, seems like the app name or the username is missing here. For help, try:");
+        errln!("    peevee generate -h");
+        ::set_exit_status(1);
+        return
+    }
+
     let app_name = matches.free[1].as_ref();
     let username = matches.free[2].as_ref();
 

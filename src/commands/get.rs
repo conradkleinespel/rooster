@@ -25,7 +25,30 @@ fn stdout_is_piped() -> bool {
     unsafe { libc::funcs::posix88::unistd::isatty(1) == 0 }
 }
 
+fn usage() {
+    println!("Usage:");
+    println!("    peevee get -h");
+    println!("    peevee get <app_name>");
+    println!("");
+    println!("Example:");
+    println!("    peevee get youtube");
+    println!("    peevee get youtube | pbcopy              # for Mac users");
+    println!("    peevee get youtube | xsel -i --clipboard # for Linux users");
+}
+
 pub fn callback(matches: &getopts::Matches, file: &mut File) {
+    if matches.opt_present("help") {
+        usage();
+        return
+    }
+
+    if matches.free.len() < 2 {
+        errln!("Woops, seems like the app name is missing here. For help, try:");
+        errln!("    peevee get -h");
+        ::set_exit_status(1);
+        return
+    }
+
     let ref app_name = matches.free[1];
 
     // We print this to STDERR instead of STDOUT so that the output of the
@@ -44,8 +67,9 @@ pub fn callback(matches: &getopts::Matches, file: &mut File) {
                     password.scrub_memory();
                 },
                 Err(err) => {
-                    errln!("I couldn't find a password for this app ({:?}). Make sure you didn't make a typo.", err);
-                    errln!("You can use 'peevee list' to see a list of available passwords.");
+                    errln!("I couldn't find a password for this app ({:?}). Make sure you", err);
+                    errln!("didn't make a typo. For a list of passwords, try:");
+                    errln!("    peevee list");
                     ::set_exit_status(1);
                 }
             }

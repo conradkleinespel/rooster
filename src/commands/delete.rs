@@ -20,7 +20,28 @@ use super::super::password::ScrubMemory;
 use super::super::rpassword::read_password;
 use std::io::Write;
 
+fn usage() {
+    println!("Usage:");
+    println!("    peevee delete -h");
+    println!("    peevee delete <app_name>");
+    println!("");
+    println!("Example:");
+    println!("    peevee delete youtube");
+}
+
 pub fn callback(matches: &getopts::Matches, file: &mut File) {
+    if matches.opt_present("help") {
+        usage();
+        return
+    }
+
+    if matches.free.len() < 2 {
+        errln!("Woops, seems like the app name is missing here. For help, try:");
+        errln!("    peevee delete -h");
+        ::set_exit_status(1);
+        return
+    }
+
     let ref app_name = matches.free[1];
 
     print_now!("Type your master password: ");

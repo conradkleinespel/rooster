@@ -29,6 +29,7 @@ use std::io::ErrorKind as IoErrorKind;
 use std::io::stdin;
 use std::io::Write;
 use std::path::Path;
+use getopts::Options;
 
 mod macros;
 mod aes;
@@ -174,32 +175,96 @@ fn execute_command(args: &[String], command: &Command) {
     };
 }
 
+fn usage() {
+    println!("Welcome to Peevee, the simple password manager :-)");
+    println!("");
+    println!("Usage:");
+    println!("    peevee --help");
+    println!("    peevee [options] <command> [<args> ...]");
+    println!("    peevee --help <command>");
+    println!("");
+    println!("Options:");
+    println!("    -h, --help        Display a help message");
+    println!("    -a, --alnum       Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords");
+    println!("    -l, --length      Set a custom length for the generated password, default is 32");
+    println!("");
+    println!("Commands:");
+    println!("    add               Add a new password.");
+    println!("    delete            Delete a password");
+    println!("    generate          Generate a password");
+    println!("    get               Retrieve a password");
+    println!("    list              List all passwords");
+    println!("");
+    println!("Extended help for commands:");
+    println!("    You can view extended documentation for a specific command with the --help");
+    println!("    option followed by the command name. For instance:");
+    println!("        peevee --help get");
+    println!("    This will display what arguments are available for the 'get' command.");
+    println!("");
+    println!("App names are case insensitive:");
+    println!("    The app names you set for your passwords are case insensitive. This means you");
+    println!("    cannot have two passwords for a single app name. For example, if you have 2");
+    println!("    Google accounts, you need to save them as something like 'Google-Personnal'");
+    println!("    and 'Google-Pro'. The upside to this is that you don't need to remember the");
+    println!("    case of the app name when searching for a password. You can just type:");
+    println!("        peevee get google-pro");
+    println!("    Nevertheless, for improved readability, the 'list' command will display app");
+    println!("    names exactly how you type them when using the 'add' or 'generate' commands.");
+    println!("");
+    println!("Cloud sync:");
+    println!("    Peevee supports online syncing of passwords. It is not built into Peevee. But");
+    println!("    because Peevee uses an encrypted file for password storage, you can put this");
+    println!("    file in your Dropbox folder (or any other folder that gets synced) and you");
+    println!("    should be good to go.");
+    println!("");
+    println!("Setting the password file path:");
+    println!("    By default, Peevee will try to use the file pointed to by the PEEVEE_FILE");
+    println!("    environment variable. This allows you to set the password file to whatever");
+    println!("    you want, via your shell configuration. For instance, if you are using Bash,");
+    println!("    you can add the following line to your ~/.bashrc to set the password file:");
+    println!("        export PEEVEE_FILE=$HOME/Dropbox/passwords.peevee");
+    println!("    If the environment variable PEEVEE_FILE is not set, Peevee will automatically");
+    println!("    look for ~/.peevee_passwords.aes.");
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().collect();
 
-    match args.get(1) {
-        Some(command_name) => {
-            match command_from_name(command_name.as_ref()) {
-                Some(command) => {
-                    execute_command(args.as_ref(), command);
-                },
-                None => {
-                    errln!(
-                        "I don't know the \"{}\" command. You can check \
-                        existing commands at: https://github.com/conradkleinespel/peevee-cli.",
-                        command_name
-                    );
-                    set_exit_status(1);
-                }
-            }
+    let mut opts = Options::new();
+    opts.optflag("h", "help", "Display this help message.");
+    opts.optflag("a", "alnum", "Only use alphanumeric characters in the generated password.");
+    opts.optopt("l", "length", "Length of the generated password.", "32");
+
+    let matches = match opts.parse(&args[1..]) {
+        Ok(m) => { m },
+        Err(err) => { panic!(err.to_string()) }
+    };
+
+    // Global help was requested.
+    if matches.opt_present("h") && matches.free.is_empty() {
+        usage();
+        std::process::exit(get_exit_status());
+    }
+
+    // No command was given, this is abnormal.
+    if matches.free.is_empty() {
+        usage();
+        std::process::exit(get_exit_status());
+    }
+
+    let command_name = matches.free.get(0).unwrap();
+    match command_from_name(command_name.as_ref()) {
+        Some(command) => {
+            execute_command(matches.free.as_ref(), command);
         },
         None => {
             errln!(
-                "I didn't understand that. You can check the documentation \
-                for Peevee at: https://github.com/conradkleinespel/peevee-cli"
+                "Woops, the command `{}` does not exist. Try the --help option for more info.",
+                command_name
             );
             set_exit_status(1);
         }
     }
+
     std::process::exit(get_exit_status());
 }

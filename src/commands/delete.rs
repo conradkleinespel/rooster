@@ -31,14 +31,15 @@ pub fn callback(matches: &getopts::Matches, file: &mut File) {
                     okln!("Done! I've deleted the password for {}.", app_name);
                 },
                 Err(err) => {
-                    errln!("I couldn't find a password for this app ({:?}).", err);
+                    errln!("Woops, I couldn't find a password for this app ({:?}). Make sure you didn't make a typo.", err);
+                    errln!("You can use 'peevee list' to see a list of available passwords.");
                     ::set_exit_status(1);
                 }
             }
             master_password.scrub_memory();
         },
         Err(err) => {
-            errln!("\nI couldn't read the master password ({:?}).", err);
+            errln!("\nWoops, I couldn't read the master password ({:?}).", err);
             ::set_exit_status(1);
         }
     }

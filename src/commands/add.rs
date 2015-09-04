@@ -48,7 +48,7 @@ pub fn callback(matches: &getopts::Matches, file: &mut File) {
                                     okln!("Alright! Your password for {} has been added.", app_name);
                                 },
                                 Err(err) => {
-                                    errln!("I couldn't add the password ({:?}).", err);
+                                    errln!("Woops, I couldn't add the password ({:?}).", err);
                                     ::set_exit_status(1);
                                 }
                             }
@@ -64,11 +64,11 @@ pub fn callback(matches: &getopts::Matches, file: &mut File) {
                     }
                 },
                 Ok(true) => {
-                    errln!("There is already an app with that name.");
+                    errln!("Woops, there is already an app with that name.");
                     ::set_exit_status(1);
                 },
                 Err(err) => {
-                    errln!("\nI couldn't add this password ({:?}).", err);
+                    errln!("\nWoops, I couldn't add this password ({:?}).", err);
                     ::set_exit_status(1);
                 }
             }
@@ -77,7 +77,7 @@ pub fn callback(matches: &getopts::Matches, file: &mut File) {
             master_password.scrub_memory();
         },
         Err(err) => {
-            errln!("\nI couldn't read the master password ({:?}).", err);
+            errln!("\nWoops, I couldn't read the master password ({:?}).", err);
             ::set_exit_status(1);
         }
     }

@@ -53,7 +53,7 @@ pub fn callback(_: &getopts::Matches, file: &mut File) {
                     passwords.scrub_memory();
                 },
                 Err(err) => {
-                    errln!("I could not retrieve passwords ({:?}).", err);
+                    errln!("Woops, I could not retrieve passwords ({:?}).", err);
                     ::set_exit_status(1);
                 }
             }
@@ -62,7 +62,7 @@ pub fn callback(_: &getopts::Matches, file: &mut File) {
             master_password.scrub_memory();
         },
         Err(err) => {
-            errln!("\nI couldn't read the master password ({:?}).", err);
+            errln!("\nWoops, I couldn't read the master password ({:?}).", err);
             ::set_exit_status(1);
         }
     }

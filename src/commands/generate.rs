@@ -56,9 +56,6 @@ pub fn callback(matches: &getopts::Matches, file: &mut File) {
         }
     }
 
-    println!("{}", password_as_string);
-    return;
-
     // Read the master password and try to save the new password.
     let mut password = password::Password::new(
         app_name,

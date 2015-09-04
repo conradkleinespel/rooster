@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use std::fs::File;
+use super::super::getopts;
 use super::super::color::Color;
 use super::super::password;
 use super::super::password::ScrubMemory;
@@ -21,11 +22,11 @@ use std::io::Write;
 use super::super::libc;
 
 fn stdout_is_piped() -> bool {
-    unsafe { libc::funcs::posix88::unistd::isatty(0) == 1 }
+    unsafe { libc::funcs::posix88::unistd::isatty(1) == 0 }
 }
 
-pub fn callback(args: &[String], file: &mut File) {
-    let ref app_name = args[1];
+pub fn callback(matches: &getopts::Matches, file: &mut File) {
+    let ref app_name = matches.free[1];
 
     // We print this to STDERR instead of STDOUT so that the output of the
     // command contains *only* the password. This makes it easy to pipe it

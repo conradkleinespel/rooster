@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use std::fs::File;
+use super::super::getopts;
 use super::super::color::Color;
 use super::super::password;
 use super::super::password::ScrubMemory;
@@ -21,7 +22,7 @@ use std::io::Write;
 use std::iter::repeat;
 use std::iter::FromIterator;
 
-pub fn callback(_: &[String], file: &mut File) {
+pub fn callback(_: &getopts::Matches, file: &mut File) {
     print_now!("Type your master password: ");
     match read_password() {
         Ok(ref mut master_password) => {

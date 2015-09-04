@@ -13,15 +13,16 @@
 // limitations under the License.
 
 use std::fs::File;
+use super::super::getopts;
 use super::super::color::Color;
 use super::super::password;
 use super::super::password::ScrubMemory;
 use super::super::rpassword::read_password;
 use std::io::Write;
 
-pub fn callback(args: &[String], file: &mut File) {
-    let app_name = args[1].as_ref();
-    let username = args[2].as_ref();
+pub fn callback(matches: &getopts::Matches, file: &mut File) {
+    let app_name = matches.free[1].as_ref();
+    let username = matches.free[2].as_ref();
 
 
     print_now!("Type your master password: ");

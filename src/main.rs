@@ -44,7 +44,7 @@ static mut PEEVEE_EXIT: i32 = 0;
 
 struct Command {
     name: &'static str,
-    callback: fn(&[String], &mut File) -> ()
+    callback: fn(&getopts::Matches, &mut File) -> ()
 }
 
 static COMMANDS: &'static [Command] = &[
@@ -124,10 +124,10 @@ fn get_password_file(filename: &str) -> IoResult<File> {
     }
 }
 
-fn execute_command_from_filename(args: &[String], command: &Command, filename: &str) {
+fn execute_command_from_filename(matches: &getopts::Matches, command: &Command, filename: &str) {
     match get_password_file(filename) {
         Ok(ref mut file) => {
-            (command.callback)(args, file);
+            (command.callback)(matches, file);
         },
         Err(err) => {
             match err.kind() {
@@ -142,10 +142,10 @@ fn execute_command_from_filename(args: &[String], command: &Command, filename: &
     }
 }
 
-fn execute_command(args: &[String], command: &Command) {
+fn execute_command(matches: &getopts::Matches, command: &Command) {
     match env::var("PEEVEE_FILE") {
         Ok(filename) => {
-            execute_command_from_filename(args, command, filename.as_ref());
+            execute_command_from_filename(matches, command, filename.as_ref());
         },
         Err(env::VarError::NotPresent) => {
             match env::home_dir() {
@@ -154,7 +154,7 @@ fn execute_command(args: &[String], command: &Command) {
                         Ok(ref mut filename) => {
                             filename.push(PATH_SEP);
                             filename.push_str(PEEVEE_FILE_DEFAULT);
-                            execute_command_from_filename(args, command, filename.as_ref());
+                            execute_command_from_filename(matches, command, filename.as_ref());
                         },
                         Err(oss) => {
                             errln!("The password filename, {:?}, is invalid. It must be valid UTF8.", oss);
@@ -255,7 +255,7 @@ fn main() {
     let command_name = matches.free.get(0).unwrap();
     match command_from_name(command_name.as_ref()) {
         Some(command) => {
-            execute_command(matches.free.as_ref(), command);
+            execute_command(&matches, command);
         },
         None => {
             errln!(

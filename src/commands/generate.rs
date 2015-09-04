@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use std::fs::File;
+use super::super::getopts;
 use super::super::color::Color;
 use super::super::password;
 use super::super::password::ScrubMemory;
@@ -20,19 +21,43 @@ use super::super::rpassword::read_password;
 use super::super::rand::{ Rng, OsRng };
 use std::io::Write;
 
-const PASSWORD_LEN: usize = 32;
-
-pub fn callback(args: &[String], file: &mut File) {
-    let app_name = args[1].as_ref();
-    let username = args[2].as_ref();
+pub fn callback(matches: &getopts::Matches, file: &mut File) {
+    let app_name = matches.free[1].as_ref();
+    let username = matches.free[2].as_ref();
 
     // Generate a random password.
-    let mut buffer: [u8; PASSWORD_LEN] = [0; PASSWORD_LEN];
-    let mut rng = OsRng::new().unwrap();
-    for i in 0 .. PASSWORD_LEN {
-        buffer[i] = rng.gen_range(33, 126);
+    let alnum = matches.opt_present("alnum");
+    let mut password_len = 32;
+    if let Some(len) = matches.opt_str("length") {
+        password_len = match len.parse::<isize>() {
+            Ok(l) => { l },
+            Err(_) => {
+                errln!("Woops! The length option must be a valid number, for instance 8 or 16.");
+                ::set_exit_status(1);
+                return
+            }
+        }
     }
-    let mut password_as_string = String::from_utf8_lossy(&buffer).into_owned();
+    let mut password_as_string = String::new();
+    let mut rng = OsRng::new().unwrap();
+    for _ in 0 .. password_len {
+        if alnum {
+            match rng.gen_range(0, 3) {
+                // Numbers 0-9
+                0 => { password_as_string.push(rng.gen_range(48, 58) as u8 as char) },
+                // Uppercase A-Z
+                1 => { password_as_string.push(rng.gen_range(65, 91) as u8 as char) },
+                // Lowercase a-z
+                2 => { password_as_string.push(rng.gen_range(97, 123) as u8 as char) },
+                _ => { panic!("Unexpected random value.") }
+            }
+        } else {
+            password_as_string.push(rng.gen_range(33, 127) as u8 as char);
+        }
+    }
+
+    println!("{}", password_as_string);
+    return;
 
     // Read the master password and try to save the new password.
     let mut password = password::Password::new(

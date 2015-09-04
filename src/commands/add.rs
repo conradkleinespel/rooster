@@ -20,8 +20,8 @@ use super::super::rpassword::read_password;
 use std::io::Write;
 
 pub fn callback(args: &[String], file: &mut File) {
-    let app_name = args[2].as_ref();
-    let username = args[3].as_ref();
+    let app_name = args[1].as_ref();
+    let username = args[2].as_ref();
 
 
     print_now!("Type your master password: ");

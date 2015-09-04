@@ -25,7 +25,7 @@ fn stdout_is_piped() -> bool {
 }
 
 pub fn callback(args: &[String], file: &mut File) {
-    let ref app_name = args[2];
+    let ref app_name = args[1];
 
     // We print this to STDERR instead of STDOUT so that the output of the
     // command contains *only* the password. This makes it easy to pipe it

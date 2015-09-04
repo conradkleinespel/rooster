@@ -20,7 +20,7 @@ use super::super::rpassword::read_password;
 use std::io::Write;
 
 pub fn callback(args: &[String], file: &mut File) {
-    let ref app_name = args[2];
+    let ref app_name = args[1];
 
     print_now!("Type your master password: ");
     match read_password() {

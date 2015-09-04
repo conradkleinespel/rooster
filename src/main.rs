@@ -52,6 +52,7 @@ static COMMANDS: &'static [Command] = &[
     Command { name: "add", callback: commands::add::callback },
     Command { name: "delete", callback: commands::delete::callback },
     Command { name: "generate", callback: commands::generate::callback },
+    Command { name: "regenerate", callback: commands::regenerate::callback },
     Command { name: "list", callback: commands::list::callback }
 ];
 
@@ -192,6 +193,7 @@ fn usage() {
     println!("    add               Add a new password.");
     println!("    delete            Delete a password");
     println!("    generate          Generate a password");
+    println!("    regenerate        Re-generate a previously existing password");
     println!("    get               Retrieve a password");
     println!("    list              List all passwords");
     println!("");

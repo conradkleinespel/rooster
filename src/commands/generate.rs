@@ -54,7 +54,7 @@ fn password_is_hard(password: &str) -> bool {
     }
 }
 
-fn generate_hard_password(alnum: bool, len: usize) -> String {
+pub fn generate_hard_password(alnum: bool, len: usize) -> String {
     loop {
         let password = generate_password(alnum, len);
         if password_is_hard(password.as_ref()) {
@@ -63,38 +63,57 @@ fn generate_hard_password(alnum: bool, len: usize) -> String {
     }
 }
 
+pub struct PasswordSpec {
+    pub alnum: bool,
+    pub len: usize
+}
+
+impl PasswordSpec {
+    pub fn from_matches(matches: &getopts::Matches) -> Option<PasswordSpec> {
+        let alnum = matches.opt_present("alnum");
+        let mut password_len = 32;
+        if let Some(len) = matches.opt_str("length") {
+            password_len = match len.parse::<usize>() {
+                Ok(parsed_len) => {
+                    // We want passwords to contain at least one uppercase letter, one lowercase
+                    // letter and one digit. So we need at least 3 characters for each password.
+                    // This checks makes sure we don't run into an infinite loop trying to generate
+                    // a password of length 2 with 3 different kinds of characters.
+                    if parsed_len < 3 {
+                        errln!("Woops! The length of the password must be at least 3. This allows us");
+                        errln!("to make sure each password contains at least one lowercase letter, one");
+                        errln!("uppercase letter and one number.");
+                        ::set_exit_status(1);
+                        return None;
+                    }
+                    parsed_len
+                },
+                Err(_) => {
+                    errln!("Woops! The length option must be a valid number, for instance 8 or 16.");
+                    ::set_exit_status(1);
+                    return None;
+                }
+            }
+        }
+        Some(PasswordSpec {
+            alnum: alnum,
+            len: password_len
+        })
+    }
+}
+
 pub fn callback(matches: &getopts::Matches, file: &mut File) {
     let app_name = matches.free[1].as_ref();
     let username = matches.free[2].as_ref();
 
-    // Generate a random password.
-    let alnum = matches.opt_present("alnum");
-    let mut password_len = 32;
-    if let Some(len) = matches.opt_str("length") {
-        password_len = match len.parse::<usize>() {
-            Ok(parsed_len) => {
-                // We want passwords to contain at least one uppercase letter, one lowercase
-                // letter and one digit. So we need at least 3 characters for each password.
-                // This checks makes sure we don't run into an infinite loop trying to generate
-                // a password of length 2 with 3 different kinds of characters.
-                if parsed_len < 3 {
-                    errln!("Woops! The length of the password must be at least 3. This allows us");
-                    errln!("to make sure each password contains at least one lowercase letter, one");
-                    errln!("uppercase letter and one number.");
-                    ::set_exit_status(1);
-                    return
-                }
-                parsed_len
-            },
-            Err(_) => {
-                errln!("Woops! The length option must be a valid number, for instance 8 or 16.");
-                ::set_exit_status(1);
-                return
-            }
-        }
-    }
+    let password_spec = PasswordSpec::from_matches(matches);
 
-    let mut password_as_string = generate_hard_password(alnum, password_len);
+    let mut password_as_string = match password_spec {
+        None => { return; },
+        Some(spec) => {
+            generate_hard_password(spec.alnum, spec.len)
+        }
+    };
 
     // Read the master password and try to save the new password.
     let mut password = password::Password::new(

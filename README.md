@@ -28,6 +28,12 @@ peevee list
 
 Please open an issue or a pull request for bug reports, ideas, etc.
 
+## Contributors
+
+- [@conradkleinespel](https://github.com/conradkleinespel)
+- [@jaezun](https://github.com/jaezun)
+
+
 ## FAQ
 
 ### How securely does Peevee store my passwords ?

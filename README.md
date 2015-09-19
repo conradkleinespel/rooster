@@ -7,7 +7,7 @@ The simple password manager for geeks.
 ## Installation
 
 ```shell
-curl -sSf https://raw.githubusercontent.com/conradkleinespel/rooster/master/install | sh
+curl -sSf https://raw.githubusercontent.com/conradkleinespel/rooster/master/install | bash
 ```
 
 ## Contributors

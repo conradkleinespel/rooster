@@ -5,14 +5,14 @@ function cleanup {
 }
 
 # Check if Cargo and Rust are installed, needed to build Rooster
-which cargo && which rustc > /dev/null
+which cargo > /dev/null && which rustc > /dev/null
 
 # Install Cargo and Rust if needed
 if [ "$?" != "0" ]; then
   curl -sSf https://static.rust-lang.org/rustup.sh | sh
 fi
 
-which cargo && which rustc > /dev/null
+which cargo > /dev/null && which rustc > /dev/null
 
 if [ "$?" != "0" ]; then
   echo 'Could not install Rust and Cargo. Aborting.' 1>&2

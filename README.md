@@ -2,12 +2,12 @@
 
 The simple password manager for geeks.
 
-[![Basic Rooster commands](http://conradk.com/rooster/images/rooster-cmd.png)](http://conradk.com/rooster/)
+[![Basic Rooster commands](http://conradk.com/rooster/images/rooster-cmd.png?1)](http://conradk.com/rooster/)
 
 ## Installation
 
 ```shell
-curl -sSf https://github.com/conradkleinespel/rooster | sh
+curl -sSf https://raw.githubusercontent.com/conradkleinespel/rooster/master/install | sh
 ```
 
 ## Contributors

@@ -23,6 +23,7 @@ git clone https://github.com/conradkleinespel/rooster.git /tmp/git-rooster-ck > 
 
 if [ "$?" != "0" ]; then
   echo 'Could not download Rooster. Aborting.' 1>&2
+  cleanup
   exit 1
 fi
 
@@ -30,6 +31,7 @@ cargo build
 
 if [ "$?" != "0" ]; then
   echo 'Could not build Rooster. Aborting.' 1>&2
+  cleanup
   exit 1
 fi
 
@@ -38,8 +40,11 @@ sudo mv target/debug/rooster /usr/local/bin/rooster
 
 if [ "$?" != "0" ]; then
   echo 'Could not put Rooster in /usr/local/bin. Aborting.' 1>&2
+  cleanup
   exit 1
 fi
+
+cleanup
 
 echo '------------------------------'
 echo 'All done!'

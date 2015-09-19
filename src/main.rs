@@ -1,4 +1,4 @@
-// Copyright 2014 The Peevee Developers
+// Copyright 2014 The Rooster Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -38,9 +38,9 @@ mod ffi;
 mod password;
 mod color;
 
-const PEEVEE_FILE_DEFAULT: &'static str = ".peevee_passwords.aes";
+const ROOSTER_FILE_DEFAULT: &'static str = ".passwords.rooster";
 
-static mut PEEVEE_EXIT: i32 = 0;
+static mut ROOSTER_EXIT: i32 = 0;
 
 struct Command {
     name: &'static str,
@@ -57,11 +57,11 @@ static COMMANDS: &'static [Command] = &[
 ];
 
 fn set_exit_status(status: i32) {
-    unsafe { PEEVEE_EXIT = status; }
+    unsafe { ROOSTER_EXIT = status; }
 }
 
 fn get_exit_status() -> i32 {
-    unsafe { PEEVEE_EXIT }
+    unsafe { ROOSTER_EXIT }
 }
 
 fn command_from_name(name: &str) -> Option<&'static Command> {
@@ -144,7 +144,7 @@ fn execute_command_from_filename(matches: &getopts::Matches, command: &Command, 
 }
 
 fn execute_command(matches: &getopts::Matches, command: &Command) {
-    match env::var("PEEVEE_FILE") {
+    match env::var("ROOSTER_FILE") {
         Ok(filename) => {
             execute_command_from_filename(matches, command, filename.as_ref());
         },
@@ -154,7 +154,7 @@ fn execute_command(matches: &getopts::Matches, command: &Command) {
                     match path.as_os_str().to_os_string().into_string() {
                         Ok(ref mut filename) => {
                             filename.push(PATH_SEP);
-                            filename.push_str(PEEVEE_FILE_DEFAULT);
+                            filename.push_str(ROOSTER_FILE_DEFAULT);
                             execute_command_from_filename(matches, command, filename.as_ref());
                         },
                         Err(oss) => {
@@ -177,12 +177,12 @@ fn execute_command(matches: &getopts::Matches, command: &Command) {
 }
 
 fn usage() {
-    println!("Welcome to Peevee, the simple password manager :-)");
+    println!("Welcome to Rooster, the simple password manager for geeks :-)");
     println!("");
     println!("Usage:");
-    println!("    peevee -h");
-    println!("    peevee [options] <command> [<args> ...]");
-    println!("    peevee <command> -h");
+    println!("    rooster -h");
+    println!("    rooster [options] <command> [<args> ...]");
+    println!("    rooster <command> -h");
     println!("");
     println!("Options:");
     println!("    -h, --help        Display a help message");
@@ -196,37 +196,6 @@ fn usage() {
     println!("    regenerate        Re-generate a previously existing password");
     println!("    get               Retrieve a password");
     println!("    list              List all passwords");
-    println!("");
-    println!("Extended help for commands:");
-    println!("    You can view extended documentation for a specific command with the --help");
-    println!("    option followed by the command name. For instance:");
-    println!("        peevee --help get");
-    println!("    This will display what arguments are available for the 'get' command.");
-    println!("");
-    println!("App names are case insensitive:");
-    println!("    The app names you set for your passwords are case insensitive. This means you");
-    println!("    cannot have two passwords for a single app name. For example, if you have 2");
-    println!("    Google accounts, you need to save them as something like 'Google-Personnal'");
-    println!("    and 'Google-Pro'. The upside to this is that you don't need to remember the");
-    println!("    case of the app name when searching for a password. You can just type:");
-    println!("        peevee get google-pro");
-    println!("    Nevertheless, for improved readability, the 'list' command will display app");
-    println!("    names exactly how you type them when using the 'add' or 'generate' commands.");
-    println!("");
-    println!("Cloud sync:");
-    println!("    Peevee supports online syncing of passwords. It is not built into Peevee. But");
-    println!("    because Peevee uses an encrypted file for password storage, you can put this");
-    println!("    file in your Dropbox folder (or any other folder that gets synced) and you");
-    println!("    should be good to go.");
-    println!("");
-    println!("Setting the password file path:");
-    println!("    By default, Peevee will try to use the file pointed to by the PEEVEE_FILE");
-    println!("    environment variable. This allows you to set the password file to whatever");
-    println!("    you want, via your shell configuration. For instance, if you are using Bash,");
-    println!("    you can add the following line to your ~/.bashrc to set the password file:");
-    println!("        export PEEVEE_FILE=$HOME/Dropbox/passwords.peevee");
-    println!("    If the environment variable PEEVEE_FILE is not set, Peevee will automatically");
-    println!("    look for ~/.peevee_passwords.aes.");
 }
 
 fn main() {

@@ -1,4 +1,4 @@
-// Copyright 2014 The Peevee Developers
+// Copyright 2014 The Rooster Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,11 +24,11 @@ use std::io::Write;
 
 fn usage() {
     println!("Usage:");
-    println!("    peevee regenerate -h");
-    println!("    peevee regenerate <app_name>");
+    println!("    rooster regenerate -h");
+    println!("    rooster regenerate <app_name>");
     println!("");
     println!("Example:");
-    println!("    peevee regenerate youtube");
+    println!("    rooster regenerate youtube");
 }
 
 pub fn callback(matches: &getopts::Matches, file: &mut File) {
@@ -39,7 +39,7 @@ pub fn callback(matches: &getopts::Matches, file: &mut File) {
 
     if matches.free.len() < 2 {
         errln!("Woops, seems like the app name is missing here. For help, try:");
-        errln!("    peevee regenerate -h");
+        errln!("    rooster regenerate -h");
         ::set_exit_status(1);
         return
     }

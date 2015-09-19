@@ -1,4 +1,4 @@
-// Copyright 2014 The Peevee Developers
+// Copyright 2014 The Rooster Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,11 +22,11 @@ use std::io::Write;
 
 fn usage() {
     println!("Usage:");
-    println!("    peevee add -h");
-    println!("    peevee add <app_name> <username>");
+    println!("    rooster add -h");
+    println!("    rooster add <app_name> <username>");
     println!("");
     println!("Example:");
-    println!("    peevee add YouTube me@example.com");
+    println!("    rooster add YouTube me@example.com");
 }
 
 pub fn callback(matches: &getopts::Matches, file: &mut File) {
@@ -37,7 +37,7 @@ pub fn callback(matches: &getopts::Matches, file: &mut File) {
 
     if matches.free.len() < 3 {
         errln!("Woops, seems like the app name or the username is missing here. For help, try:");
-        errln!("    peevee add -h");
+        errln!("    rooster add -h");
         ::set_exit_status(1);
         return
     }

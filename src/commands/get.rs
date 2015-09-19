@@ -1,4 +1,4 @@
-// Copyright 2014 The Peevee Developers
+// Copyright 2014 The Rooster Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,13 +27,13 @@ fn stdout_is_piped() -> bool {
 
 fn usage() {
     println!("Usage:");
-    println!("    peevee get -h");
-    println!("    peevee get <app_name>");
+    println!("    rooster get -h");
+    println!("    rooster get <app_name>");
     println!("");
     println!("Example:");
-    println!("    peevee get youtube");
-    println!("    peevee get youtube | pbcopy              # for Mac users");
-    println!("    peevee get youtube | xsel -i --clipboard # for Linux users");
+    println!("    rooster get youtube");
+    println!("    rooster get youtube | pbcopy              # for Mac users");
+    println!("    rooster get youtube | xsel -i --clipboard # for Linux users");
 }
 
 pub fn callback(matches: &getopts::Matches, file: &mut File) {
@@ -44,7 +44,7 @@ pub fn callback(matches: &getopts::Matches, file: &mut File) {
 
     if matches.free.len() < 2 {
         errln!("Woops, seems like the app name is missing here. For help, try:");
-        errln!("    peevee get -h");
+        errln!("    rooster get -h");
         ::set_exit_status(1);
         return
     }
@@ -69,7 +69,7 @@ pub fn callback(matches: &getopts::Matches, file: &mut File) {
                 Err(err) => {
                     errln!("I couldn't find a password for this app ({:?}). Make sure you", err);
                     errln!("didn't make a typo. For a list of passwords, try:");
-                    errln!("    peevee list");
+                    errln!("    rooster list");
                     ::set_exit_status(1);
                 }
             }

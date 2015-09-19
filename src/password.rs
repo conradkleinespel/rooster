@@ -1,4 +1,4 @@
-// Copyright 2014 The Peevee Developers
+// Copyright 2014 The Rooster Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ use std::borrow::ToOwned;
 ///
 /// The "version" key MUST be provided. It is used to determine which schema
 /// structure to use for encoding and decoding. This way, future versions of
-/// Peevee can interoperate with older password file formats.
+/// Rooster can interoperate with older password file formats.
 ///
 /// Version 1 example:
 /// ```

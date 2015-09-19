@@ -1,4 +1,4 @@
-// Copyright 2014 The Peevee Developers
+// Copyright 2014 The Rooster Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,11 +22,11 @@ use std::io::Write;
 
 fn usage() {
     println!("Usage:");
-    println!("    peevee delete -h");
-    println!("    peevee delete <app_name>");
+    println!("    rooster delete -h");
+    println!("    rooster delete <app_name>");
     println!("");
     println!("Example:");
-    println!("    peevee delete youtube");
+    println!("    rooster delete youtube");
 }
 
 pub fn callback(matches: &getopts::Matches, file: &mut File) {
@@ -37,7 +37,7 @@ pub fn callback(matches: &getopts::Matches, file: &mut File) {
 
     if matches.free.len() < 2 {
         errln!("Woops, seems like the app name is missing here. For help, try:");
-        errln!("    peevee delete -h");
+        errln!("    rooster delete -h");
         ::set_exit_status(1);
         return
     }
@@ -53,7 +53,7 @@ pub fn callback(matches: &getopts::Matches, file: &mut File) {
                 },
                 Err(err) => {
                     errln!("Woops, I couldn't find a password for this app ({:?}). Make sure you didn't make a typo.", err);
-                    errln!("You can use 'peevee list' to see a list of available passwords.");
+                    errln!("You can use 'rooster list' to see a list of available passwords.");
                     ::set_exit_status(1);
                 }
             }

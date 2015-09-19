@@ -1,4 +1,4 @@
-// Copyright 2014 The Peevee Developers
+// Copyright 2014 The Rooster Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,11 +24,11 @@ use std::iter::FromIterator;
 
 fn usage() {
     println!("Usage:");
-    println!("    peevee list -h");
-    println!("    peevee list");
+    println!("    rooster list -h");
+    println!("    rooster list");
     println!("");
     println!("Example:");
-    println!("    peevee list");
+    println!("    rooster list");
 }
 
 pub fn callback(matches: &getopts::Matches, file: &mut File) {

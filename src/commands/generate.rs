@@ -1,4 +1,4 @@
-// Copyright 2014 The Peevee Developers
+// Copyright 2014 The Rooster Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -104,11 +104,11 @@ impl PasswordSpec {
 
 fn usage() {
     println!("Usage:");
-    println!("    peevee generate -h");
-    println!("    peevee generate <app_name> <username>");
+    println!("    rooster generate -h");
+    println!("    rooster generate <app_name> <username>");
     println!("");
     println!("Example:");
-    println!("    peevee generate YouTube me@example.com");
+    println!("    rooster generate YouTube me@example.com");
 }
 
 pub fn callback(matches: &getopts::Matches, file: &mut File) {
@@ -119,7 +119,7 @@ pub fn callback(matches: &getopts::Matches, file: &mut File) {
 
     if matches.free.len() < 3 {
         errln!("Woops, seems like the app name or the username is missing here. For help, try:");
-        errln!("    peevee generate -h");
+        errln!("    rooster generate -h");
         ::set_exit_status(1);
         return
     }

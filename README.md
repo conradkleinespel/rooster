@@ -1,8 +1,20 @@
-![Rooster Banner](http://conradk.com/rooster/images/rooster-banner.png)
+[![Rooster Banner](http://conradk.com/rooster/images/rooster-banner.png)](http://conradk.com/rooster/)
 
 ## Basic commands
 
-[![Basic Rooster commands](http://conradk.com/rooster/images/rooster-cmd.png?1)](http://conradk.com/rooster/)
+```shell
+# Generate a strong random password
+rooster generate youtube john@doe.com
+
+# Retrieve a password and copy it to the clipboard (needs xsel installed)
+rooster get youtube | xsel -ib
+
+# Delete a password
+rooster delete youtube
+
+# Need more ? RTFM :-)
+rooster --help
+```
 
 ## Installation
 

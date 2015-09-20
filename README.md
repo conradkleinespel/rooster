@@ -2,19 +2,7 @@
 
 ## Basic commands
 
-```shell
-# Generate a strong random password
-rooster generate youtube john@doe.com
-
-# Retrieve a password and copy it to the clipboard (needs xsel installed)
-rooster get youtube | xsel -ib
-
-# Delete a password
-rooster delete youtube
-
-# Need more ? RTFM :-)
-rooster --help
-```
+You can find basic commands on the [Rooster website](http://conradk.com/rooster/).
 
 ## Installation
 

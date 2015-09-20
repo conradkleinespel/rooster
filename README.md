@@ -1,6 +1,6 @@
-# Rooster
+![Rooster Banner](http://conradk.com/rooster/images/rooster-banner.png)
 
-The simple password manager for geeks.
+## Basic commands
 
 [![Basic Rooster commands](http://conradk.com/rooster/images/rooster-cmd.png?1)](http://conradk.com/rooster/)
 

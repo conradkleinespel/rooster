@@ -14,3 +14,4 @@ curl -sSf https://raw.githubusercontent.com/conradkleinespel/rooster/master/inst
 
 - [@conradkleinespel](https://github.com/conradkleinespel)
 - [@jaezun](https://github.com/jaezun)
+- Awesome people from the Rust community at the [Rust Paris](http://www.meetup.com/Rust-Paris/) meetup

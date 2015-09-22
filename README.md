@@ -15,3 +15,13 @@ curl -sSf https://raw.githubusercontent.com/conradkleinespel/rooster/master/inst
 - [@conradkleinespel](https://github.com/conradkleinespel)
 - [@jaezun](https://github.com/jaezun)
 - Awesome people from the Rust community at the [Rust Paris](http://www.meetup.com/Rust-Paris/) meetup
+
+## Ideas and possible enhancements
+
+Here are some things that would be great to have in Rooster. If you want to make a suggestion, feel free to do so by opening an issue. If you are willing to work on Rooster (for free), please open an issue to we can help you and track your progress. If you don't have the time, that's fine too.
+
+- Using a strong KDF, like `scrypt` or `PBKDF2`
+- Signing the Rooster file, maybe with `GPG` or something similar
+- Building a web frontend
+- Building a mobile app
+- Better error messages

@@ -83,21 +83,21 @@ fn open_password_file(filename: &str, create: bool) -> IoResult<File> {
 
 fn get_password_file_from_input(filename: &str) -> IoResult<File> {
     println_stderr!(
-        "I could not find the password file \"{}\". Would you like to create it now? [yes/no]",
+        "I could not find the password file \"{}\". Would you like to create it now? [y/n]",
         filename
     );
     loop {
         let mut line = String::new();
         match stdin().read_line(&mut line) {
             Ok(_) => {
-                if line.starts_with("yes") {
+                if line.starts_with("y") {
                     return open_password_file(filename, true);
-                } else if line.starts_with("no") {
+                } else if line.starts_with("n") {
                     return Err(IoError::last_os_error());
                 } else {
                     errln!(
                         "I did not understand that. Would you like to create \
-                        the password file \"{}\" now? [yes/no]",
+                        the password file \"{}\" now? [y/n]",
                         filename
                     );
                 }
@@ -105,7 +105,7 @@ fn get_password_file_from_input(filename: &str) -> IoResult<File> {
             Err(_) => {
                 errln!(
                     "I was not able to read your answer. Would you like to create \
-                    the password file \"{}\" now? [yes/no]",
+                    the password file \"{}\" now? [y/n]",
                     filename
                 );
             }

@@ -14,15 +14,13 @@
 
 use std::fs::File;
 use super::super::getopts;
-use super::super::color::Color;
 use super::super::password;
 use super::super::password::ScrubMemory;
-use super::super::rpassword::read_password;
 use std::io::Write;
 use std::iter::repeat;
 use std::iter::FromIterator;
 
-fn usage() {
+pub fn callback_help() {
     println!("Usage:");
     println!("    rooster list -h");
     println!("    rooster list");
@@ -31,53 +29,37 @@ fn usage() {
     println!("    rooster list");
 }
 
-pub fn callback(matches: &getopts::Matches, file: &mut File) {
-    if matches.opt_present("help") {
-        usage();
-        return
-    }
-
-    print_now!("Type your master password: ");
-    match read_password() {
-        Ok(ref mut master_password) => {
-            match password::get_all_passwords(master_password, file) {
-                Ok(ref mut passwords) => {
-                    match passwords.len() {
-                        0 => {
-                            println!("There are no passwords saved in your file.");
-                        },
-                        _ => {
-                            // We'll now print the password in a table.
-                            // The table is delimited by borders.
-                            let horizontal_border = String::from_iter(repeat('-').take(73));
-
-                            println!("{}", horizontal_border);
-                            println!("| {:2} | {:30} | {:30} |", "id", "app", "username");
-                            println!("{}", horizontal_border);
-                            let mut i = 0;
-                            for p in passwords.iter() {
-                                println!("| {:2?} | {:30} | {:30} |", i, p.name, p.username);
-                                i += 1;
-                            }
-                            println!("{}", horizontal_border);
-                        }
-                    }
-
-                    // Clean up memory so no one can re-use it.
-                    passwords.scrub_memory();
+pub fn callback_exec(_matches: &getopts::Matches, file: &mut File, master_password: &str) -> Result<(), i32> {
+    match password::v2::get_all_passwords(master_password, file) {
+        Ok(ref mut passwords) => {
+            match passwords.len() {
+                0 => {
+                    println!("There are no passwords saved in your file.");
                 },
-                Err(err) => {
-                    errln!("Woops, I could not retrieve passwords ({:?}).", err);
-                    ::set_exit_status(1);
+                _ => {
+                    // We'll now print the password in a table.
+                    // The table is delimited by borders.
+                    let horizontal_border = String::from_iter(repeat('-').take(73));
+
+                    println!("{}", horizontal_border);
+                    println!("| {:2} | {:30} | {:30} |", "id", "app", "username");
+                    println!("{}", horizontal_border);
+                    let mut i = 0;
+                    for p in passwords.iter() {
+                        println!("| {:2?} | {:30} | {:30} |", i, p.name, p.username);
+                        i += 1;
+                    }
+                    println!("{}", horizontal_border);
                 }
             }
 
             // Clean up memory so no one can re-use it.
-            master_password.scrub_memory();
+            passwords.scrub_memory();
+            return Ok(());
         },
         Err(err) => {
-            errln!("\nWoops, I couldn't read the master password ({:?}).", err);
-            ::set_exit_status(1);
+            println_err!("Woops, I could not retrieve passwords ({:?}).", err);
+            return Err(1);
         }
     }
 }

@@ -16,13 +16,11 @@ use super::super::getopts;
 use super::generate::PasswordSpec;
 use super::generate::generate_hard_password;
 use super::super::ffi;
-use super::super::color::Color;
 use super::super::password;
-use super::super::rpassword::read_password;
 use std::fs::File;
 use std::io::Write;
 
-fn usage() {
+pub fn callback_help() {
     println!("Usage:");
     println!("    rooster regenerate -h");
     println!("    rooster regenerate <app_name>");
@@ -31,17 +29,11 @@ fn usage() {
     println!("    rooster regenerate youtube");
 }
 
-pub fn callback(matches: &getopts::Matches, file: &mut File) {
-    if matches.opt_present("help") {
-        usage();
-        return
-    }
-
+pub fn callback_exec(matches: &getopts::Matches, file: &mut File, master_password: &str) -> Result<(), i32> {
     if matches.free.len() < 2 {
-        errln!("Woops, seems like the app name is missing here. For help, try:");
-        errln!("    rooster regenerate -h");
-        ::set_exit_status(1);
-        return
+        println_err!("Woops, seems like the app name is missing here. For help, try:");
+        println_err!("    rooster regenerate -h");
+        return Err(1);
     }
 
     let app_name: &str = matches.free[1].as_ref();
@@ -49,42 +41,34 @@ pub fn callback(matches: &getopts::Matches, file: &mut File) {
     let password_spec = PasswordSpec::from_matches(matches);
 
     let password_as_string = match password_spec {
-        None => { return; },
+        None => { return Err(1); },
         Some(spec) => {
             generate_hard_password(spec.alnum, spec.len)
         }
     };
 
-    print_now!("Type your master password: ");
-    match read_password() {
-        Ok(ref mut master_password) => {
-            match password::get_password(master_password, app_name, file) {
-                Ok(ref mut previous) => {
-                    previous.password = password_as_string;
-                    previous.updated_at = ffi::time();
+    match password::v2::get_password(master_password, app_name, file) {
+        Ok(ref mut previous) => {
+            previous.password = password_as_string;
+            previous.updated_at = ffi::time();
 
-                    let modified = password::delete_password(master_password, app_name, file).and(
-                        password::add_password(master_password, previous, file)
-                    );
-                    match modified {
-                        Ok(_) => {
-                            okln!("Done ! The password for {} has been regenerated.", previous.name);
-                        },
-                        Err(err) => {
-                            errln!("Woops, I couldn't save the new password ({:?}).", err);
-                            ::set_exit_status(1);
-                        }
-                    }
+            let modified = password::v2::delete_password(master_password, app_name, file).and(
+                password::v2::add_password(master_password, previous, file)
+            );
+            match modified {
+                Ok(_) => {
+                    println_ok!("Done ! The password for {} has been regenerated.", previous.name);
+                    return Ok(());
                 },
                 Err(err) => {
-                    errln!("Woops, I couldn't get that password. ({:?}).", err);
-                    ::set_exit_status(1);
+                    println_err!("Woops, I couldn't save the new password ({:?}).", err);
+                    return Err(1);
                 }
             }
         },
         Err(err) => {
-            errln!("\nI couldn't read the master password ({:?}).", err);
-            ::set_exit_status(1);
+            println_err!("Woops, I couldn't get that password. ({:?}).", err);
+            return Err(1);
         }
     }
 }

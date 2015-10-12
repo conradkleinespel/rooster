@@ -6,8 +6,8 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use super::crypto::{ symmetriccipher, buffer, aes, blockmodes };
-use super::crypto::buffer::{ ReadBuffer, WriteBuffer, BufferResult };
+use super::crypto::{symmetriccipher, buffer, aes, blockmodes};
+use super::crypto::buffer::{ReadBuffer, WriteBuffer, BufferResult};
 
 // Encrypt a buffer with the given key and iv using
 // AES-256/CBC/Pkcs encryption.

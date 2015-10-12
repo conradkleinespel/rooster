@@ -14,11 +14,9 @@
 
 use std::fs::File;
 use super::super::getopts;
-use super::super::color::Color;
 use super::super::password;
 use super::super::password::ScrubMemory;
-use super::super::rpassword::read_password;
-use super::super::rand::{ Rng, OsRng };
+use super::super::rand::{Rng, OsRng};
 use std::io::Write;
 
 fn generate_password(alnum: bool, len: usize) -> String {
@@ -80,17 +78,15 @@ impl PasswordSpec {
                     // This checks makes sure we don't run into an infinite loop trying to generate
                     // a password of length 2 with 3 different kinds of characters.
                     if parsed_len < 3 {
-                        errln!("Woops! The length of the password must be at least 3. This allows us");
-                        errln!("to make sure each password contains at least one lowercase letter, one");
-                        errln!("uppercase letter and one number.");
-                        ::set_exit_status(1);
+                        println_err!("Woops! The length of the password must be at least 3. This allows us");
+                        println_err!("to make sure each password contains at least one lowercase letter, one");
+                        println_err!("uppercase letter and one number.");
                         return None;
                     }
                     parsed_len
                 },
                 Err(_) => {
-                    errln!("Woops! The length option must be a valid number, for instance 8 or 16.");
-                    ::set_exit_status(1);
+                    println_err!("Woops! The length option must be a valid number, for instance 8 or 16.");
                     return None;
                 }
             }
@@ -102,7 +98,7 @@ impl PasswordSpec {
     }
 }
 
-fn usage() {
+pub fn callback_help() {
     println!("Usage:");
     println!("    rooster generate -h");
     println!("    rooster generate <app_name> <username>");
@@ -111,17 +107,11 @@ fn usage() {
     println!("    rooster generate YouTube me@example.com");
 }
 
-pub fn callback(matches: &getopts::Matches, file: &mut File) {
-    if matches.opt_present("help") {
-        usage();
-        return
-    }
-
+pub fn callback_exec(matches: &getopts::Matches, file: &mut File, master_password: &str) -> Result<(), i32> {
     if matches.free.len() < 3 {
-        errln!("Woops, seems like the app name or the username is missing here. For help, try:");
-        errln!("    rooster generate -h");
-        ::set_exit_status(1);
-        return
+        println_err!("Woops, seems like the app name or the username is missing here. For help, try:");
+        println_err!("    rooster generate -h");
+        return Err(1);
     }
 
     let app_name = matches.free[1].as_ref();
@@ -130,55 +120,44 @@ pub fn callback(matches: &getopts::Matches, file: &mut File) {
     let password_spec = PasswordSpec::from_matches(matches);
 
     let mut password_as_string = match password_spec {
-        None => { return; },
+        None => { return Err(1); },
         Some(spec) => {
             generate_hard_password(spec.alnum, spec.len)
         }
     };
 
     // Read the master password and try to save the new password.
-    let mut password = password::Password::new(
+    let mut password = password::v2::Password::new(
         app_name,
         username,
         password_as_string.as_ref()
     );
 
-    print_now!("Type your master password: ");
-    match read_password() {
-        Ok(ref mut master_password) => {
-            match password::has_password(master_password, app_name, file) {
-                Ok(false) => {
-                    let password_added = password::add_password(
-                        master_password,
-                        &password,
-                        file
-                    );
-                    match password_added {
-                        Ok(_) => {
-                            okln!("Alright! Your password for {} has been added.", app_name);
-                        },
-                        Err(err) => {
-                            errln!("\nI couldn't add this password ({:?}).", err);
-                            ::set_exit_status(1);
-                        }
-                    }
-                },
-                Ok(true) => {
-                    errln!("There is already an app with that name.");
-                    ::set_exit_status(1);
+    match password::v2::has_password(master_password, app_name, file) {
+        Ok(false) => {
+            let password_added = password::v2::add_password(
+                master_password,
+                &password,
+                file
+            );
+            match password_added {
+                Ok(_) => {
+                    println_ok!("Alright! Your password for {} has been added.", app_name);
+                    return Ok(());
                 },
                 Err(err) => {
-                    errln!("\nI couldn't add this password ({:?}).", err);
-                    ::set_exit_status(1);
+                    println_err!("\nI couldn't add this password ({:?}).", err);
+                    return Err(1);
                 }
             }
-
-            // Clean up memory so no one can re-use it.
-            master_password.scrub_memory();
+        },
+        Ok(true) => {
+            println_err!("There is already an app with that name.");
+            return Err(1);
         },
         Err(err) => {
-            errln!("\nI couldn't read the master password ({:?}).", err);
-            ::set_exit_status(1);
+            println_err!("\nI couldn't add this password ({:?}).", err);
+            return Err(1);
         }
     }
 

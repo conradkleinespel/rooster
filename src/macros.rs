@@ -13,44 +13,15 @@ macro_rules! println_stderr(
 );
 
 #[macro_export]
-macro_rules! print_stderr(
-    ($($arg:tt)*) => (
-        match write!(&mut ::std::io::stderr(), $($arg)*) {
-            Ok(_) => {},
-            Err(x) => panic!("Unable to write to stderr: {}", x),
-        }
-    )
-);
-
-#[macro_export]
-macro_rules! print_now(
-    ($($arg:tt)*) => (
-        match write!(&mut ::std::io::stdout(), $($arg)*) {
-            Ok(_) => {
-                ::std::io::stdout().flush().unwrap();
-            },
-            Err(x) => panic!("{}", x),
-        }
-    )
-);
-
-#[macro_export]
-macro_rules! fgcolor(
-    ($c:expr, $($args:tt)*) => (
-        format!("{}{}\x1b[39m", $c.to_color_code(), format!($($args)*))
-    )
-);
-
-#[macro_export]
-macro_rules! errln(
+macro_rules! println_err(
     ($($args:tt)*) => (
-        println_stderr!("{}", fgcolor!(Color::Red, $($args)*))
+        println_stderr!("{}", format!("{}{}\x1b[39m", ::color::Color::Red.to_color_code(), format!($($args)*)))
     )
 );
 
 #[macro_export]
-macro_rules! okln(
+macro_rules! println_ok(
     ($($args:tt)*) => (
-        println_stderr!("{}", fgcolor!(Color::Green, $($args)*))
+        println_stderr!("{}", format!("{}{}\x1b[39m", ::color::Color::Green.to_color_code(), format!($($args)*)))
     )
 );

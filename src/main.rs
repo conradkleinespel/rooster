@@ -18,8 +18,9 @@ extern crate rustc_serialize;
 extern crate crypto;
 extern crate rpassword;
 extern crate rand;
+extern crate byteorder;
+extern crate tempfile;
 
-use color::Color;
 use std::fs::File;
 use std::env;
 use std::path::MAIN_SEPARATOR as PATH_SEP;
@@ -29,7 +30,10 @@ use std::io::ErrorKind as IoErrorKind;
 use std::io::stdin;
 use std::io::Write;
 use std::path::Path;
+use std::ops::Deref;
+use password::ScrubMemory;
 use getopts::Options;
+use rpassword::read_password;
 
 mod macros;
 mod aes;
@@ -40,29 +44,20 @@ mod color;
 
 const ROOSTER_FILE_DEFAULT: &'static str = ".passwords.rooster";
 
-static mut ROOSTER_EXIT: i32 = 0;
-
 struct Command {
     name: &'static str,
-    callback: fn(&getopts::Matches, &mut File) -> ()
+    callback_exec: fn(&getopts::Matches, &mut File, &str) -> Result<(), i32>,
+    callback_help: fn(),
 }
 
 static COMMANDS: &'static [Command] = &[
-    Command { name: "get", callback: commands::get::callback },
-    Command { name: "add", callback: commands::add::callback },
-    Command { name: "delete", callback: commands::delete::callback },
-    Command { name: "generate", callback: commands::generate::callback },
-    Command { name: "regenerate", callback: commands::regenerate::callback },
-    Command { name: "list", callback: commands::list::callback }
+    Command { name: "get", callback_exec: commands::get::callback_exec, callback_help: commands::get::callback_help },
+    Command { name: "add", callback_exec: commands::add::callback_exec, callback_help: commands::add::callback_help },
+    Command { name: "delete", callback_exec: commands::delete::callback_exec, callback_help: commands::delete::callback_help },
+    Command { name: "generate", callback_exec: commands::generate::callback_exec, callback_help: commands::generate::callback_help },
+    Command { name: "regenerate", callback_exec: commands::regenerate::callback_exec, callback_help: commands::regenerate::callback_help },
+    Command { name: "list", callback_exec: commands::list::callback_exec, callback_help: commands::list::callback_help },
 ];
-
-fn set_exit_status(status: i32) {
-    unsafe { ROOSTER_EXIT = status; }
-}
-
-fn get_exit_status() -> i32 {
-    unsafe { ROOSTER_EXIT }
-}
 
 fn command_from_name(name: &str) -> Option<&'static Command> {
     for c in COMMANDS.iter() {
@@ -81,72 +76,74 @@ fn open_password_file(filename: &str, create: bool) -> IoResult<File> {
     options.open(&Path::new(filename))
 }
 
-fn get_password_file_from_input(filename: &str) -> IoResult<File> {
-    println_stderr!(
-        "I could not find the password file \"{}\". Would you like to create it now? [y/n]",
-        filename
-    );
-    loop {
-        let mut line = String::new();
-        match stdin().read_line(&mut line) {
-            Ok(_) => {
-                if line.starts_with("y") {
-                    return open_password_file(filename, true);
-                } else if line.starts_with("n") {
-                    return Err(IoError::last_os_error());
-                } else {
-                    errln!(
-                        "I did not understand that. Would you like to create \
-                        the password file \"{}\" now? [y/n]",
-                        filename
-                    );
-                }
-            },
-            Err(_) => {
-                errln!(
-                    "I was not able to read your answer. Would you like to create \
-                    the password file \"{}\" now? [y/n]",
-                    filename
-                );
-            }
-        }
-    }
-}
-
 fn get_password_file(filename: &str) -> IoResult<File> {
     match open_password_file(filename, false) {
         Ok(file) => Ok(file),
         Err(err) => {
             match err.kind() {
-                IoErrorKind::NotFound => get_password_file_from_input(filename),
+                IoErrorKind::NotFound => {
+                    println_err!("I could not find the password file \"{}\". Would you like to create it now? [y/n]", filename);
+                    let msg = format!("I did not understand that. Would you like to create the password file \"{}\" now? [y/n]", filename);
+                    loop {
+                        let mut line = String::new();
+                        match stdin().read_line(&mut line) {
+                            Ok(_) => {
+                                if line.starts_with("y") {
+                                    return open_password_file(filename, true);
+                                } else if line.starts_with("n") {
+                                    return Err(IoError::new(IoErrorKind::Other, "no password file available"));
+                                } else {
+                                    println_err!("{}", msg);
+                                }
+                            },
+                            Err(_) => {
+                                println_err!("{}", msg);
+                            }
+                        }
+                    }
+                },
                 _ => Err(err)
             }
         }
     }
 }
 
-fn execute_command_from_filename(matches: &getopts::Matches, command: &Command, filename: &str) {
+fn execute_command_from_filename(matches: &getopts::Matches, command: &Command, filename: &str) -> Result<(), i32> {
     match get_password_file(filename) {
         Ok(ref mut file) => {
-            (command.callback)(matches, file);
-        },
-        Err(err) => {
-            match err.kind() {
-                // This was already handled before.
-                IoErrorKind::NotFound => {},
-                _ => {
-                    errln!("I could not open the password file \"{}\" :( ({})", filename, err);
+            if matches.opt_present("help") {
+                (command.callback_help)();
+                return Ok(());
+            } else {
+                write!(::std::io::stderr(), "Type your master password: ").unwrap();
+                ::std::io::stderr().flush().unwrap();
+                match read_password() {
+                    Ok(ref mut master_password) => {
+						// Upgrade the rooster file to the newest format supported.
+						try!(password::upgrade(master_password.deref(), file).map_err(|_| 1));
+
+                        let ret = (command.callback_exec)(matches, file, master_password.deref());
+                        master_password.scrub_memory();
+                        return ret;
+                    },
+                    Err(err) => {
+                        println_err!("I could not read your master password ({})", err);
+                        return Err(1);
+                    }
                 }
             }
-            set_exit_status(1);
+        },
+        Err(err) => {
+            println_err!("I could not open the password file \"{}\" :( ({})", filename, err);
+            return Err(1);
         }
     }
 }
 
-fn execute_command(matches: &getopts::Matches, command: &Command) {
+fn execute_command(matches: &getopts::Matches, command: &Command) -> Result<(), i32> {
     match env::var("ROOSTER_FILE") {
         Ok(filename) => {
-            execute_command_from_filename(matches, command, filename.as_ref());
+            return execute_command_from_filename(matches, command, filename.as_ref());
         },
         Err(env::VarError::NotPresent) => {
             match env::home_dir() {
@@ -155,23 +152,23 @@ fn execute_command(matches: &getopts::Matches, command: &Command) {
                         Ok(ref mut filename) => {
                             filename.push(PATH_SEP);
                             filename.push_str(ROOSTER_FILE_DEFAULT);
-                            execute_command_from_filename(matches, command, filename.as_ref());
+                            return execute_command_from_filename(matches, command, filename.as_ref());
                         },
                         Err(oss) => {
-                            errln!("The password filename, {:?}, is invalid. It must be valid UTF8.", oss);
-                            set_exit_status(1);
+                            println_err!("The password filename, {:?}, is invalid. It must be valid UTF8.", oss);
+                            return Err(1);
                         }
                     }
                 },
                 None => {
-                    errln!("I couldn't figure out what file to use for the passwords.");
-                    set_exit_status(1);
+                    println_err!("I couldn't figure out what file to use for the passwords.");
+                    return Err(1);
                 }
             }
         },
         Err(env::VarError::NotUnicode(oss)) => {
-            errln!("The password filename, {:?}, is invalid. It must be valid UTF8.", oss);
-            set_exit_status(1);
+            println_err!("The password filename, {:?}, is invalid. It must be valid UTF8.", oss);
+            return Err(1);
         }
     };
 }
@@ -208,34 +205,38 @@ fn main() {
 
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => { m },
-        Err(err) => { panic!(err.to_string()) }
+        Err(err) => {
+            println_err!("{}", err);
+             std::process::exit(1);
+        }
     };
 
     // Global help was requested.
     if matches.opt_present("h") && matches.free.is_empty() {
         usage();
-        std::process::exit(get_exit_status());
+        std::process::exit(0);
     }
 
     // No command was given, this is abnormal.
     if matches.free.is_empty() {
         usage();
-        std::process::exit(get_exit_status());
+        std::process::exit(1);
     }
 
     let command_name = matches.free.get(0).unwrap();
     match command_from_name(command_name.as_ref()) {
         Some(command) => {
-            execute_command(&matches, command);
+            match execute_command(&matches, command) {
+                Err(i) => std::process::exit(i),
+                _ => std::process::exit(0)
+            }
         },
         None => {
-            errln!(
+            println_err!(
                 "Woops, the command `{}` does not exist. Try the --help option for more info.",
                 command_name
             );
-            set_exit_status(1);
+            std::process::exit(1);
         }
     }
-
-    std::process::exit(get_exit_status());
 }

@@ -14,18 +14,11 @@
 
 use std::fs::File;
 use super::super::getopts;
-use super::super::color::Color;
 use super::super::password;
 use super::super::password::ScrubMemory;
-use super::super::rpassword::read_password;
 use std::io::Write;
-use super::super::libc;
 
-fn stdout_is_piped() -> bool {
-    unsafe { libc::funcs::posix88::unistd::isatty(1) == 0 }
-}
-
-fn usage() {
+pub fn callback_help() {
     println!("Usage:");
     println!("    rooster get -h");
     println!("    rooster get <app_name>");
@@ -36,48 +29,29 @@ fn usage() {
     println!("    rooster get youtube | xsel -i --clipboard # for Linux users");
 }
 
-pub fn callback(matches: &getopts::Matches, file: &mut File) {
-    if matches.opt_present("help") {
-        usage();
-        return
-    }
-
+pub fn callback_exec(matches: &getopts::Matches, file: &mut File, master_password: &str) -> Result<(), i32> {
     if matches.free.len() < 2 {
-        errln!("Woops, seems like the app name is missing here. For help, try:");
-        errln!("    rooster get -h");
-        ::set_exit_status(1);
-        return
+        println_err!("Woops, seems like the app name is missing here. For help, try:");
+        println_err!("    rooster get -h");
+        return Err(1);
     }
 
     let ref app_name = matches.free[1];
 
-    // We print this to STDERR instead of STDOUT so that the output of the
-    // command contains *only* the password. This makes it easy to pipe it
-    // to something like "xclip" which would save the password in the clipboard.
-    print_stderr!("Type your master password: ");
-    match read_password() {
-        Ok(ref mut master_password) => {
-            match password::get_password(master_password, app_name, file) {
-                Ok(ref mut password) => {
-                    if stdout_is_piped() {
-                        print_now!("{}", password.password);
-                    } else {
-                        println!("{}", password.password);
-                    }
-                    password.scrub_memory();
-                },
-                Err(err) => {
-                    errln!("I couldn't find a password for this app ({:?}). Make sure you", err);
-                    errln!("didn't make a typo. For a list of passwords, try:");
-                    errln!("    rooster list");
-                    ::set_exit_status(1);
-                }
-            }
-            master_password.scrub_memory();
+    match password::v2::get_password(master_password, app_name, file) {
+        Ok(ref mut password) => {
+            write!(::std::io::stdout(), "{}", password.password).unwrap();
+            ::std::io::stdout().flush().unwrap();
+            write!(::std::io::stderr(), "\n").unwrap();
+            ::std::io::stderr().flush().unwrap();
+            password.scrub_memory();
+            return Ok(());
         },
         Err(err) => {
-            errln!("\nWoops, I couldn't read the master password ({:?}).", err);
-            ::set_exit_status(1);
+            println_err!("I couldn't find a password for this app ({:?}). Make sure you", err);
+            println_err!("didn't make a typo. For a list of passwords, try:");
+            println_err!("    rooster list");
+            return Err(1);
         }
     }
 }

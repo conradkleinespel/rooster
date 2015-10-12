@@ -14,13 +14,10 @@
 
 use std::fs::File;
 use super::super::getopts;
-use super::super::color::Color;
 use super::super::password;
-use super::super::password::ScrubMemory;
-use super::super::rpassword::read_password;
 use std::io::Write;
 
-fn usage() {
+pub fn callback_help() {
     println!("Usage:");
     println!("    rooster delete -h");
     println!("    rooster delete <app_name>");
@@ -29,39 +26,24 @@ fn usage() {
     println!("    rooster delete youtube");
 }
 
-pub fn callback(matches: &getopts::Matches, file: &mut File) {
-    if matches.opt_present("help") {
-        usage();
-        return
-    }
-
+pub fn callback_exec(matches: &getopts::Matches, file: &mut File, master_password: &str) -> Result<(), i32> {
     if matches.free.len() < 2 {
-        errln!("Woops, seems like the app name is missing here. For help, try:");
-        errln!("    rooster delete -h");
-        ::set_exit_status(1);
-        return
+        println_err!("Woops, seems like the app name is missing here. For help, try:");
+        println_err!("    rooster delete -h");
+        return Err(1);
     }
 
     let ref app_name = matches.free[1];
 
-    print_now!("Type your master password: ");
-    match read_password() {
-        Ok(ref mut master_password) => {
-            match password::delete_password(master_password, app_name, file) {
-                Ok(_) => {
-                    okln!("Done! I've deleted the password for {}.", app_name);
-                },
-                Err(err) => {
-                    errln!("Woops, I couldn't find a password for this app ({:?}). Make sure you didn't make a typo.", err);
-                    errln!("You can use 'rooster list' to see a list of available passwords.");
-                    ::set_exit_status(1);
-                }
-            }
-            master_password.scrub_memory();
+    match password::v2::delete_password(master_password, app_name, file) {
+        Ok(_) => {
+            println_ok!("Done! I've deleted the password for {}.", app_name);
+            return Ok(());
         },
         Err(err) => {
-            errln!("\nWoops, I couldn't read the master password ({:?}).", err);
-            ::set_exit_status(1);
+            println_err!("Woops, I couldn't find a password for this app ({:?}). Make sure you didn't make a typo.", err);
+            println_err!("You can use 'rooster list' to see a list of available passwords.");
+            return Err(1);
         }
     }
 }

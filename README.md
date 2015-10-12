@@ -25,3 +25,4 @@ Here are some things that would be great to have in Rooster. If you want to make
 - Building a web frontend
 - Building a mobile app
 - Better error messages
+- Prevent swapping passwords in clear text

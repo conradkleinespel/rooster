@@ -19,7 +19,6 @@ extern crate crypto;
 extern crate rpassword;
 extern crate rand;
 extern crate byteorder;
-extern crate tempfile;
 
 use std::fs::File;
 use std::env;
@@ -31,7 +30,6 @@ use std::io::stdin;
 use std::io::Write;
 use std::path::Path;
 use std::ops::Deref;
-use password::ScrubMemory;
 use getopts::Options;
 use rpassword::read_password;
 
@@ -41,12 +39,13 @@ mod commands;
 mod ffi;
 mod password;
 mod color;
+mod safe_string;
 
 const ROOSTER_FILE_DEFAULT: &'static str = ".passwords.rooster";
 
 struct Command {
     name: &'static str,
-    callback_exec: fn(&getopts::Matches, &mut File, &str) -> Result<(), i32>,
+    callback_exec: fn(&getopts::Matches, &mut password::v2::PasswordStore, &str) -> Result<(), i32>,
     callback_help: fn(),
 }
 
@@ -122,7 +121,8 @@ fn execute_command_from_filename(matches: &getopts::Matches, command: &Command, 
 						// Upgrade the rooster file to the newest format supported.
 						try!(password::upgrade(master_password.deref(), file).map_err(|_| 1));
 
-                        let ret = (command.callback_exec)(matches, file, master_password.deref());
+                        let store = password::v2::PasswordStore::new(master_password.deref(), file);
+                        let ret = (command.callback_exec)(matches, store);
                         master_password.scrub_memory();
                         return ret;
                     },

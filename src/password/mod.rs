@@ -15,7 +15,6 @@
 pub mod v1;
 pub mod v2;
 
-use super::tempfile::{TempFile, NamedTempFile};
 use std::fs::File;
 use std::io::{Seek, SeekFrom, Read, Write, Result as IoResult, Error as IoError, ErrorKind as IoErrorKind};
 use std::ops::Deref;
@@ -28,63 +27,7 @@ pub enum PasswordError {
     Io(IoError)
 }
 
-pub trait ScrubMemory {
-    fn scrub_memory(&mut self);
-}
-
-impl ScrubMemory for String {
-    fn scrub_memory(&mut self) {
-        self.clear();
-        for _ in 0 .. self.capacity() {
-            self.push('0');
-        }
-    }
-}
-
-impl ScrubMemory for [u8] {
-    fn scrub_memory(&mut self) {
-        for c in self.iter_mut() {
-            *c = 0;
-        }
-    }
-}
-
-pub trait RoosterFileExt {
-	fn rooster_sync_all(&mut self) -> IoResult<()>;
-	fn rooster_set_len(&self, size: u64) -> IoResult<()>;
-}
-
-impl RoosterFileExt for File {
-	fn rooster_sync_all(&mut self) -> IoResult<()> {
-		self.sync_all()
-	}
-
-	fn rooster_set_len(&self, size: u64) -> IoResult<()> {
-		self.set_len(size)
-	}
-}
-
-impl RoosterFileExt for TempFile {
-	fn rooster_sync_all(&mut self) -> IoResult<()> {
-		self.flush()
-	}
-
-	fn rooster_set_len(&self, size: u64) -> IoResult<()> {
-		self.set_len(size)
-	}
-}
-
-impl RoosterFileExt for NamedTempFile {
-	fn rooster_sync_all(&mut self) -> IoResult<()> {
-		self.flush()
-	}
-
-	fn rooster_set_len(&self, size: u64) -> IoResult<()> {
-		self.set_len(size)
-	}
-}
-
-fn upgrade_v1_v2(master_password: &str, mut old_file: TempFile) -> Result<TempFile, PasswordError> {
+fn upgrade_v1_v2(master_password: &str, mut old_file: TempFile) -> Result<Vec<u8>, PasswordError> {
 	println!("starting v1 to v2");
 
 	let passwords = match v1::get_all_passwords(master_password, &mut old_file) {
@@ -144,16 +87,6 @@ pub fn upgrade(master_password: &str, old_file: &mut File) -> Result<(), Passwor
             .and_then(|_| old_file.read_to_end(&mut file_contents))
             .map_err(|err| PasswordError::Io(err))
     );
-	let mut backup = try!(NamedTempFile::new().map_err(|_| {
-		PasswordError::Io(IoError::new(IoErrorKind::Other, BACKUP_ERR))
-	}));
-	try!(backup.write_all(file_contents.deref()).map_err(|err| PasswordError::Io(err)));
-
-	println!("backed up at {:?}", backup.path());
-
-	let file_v1 = try!(TempFile::new().and_then(|mut file_v1| {
-		file_v1.write_all(file_contents.deref()).map(|_| file_v1)
-	}).map_err(|err| PasswordError::Io(err)));
 
 	let upgraded = upgrade_v1_v2(master_password, file_v1)
 		.and_then(|file_v2| upgrade_v2_v3(master_password, file_v2))

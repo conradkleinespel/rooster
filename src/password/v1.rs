@@ -16,10 +16,10 @@ use super::super::ffi;
 use super::super::crypto;
 use super::super::crypto::digest::Digest;
 use super::super::aes;
-use super::ScrubMemory;
 use super::PasswordError;
 use rustc_serialize::json;
 use std::io::{Seek, SeekFrom, Read};
+use std::ops::Drop;
 
 /// The Rooster file format
 ///
@@ -67,39 +67,12 @@ pub struct Password {
     pub updated_at: ffi::time_t
 }
 
-impl ScrubMemory for Schema {
-    fn scrub_memory(&mut self) {
-        self.passwords.scrub_memory();
-    }
-}
-
-impl ScrubMemory for [Password] {
-    fn scrub_memory(&mut self) {
-        for p in self.iter_mut() {
-            p.scrub_memory();
+impl Drop for Password {
+    fn drop(&mut self) {
+        self.password.clear();
+        for _ in 0 .. self.password.capacity() {
+            self.password.push('0');
         }
-    }
-}
-
-impl Password {
-    /// Set the memory to `0` everywhere in the structure.
-    ///
-    /// This is used when a password is no longer needed, in which case we
-    /// don't want the memory to leak out to another program that could try to
-    /// see its contents.
-    pub fn scrub_memory(&mut self) {
-        self.name.scrub_memory();
-        match self.domain {
-            Some(ref mut s) => {
-                s.scrub_memory();
-            },
-            None => {}
-        }
-        self.domain = None;
-        self.username.scrub_memory();
-        self.password.scrub_memory();
-        self.created_at = 0;
-        self.updated_at = 0;
     }
 }
 
@@ -112,7 +85,6 @@ fn generate_encryption_key(master_password: &str) -> Vec<u8> {
     hash.result(&mut key);
 
     let out = key.to_vec();
-    key.scrub_memory();
 
     out
 }
@@ -140,7 +112,7 @@ pub fn get_all_passwords<F: Read + Seek>(master_password: &str, file: &mut F) ->
 
         // Decrypt the data and remvoe the descryption key from memory.
         let decrypted_maybe = aes::decrypt(encrypted, key.as_ref(), &iv);
-        key.scrub_memory();
+
         match decrypted_maybe {
             Ok(decrypted) => {
                 let mut encoded = String::from_utf8_lossy(decrypted.as_ref()).into_owned();
@@ -148,9 +120,6 @@ pub fn get_all_passwords<F: Read + Seek>(master_password: &str, file: &mut F) ->
                 // This should never fail. The file contents should always be
                 // valid JSON.
                 let passwords = json::decode::<Schema>(encoded.as_ref()).unwrap().passwords;
-
-                // Clear the memory so no other program can see it once freed.
-                encoded.scrub_memory();
 
                 passwords
             },

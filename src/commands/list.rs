@@ -15,7 +15,6 @@
 use std::fs::File;
 use super::super::getopts;
 use super::super::password;
-use super::super::password::ScrubMemory;
 use std::io::Write;
 use std::iter::repeat;
 use std::iter::FromIterator;
@@ -52,9 +51,6 @@ pub fn callback_exec(_matches: &getopts::Matches, file: &mut File, master_passwo
                     println!("{}", horizontal_border);
                 }
             }
-
-            // Clean up memory so no one can re-use it.
-            passwords.scrub_memory();
             return Ok(());
         },
         Err(err) => {

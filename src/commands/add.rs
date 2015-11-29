@@ -15,7 +15,6 @@
 use std::fs::File;
 use super::super::getopts;
 use super::super::password;
-use super::super::password::ScrubMemory;
 use super::super::rpassword::read_password;
 use std::io::Write;
 
@@ -28,7 +27,7 @@ pub fn callback_help() {
     println!("    rooster add YouTube me@example.com");
 }
 
-pub fn callback_exec(matches: &getopts::Matches, file: &mut File, master_password: &str) -> Result<(), i32> {
+pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::PasswordStore, master_password: &str) -> Result<(), i32> {
     if matches.free.len() < 3 {
         println_err!("Woops, seems like the app name or the username is missing here. For help, try:");
         println_err!("    rooster add -h");
@@ -38,23 +37,18 @@ pub fn callback_exec(matches: &getopts::Matches, file: &mut File, master_passwor
     let app_name = matches.free[1].as_ref();
     let username = matches.free[2].as_ref();
 
-    match password::v2::has_password(master_password, app_name, file) {
+    match store.has_password(app_name) {
         Ok(false) => {
             write!(::std::io::stderr(), "What password do you want for {}? ", app_name).unwrap();
             ::std::io::stderr().flush().unwrap();
             match read_password() {
-                Ok(ref mut password_as_string) => {
-                    let mut password = password::v2::Password::new(
-                        app_name,
-                        username,
-                        password_as_string.as_ref()
+                Ok(password_as_string) => {
+                    let password = password::v2::Password::new(
+                        app_name.to_owned(),
+                        username.to_owned(),
+                        password_as_string
                     );
-                    let password_added = password::v2::add_password(
-                        master_password,
-                        &password,
-                        file
-                    );
-                    match password_added {
+                    match store.add_password(password) {
                         Ok(_) => {
                             println_ok!("Alright! Your password for {} has been added.", app_name);
                         },
@@ -63,10 +57,6 @@ pub fn callback_exec(matches: &getopts::Matches, file: &mut File, master_passwor
                             return Err(1);
                         }
                     }
-
-                    // Clean up memory so no one can re-use it.
-                    password_as_string.scrub_memory();
-                    password.scrub_memory();
 
                     return Ok(());
                 },

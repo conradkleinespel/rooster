@@ -15,7 +15,6 @@
 use std::fs::File;
 use super::super::getopts;
 use super::super::password;
-use super::super::password::ScrubMemory;
 use super::super::rand::{Rng, OsRng};
 use std::io::Write;
 
@@ -160,8 +159,4 @@ pub fn callback_exec(matches: &getopts::Matches, file: &mut File, master_passwor
             return Err(1);
         }
     }
-
-    // Clean up memory so no one can re-use it.
-    password_as_string.scrub_memory();
-    password.scrub_memory();
 }

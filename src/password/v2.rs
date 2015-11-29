@@ -18,13 +18,13 @@ use super::super::aes;
 use super::super::rand::{Rng, OsRng};
 use super::super::byteorder::{WriteBytesExt, BigEndian, Error as ByteorderError};
 use super::super::rustc_serialize::json;
-use super::ScrubMemory;
 use super::PasswordError;
-use super::RoosterFileExt;
 use std::ops::Deref;
 use std::mem;
 use std::io::{Seek, SeekFrom, Error as IoError, ErrorKind as IoErrorKind, Read, Write};
 use std::borrow::ToOwned;
+use std::fs::File;
+use std::ops::Drop;
 #[cfg(test)]
 use std::fs::OpenOptions;
 
@@ -124,8 +124,8 @@ impl RoosterFile {
         }
     }
 
-    pub fn to_file<F: RoosterFileExt + Write + Seek>(self, file: &mut F) -> Result<(), PasswordError> {
-        try!(file.seek(SeekFrom::Start(0)).and_then(|_| file.rooster_set_len(0)).map_err(|err| PasswordError::Io(err)));
+    pub fn to_file(self, file: &mut File) -> Result<(), PasswordError> {
+        try!(file.seek(SeekFrom::Start(0)).and_then(|_| file.set_len(0)).map_err(|err| PasswordError::Io(err)));
         try!(match file.write_u32::<BigEndian>(self.version) {
             Ok(_) => Ok(()),
             Err(err) => {
@@ -138,7 +138,7 @@ impl RoosterFile {
         try!(file.write_all(&self.salt).map_err(|err| PasswordError::Io(err)));
         try!(file.write_all(&self.iv).map_err(|err| PasswordError::Io(err)));
         try!(file.write_all(&self.blob.as_ref()).map_err(|err| PasswordError::Io(err)));
-        try!(file.rooster_sync_all().map_err(|err| PasswordError::Io(err)));
+        try!(file.sync_all().map_err(|err| PasswordError::Io(err)));
 
         Ok(())
     }
@@ -168,51 +168,39 @@ pub struct Password {
     pub updated_at: ffi::time_t
 }
 
-impl ScrubMemory for Schema {
-    fn scrub_memory(&mut self) {
-        self.passwords.scrub_memory();
-    }
-}
-
-impl ScrubMemory for [Password] {
-    fn scrub_memory(&mut self) {
-        for p in self.iter_mut() {
-            p.scrub_memory();
-        }
-    }
-}
-
 impl Password {
-    pub fn new(name: &str, username: &str, password: &str) -> Password {
+    pub fn new(name: String, username: String, password: String) -> Password {
         let timestamp = ffi::time();
         Password {
-            name: name.to_owned(),
+            name: name,
             domain: None,
-            username: username.to_owned(),
-            password: password.to_owned(),
+            username: username,
+            password: password,
             created_at: timestamp,
             updated_at: timestamp
         }
     }
+}
 
-    /// Set the memory to `0` everywhere in the structure.
-    ///
-    /// This is used when a password is no longer needed, in which case we
-    /// don't want the memory to leak out to another program that could try to
-    /// see its contents.
-    pub fn scrub_memory(&mut self) {
-        self.name.scrub_memory();
-        match self.domain {
-            Some(ref mut s) => {
-                s.scrub_memory();
-            },
-            None => {}
+impl Drop for Password {
+    fn drop(&mut self) {
+        self.password.clear();
+        for _ in 0 .. self.password.capacity() {
+            self.password.push('0');
         }
-        self.domain = None;
-        self.username.scrub_memory();
-        self.password.scrub_memory();
-        self.created_at = 0;
-        self.updated_at = 0;
+    }
+}
+
+struct PasswordStore {
+    master_password: String,
+}
+
+impl Drop for PasswordStore {
+    fn drop(&mut self) {
+        self.master_password.clear();
+        for _ in 0 .. self.master_password.capacity() {
+            self.master_password.push('0');
+        }
     }
 }
 
@@ -283,7 +271,7 @@ pub fn get_all_passwords<F: Read + Seek>(master_password: &str, file: &mut F) ->
     }
 }
 
-fn save_all_passwords<F: RoosterFileExt + Write + Read + Seek>(master_password: &str, passwords: &Vec<Password>, file: &mut F) -> Result<(), PasswordError> {
+fn save_all_passwords(master_password: &str, passwords: &Vec<Password>, file: &mut File) -> Result<(), PasswordError> {
     // This should never fail. The structs are all encodable.
     let mut schema = Schema::new(passwords.clone());
     let mut encoded_after = json::encode(&schema).unwrap();
@@ -312,7 +300,7 @@ fn save_all_passwords<F: RoosterFileExt + Write + Read + Seek>(master_password: 
 }
 
 /// Adds a password to the file.
-pub fn add_password<F: RoosterFileExt + Write + Read + Seek>(master_password: &str, password: &Password, file: &mut F) -> Result<(), PasswordError> {
+pub fn add_password(master_password: &str, password: &Password, file: &mut File) -> Result<(), PasswordError> {
     let mut passwords = try!(get_all_passwords(master_password, file));
 
     passwords.push(password.clone());
@@ -325,7 +313,7 @@ pub fn add_password<F: RoosterFileExt + Write + Read + Seek>(master_password: &s
     saved
 }
 
-pub fn delete_password<F: RoosterFileExt + Write + Read + Seek>(master_password: &str, app_name: &str, file: &mut F) -> Result<(), PasswordError> {
+pub fn delete_password(master_password: &str, app_name: &str, file: &mut File) -> Result<(), PasswordError> {
     match get_password(master_password, app_name, file) {
         Ok(ref mut p) => {
             let mut result = Ok(());

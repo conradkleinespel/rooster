@@ -15,7 +15,6 @@
 use std::fs::File;
 use super::super::getopts;
 use super::super::password;
-use super::super::password::ScrubMemory;
 use std::io::Write;
 
 pub fn callback_help() {
@@ -44,7 +43,6 @@ pub fn callback_exec(matches: &getopts::Matches, file: &mut File, master_passwor
             ::std::io::stdout().flush().unwrap();
             write!(::std::io::stderr(), "\n").unwrap();
             ::std::io::stderr().flush().unwrap();
-            password.scrub_memory();
             return Ok(());
         },
         Err(err) => {

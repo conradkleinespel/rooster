@@ -29,7 +29,7 @@ pub fn callback_help() {
     println!("    rooster regenerate youtube");
 }
 
-pub fn callback_exec(matches: &getopts::Matches, file: &mut File, master_password: &str) -> Result<(), i32> {
+pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::PasswordStore) -> Result<(), i32> {
     if matches.free.len() < 2 {
         println_err!("Woops, seems like the app name is missing here. For help, try:");
         println_err!("    rooster regenerate -h");
@@ -47,14 +47,12 @@ pub fn callback_exec(matches: &getopts::Matches, file: &mut File, master_passwor
         }
     };
 
-    match password::v2::get_password(master_password, app_name, file) {
-        Ok(ref mut previous) => {
+    match store.get_password(app_name) {
+        Some(ref mut previous) => {
             previous.password = password_as_string;
             previous.updated_at = ffi::time();
 
-            let modified = password::v2::delete_password(master_password, app_name, file).and(
-                password::v2::add_password(master_password, previous, file)
-            );
+            let modified = store.delete_password(app_name).and_then(|| store.add_password(previous));
             match modified {
                 Ok(_) => {
                     println_ok!("Done ! The password for {} has been regenerated.", previous.name);
@@ -66,8 +64,8 @@ pub fn callback_exec(matches: &getopts::Matches, file: &mut File, master_passwor
                 }
             }
         },
-        Err(err) => {
-            println_err!("Woops, I couldn't get that password. ({:?}).", err);
+        None => {
+            println_err!("Woops, I couldn't get that password.");
             return Err(1);
         }
     }

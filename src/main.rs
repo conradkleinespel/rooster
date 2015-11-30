@@ -45,7 +45,7 @@ const ROOSTER_FILE_DEFAULT: &'static str = ".passwords.rooster";
 
 struct Command {
     name: &'static str,
-    callback_exec: fn(&getopts::Matches, &mut password::v2::PasswordStore, &str) -> Result<(), i32>,
+    callback_exec: fn(&getopts::Matches, &mut password::v2::PasswordStore) -> Result<(), i32>,
     callback_help: fn(),
 }
 
@@ -118,13 +118,16 @@ fn execute_command_from_filename(matches: &getopts::Matches, command: &Command, 
                 ::std::io::stderr().flush().unwrap();
                 match read_password() {
                     Ok(ref mut master_password) => {
-						// Upgrade the rooster file to the newest format supported.
-						try!(password::upgrade(master_password.deref(), file).map_err(|_| 1));
+                        let mut input: Vec<u8> = Vec::new();
+                        try!(file.read_to_end(&mut input).map_err(|_| 1));
 
-                        let store = password::v2::PasswordStore::new(master_password.deref(), file);
-                        let ret = (command.callback_exec)(matches, store);
-                        master_password.scrub_memory();
-                        return ret;
+						// Upgrade the rooster file to the newest format supported.
+						let mut store = try!(password::upgrade(master_password.deref(), input.deref(), file).map_err(|_| 1));
+
+                        // Execute the command and save the new password list
+                        try!((command.callback_exec)(matches, store).map_err(|_| 1));
+
+                        store.sync(file);
                     },
                     Err(err) => {
                         println_err!("I could not read your master password ({})", err);

@@ -28,34 +28,18 @@ pub fn callback_help() {
     println!("    rooster list");
 }
 
-pub fn callback_exec(_matches: &getopts::Matches, file: &mut File, master_password: &str) -> Result<(), i32> {
-    match password::v2::get_all_passwords(master_password, file) {
-        Ok(ref mut passwords) => {
-            match passwords.len() {
-                0 => {
-                    println!("There are no passwords saved in your file.");
-                },
-                _ => {
-                    // We'll now print the password in a table.
-                    // The table is delimited by borders.
-                    let horizontal_border = String::from_iter(repeat('-').take(73));
+pub fn callback_exec(_matches: &getopts::Matches, store: &mut password::v2::PasswordStore) -> Result<(), i32> {
+    // We'll now print the password in a table.
+    // The table is delimited by borders.
+    let horizontal_border = String::from_iter(repeat('-').take(73));
 
-                    println!("{}", horizontal_border);
-                    println!("| {:2} | {:30} | {:30} |", "id", "app", "username");
-                    println!("{}", horizontal_border);
-                    let mut i = 0;
-                    for p in passwords.iter() {
-                        println!("| {:2?} | {:30} | {:30} |", i, p.name, p.username);
-                        i += 1;
-                    }
-                    println!("{}", horizontal_border);
-                }
-            }
-            return Ok(());
-        },
-        Err(err) => {
-            println_err!("Woops, I could not retrieve passwords ({:?}).", err);
-            return Err(1);
-        }
+    println!("{}", horizontal_border);
+    println!("| {:2} | {:30} | {:30} |", "id", "app", "username");
+    println!("{}", horizontal_border);
+    let mut i = 0;
+    for p in store.get_all_passwords().iter() {
+        println!("| {:2?} | {:30} | {:30} |", i, p.name, p.username);
+        i += 1;
     }
+    println!("{}", horizontal_border);
 }

@@ -106,7 +106,7 @@ pub fn callback_help() {
     println!("    rooster generate YouTube me@example.com");
 }
 
-pub fn callback_exec(matches: &getopts::Matches, file: &mut File, master_password: &str) -> Result<(), i32> {
+pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::PasswordStore) -> Result<(), i32> {
     if matches.free.len() < 3 {
         println_err!("Woops, seems like the app name or the username is missing here. For help, try:");
         println_err!("    rooster generate -h");
@@ -132,27 +132,10 @@ pub fn callback_exec(matches: &getopts::Matches, file: &mut File, master_passwor
         password_as_string.as_ref()
     );
 
-    match password::v2::has_password(master_password, app_name, file) {
-        Ok(false) => {
-            let password_added = password::v2::add_password(
-                master_password,
-                &password,
-                file
-            );
-            match password_added {
-                Ok(_) => {
-                    println_ok!("Alright! Your password for {} has been added.", app_name);
-                    return Ok(());
-                },
-                Err(err) => {
-                    println_err!("\nI couldn't add this password ({:?}).", err);
-                    return Err(1);
-                }
-            }
-        },
-        Ok(true) => {
-            println_err!("There is already an app with that name.");
-            return Err(1);
+    match store.add_password(&password) {
+        Ok(_) => {
+            println_ok!("Alright! Your password for {} has been added.", app_name);
+            return Ok(());
         },
         Err(err) => {
             println_err!("\nI couldn't add this password ({:?}).", err);

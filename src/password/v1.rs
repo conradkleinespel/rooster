@@ -20,6 +20,7 @@ use super::PasswordError;
 use rustc_serialize::json;
 use std::io::{Seek, SeekFrom, Read};
 use std::ops::Drop;
+use std::fs::File;
 
 /// The Rooster file format
 ///
@@ -89,15 +90,7 @@ fn generate_encryption_key(master_password: &str) -> Vec<u8> {
     out
 }
 
-pub fn get_all_passwords<F: Read + Seek>(master_password: &str, file: &mut F) -> Result<Vec<Password>, PasswordError> {
-    // Go to the start of the file and read it.
-    let mut encrypted: Vec<u8> = Vec::new();
-    try!(
-        file.seek(SeekFrom::Start(0))
-            .and_then(|_| file.read_to_end(&mut encrypted))
-            .map_err(|err| PasswordError::Io(err))
-    );
-
+pub fn get_all_passwords(master_password: &str, encrypted: &[u8]) -> Result<Vec<Password>, PasswordError> {
     // If there were already some password, we'll decrypt them. Otherwise, we'll
     // start off with an empty list of passwords.
     let passwords: Vec<Password> = if encrypted.len() > 0 {

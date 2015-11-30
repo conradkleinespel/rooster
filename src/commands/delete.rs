@@ -26,7 +26,7 @@ pub fn callback_help() {
     println!("    rooster delete youtube");
 }
 
-pub fn callback_exec(matches: &getopts::Matches, file: &mut File, master_password: &str) -> Result<(), i32> {
+pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::PasswordStore) -> Result<(), i32> {
     if matches.free.len() < 2 {
         println_err!("Woops, seems like the app name is missing here. For help, try:");
         println_err!("    rooster delete -h");
@@ -35,7 +35,7 @@ pub fn callback_exec(matches: &getopts::Matches, file: &mut File, master_passwor
 
     let ref app_name = matches.free[1];
 
-    match password::v2::delete_password(master_password, app_name, file) {
+    match store.delete_password(app_name) {
         Ok(_) => {
             println_ok!("Done! I've deleted the password for {}.", app_name);
             return Ok(());

@@ -37,6 +37,8 @@ impl Drop for SafeString {
 }
 
 impl Deref for SafeString {
+    type Target = str;
+
     fn deref(&self) -> &str {
         self.inner.deref()
     }

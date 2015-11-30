@@ -27,7 +27,7 @@ pub fn callback_help() {
     println!("    rooster add YouTube me@example.com");
 }
 
-pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::PasswordStore, master_password: &str) -> Result<(), i32> {
+pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::PasswordStore) -> Result<(), i32> {
     if matches.free.len() < 3 {
         println_err!("Woops, seems like the app name or the username is missing here. For help, try:");
         println_err!("    rooster add -h");
@@ -37,41 +37,34 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
     let app_name = matches.free[1].as_ref();
     let username = matches.free[2].as_ref();
 
-    match store.has_password(app_name) {
-        Ok(false) => {
-            write!(::std::io::stderr(), "What password do you want for {}? ", app_name).unwrap();
-            ::std::io::stderr().flush().unwrap();
-            match read_password() {
-                Ok(password_as_string) => {
-                    let password = password::v2::Password::new(
-                        app_name.to_owned(),
-                        username.to_owned(),
-                        password_as_string
-                    );
-                    match store.add_password(password) {
-                        Ok(_) => {
-                            println_ok!("Alright! Your password for {} has been added.", app_name);
-                        },
-                        Err(err) => {
-                            println_err!("Woops, I couldn't add the password ({:?}).", err);
-                            return Err(1);
-                        }
-                    }
+    if store.has_password(app_name) {
+        println_err!("Woops, there is already an app with that name.");
+        return Err(1);
+    }
 
-                    return Ok(());
+    write!(::std::io::stderr(), "What password do you want for {}? ", app_name).unwrap();
+    ::std::io::stderr().flush().unwrap();
+    match read_password() {
+        Ok(password_as_string) => {
+            let password = password::v2::Password::new(
+                app_name.to_owned(),
+                username.to_owned(),
+                password_as_string
+            );
+            match store.add_password(password) {
+                Ok(_) => {
+                    println_ok!("Alright! Your password for {} has been added.", app_name);
                 },
                 Err(err) => {
-                    println_err!("\nI couldn't read the app's password ({:?}).", err);
+                    println_err!("Woops, I couldn't add the password ({:?}).", err);
                     return Err(1);
                 }
             }
-        },
-        Ok(true) => {
-            println_err!("Woops, there is already an app with that name.");
-            return Err(1);
+
+            return Ok(());
         },
         Err(err) => {
-            println_err!("\nWoops, I couldn't add this password ({:?}).", err);
+            println_err!("\nI couldn't read the app's password ({:?}).", err);
             return Err(1);
         }
     }

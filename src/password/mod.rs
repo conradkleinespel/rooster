@@ -24,13 +24,15 @@ pub enum PasswordError {
     DecryptionError,
     EncryptionError,
     NoSuchAppError,
-    Io(IoError)
+    AppExistsError,
+    Io(IoError),
+    WrongVersionError,
 }
 
-fn upgrade_v1_v2(master_password: &str, mut old_file: TempFile) -> Result<Vec<u8>, PasswordError> {
+fn upgrade_v1_v2(master_password: &str, input: &[u8], v2_store: &mut v2::PasswordStore) -> Result<(), PasswordError> {
 	println!("starting v1 to v2");
 
-	let passwords = match v1::get_all_passwords(master_password, &mut old_file) {
+	let passwords = match v1::get_all_passwords(master_password, input) {
 		Ok(passwords) => passwords,
 		Err(err) => {
 			match err {
@@ -42,7 +44,7 @@ fn upgrade_v1_v2(master_password: &str, mut old_file: TempFile) -> Result<Vec<u8
 				// upgrader, or an error in the command specific code, or no error if
 				// everything is fine.
 				PasswordError::DecryptionError => {
-					return Ok(old_file);
+					return Ok(());
 				},
 				_ => {
 					return Err(err);
@@ -50,10 +52,9 @@ fn upgrade_v1_v2(master_password: &str, mut old_file: TempFile) -> Result<Vec<u8
 			}
 		}
 	};
+    println!("{:?}", passwords);
 
 	println!("copying passwords to new file");
-
-	let mut new_file = try!(TempFile::new().map_err(|err| PasswordError::Io(err)));
 
 	for p in passwords.iter() {
 		let v2_password = v2::Password {
@@ -64,56 +65,17 @@ fn upgrade_v1_v2(master_password: &str, mut old_file: TempFile) -> Result<Vec<u8
 		    created_at: p.created_at,
 		    updated_at: p.updated_at,
 		};
-		try!(v2::add_password(master_password, &v2_password, &mut new_file));
+		try!(v2_store.add_password(&v2_password));
 	}
 
 	println!("copied passwords...");
 
-	Ok(new_file)
+	Ok(())
 }
 
-fn upgrade_v2_v3(_master_password: &str, file: TempFile) -> Result<TempFile, PasswordError> {
-	// 1- check version at top of file, if >= 3, skip this
-	// 2- upgrade to v3
-	Ok(file)
-}
-
-pub fn upgrade(master_password: &str, old_file: &mut File) -> Result<(), PasswordError> {
-	static BACKUP_ERR: &'static str = "could not backup the password file before upgrade";
-
-	let mut file_contents: Vec<u8> = Vec::new();
-    try!(
-        old_file.seek(SeekFrom::Start(0))
-            .and_then(|_| old_file.read_to_end(&mut file_contents))
-            .map_err(|err| PasswordError::Io(err))
-    );
-
-	let upgraded = upgrade_v1_v2(master_password, file_v1)
-		.and_then(|file_v2| upgrade_v2_v3(master_password, file_v2))
-		.and_then(|mut file_v3| {
-			file_v3.seek(SeekFrom::Start(0))
-				.and_then(|_| file_v3.set_len(0))
-				.and_then(|_| file_v3.write_all(file_contents.deref()))
-				.map_err(|err| PasswordError::Io(err))
-		});
-	match upgraded {
-		Ok(_) => Ok(()),
-		Err(err) => {
-			try!(
-		        old_file.seek(SeekFrom::Start(0))
-					.and_then(|_| old_file.set_len(0))
-		            .and_then(|_| old_file.write_all(file_contents.deref()))
-		            .map_err(|err| {
-						println_err!("I tried to upgrade your Rooster file to the newest version supported by your");
-						println_err!("system. But there was an error ({:?}). I was not able to recover your Rooster", err);
-						println_err!("file, but I have made a backup at {}.", backup.path().to_string_lossy().deref());
-						PasswordError::Io(err)
-					})
-		    );
-
-			println_err!("I tried to upgrade your Rooster file to the newest version supported by your");
-			println_err!("system. But there was an error ({:?}). You may want to try again.", err);
-			Err(err)
-		}
-	}
+pub fn upgrade(master_password: &str, input: &[u8], file: &mut File) -> Result<v2::PasswordStore, PasswordError> {
+    let v2_store = try!(v2::PasswordStore::from_input(master_password, input));
+    try!(upgrade_v1_v2(master_password, input, v2_store));
+    try!(v2_store.sync(file));
+    Ok(v2_store)
 }

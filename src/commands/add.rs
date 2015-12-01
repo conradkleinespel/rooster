@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::fs::File;
 use super::super::getopts;
 use super::super::password;
 use super::super::rpassword::read_password;
 use std::io::Write;
+use std::ops::Deref;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -34,10 +34,10 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
         return Err(1);
     }
 
-    let app_name = matches.free[1].as_ref();
-    let username = matches.free[2].as_ref();
+    let app_name = matches.free[1].clone();
+    let username = matches.free[2].clone();
 
-    if store.has_password(app_name) {
+    if store.has_password(app_name.deref()) {
         println_err!("Woops, there is already an app with that name.");
         return Err(1);
     }
@@ -47,8 +47,8 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
     match read_password() {
         Ok(password_as_string) => {
             let password = password::v2::Password::new(
-                app_name.to_owned(),
-                username.to_owned(),
+                app_name.clone(),
+                username,
                 password_as_string
             );
             match store.add_password(password) {

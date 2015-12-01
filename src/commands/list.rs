@@ -12,10 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::fs::File;
 use super::super::getopts;
 use super::super::password;
-use std::io::Write;
 use std::iter::repeat;
 use std::iter::FromIterator;
 
@@ -42,4 +40,6 @@ pub fn callback_exec(_matches: &getopts::Matches, store: &mut password::v2::Pass
         i += 1;
     }
     println!("{}", horizontal_border);
+
+    Ok(())
 }

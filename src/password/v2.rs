@@ -103,15 +103,15 @@ fn generate_encryption_key(master_password: &str, salt: [u8; SALT_LEN]) -> [u8; 
 }
 
 /// The format of the encrypted JSON content in the password file v1.
-#[derive(RustcDecodable, RustcEncodable)]
+#[derive(RustcDecodable, RustcEncodable, Clone)]
 pub struct Schema {
     passwords: Vec<Password>,
 }
 
 impl Schema {
-    fn new(passwords: Vec<Password>) -> Schema {
+    fn new() -> Schema {
         Schema {
-            passwords: passwords,
+            passwords: Vec::new(),
         }
     }
 }
@@ -149,7 +149,7 @@ impl Drop for Password {
     }
 }
 
-struct PasswordStore {
+pub struct PasswordStore {
     master_password: String,
     key: [u8; KEY_LEN],
     salt: [u8; SALT_LEN],
@@ -166,10 +166,23 @@ impl Drop for PasswordStore {
 }
 
 impl PasswordStore {
+    fn new(master_password: String) -> PasswordStore {
+        let salt = generate_random_salt();
+
+        let key = generate_encryption_key(master_password.deref(), salt);
+
+        PasswordStore {
+            master_password: master_password,
+            key: key,
+            salt: salt,
+            schema: Schema::new(),
+        }
+    }
+
     pub fn from_input(master_password: String, input: Vec<u8>) -> Result<PasswordStore, PasswordError> {
-		if input.len() == 0 {
-			return Ok(None);
-		}
+        if input.len() == 0 {
+            return Ok(PasswordStore::new(master_password));
+        }
 
         // Version taken from network byte order (big endian).
         let version = 2u32.pow(3) * (input[0] as u32) + 2u32.pow(2) * (input[1] as u32) + 2u32.pow(1) * (input[2] as u32) + 2u32.pow(0) * (input[3] as u32);
@@ -195,12 +208,12 @@ impl PasswordStore {
         let blob = input[mem::size_of::<u32>() + SALT_LEN + IV_LEN ..].to_owned();
 
         // Derive a 256 bits encryption key from the password.
-        let mut key = generate_encryption_key(master_password.deref(), salt_orig.as_ref());
+        let key = generate_encryption_key(master_password.deref(), salt);
 
         // Decrypt the data and remvoe the descryption key from memory.
         let passwords = match aes::decrypt(blob.deref(), key.as_ref(), iv.as_ref()) {
             Ok(decrypted) => {
-                let mut encoded = String::from_utf8_lossy(decrypted.as_ref()).into_owned();
+                let encoded = String::from_utf8_lossy(decrypted.as_ref()).into_owned();
                 json::decode::<Schema>(encoded.as_ref()).unwrap().passwords
             },
             Err(_) => {
@@ -211,7 +224,7 @@ impl PasswordStore {
         // decrypt the data
         Ok(PasswordStore {
             master_password: master_password,
-            encryption_key: key,
+            key: key,
             salt: salt,
             schema: Schema {
                 passwords: passwords,
@@ -221,8 +234,7 @@ impl PasswordStore {
 
     pub fn sync(&self, file: &mut File) -> Result<(), PasswordError> {
         // This should never fail. The structs are all encodable.
-        let mut schema = self.schema.clone();
-        let mut encoded_after = json::encode(&schema).unwrap();
+        let encoded_after = json::encode(&self.schema).unwrap();
 
         // Encrypt the data with a new salt and a new IV.
         let iv = generate_random_iv();
@@ -266,15 +278,15 @@ impl PasswordStore {
 
     /// Adds a password to the file.
     pub fn add_password(&mut self, password: Password)-> Result<(), PasswordError> {
-        if self.has_password(password.app_name.deref()) {
+        if self.has_password(password.name.deref()) {
             return Err(PasswordError::AppExistsError);
         }
         self.schema.passwords.push(password);
         Ok(())
     }
 
-    pub fn delete_password(&mut self, app_name: &str) -> Result<Password, PasswordError> {
-        let p = try!(self.get_password(app_name).ok_or(PasswordError::NoSuchAppError));
+    pub fn delete_password(&mut self, name: &str) -> Result<Password, PasswordError> {
+        let p = try!(self.get_password(name).ok_or(PasswordError::NoSuchAppError));
 
         let mut i = 0;
         while i < self.schema.passwords.len() {
@@ -286,10 +298,10 @@ impl PasswordStore {
         unreachable!();
     }
 
-    pub fn get_password(&self, app_name: &str) -> Option<Password> {
+    pub fn get_password(&self, name: &str) -> Option<Password> {
         'passwords_loop: for p in self.schema.passwords.iter() {
             // Since the app name must be the same, we need the same length.
-            if p.name.len() != app_name.len() {
+            if p.name.len() != name.len() {
                 continue 'passwords_loop;
             }
 
@@ -297,7 +309,7 @@ impl PasswordStore {
             let mut i: usize = 0;
             while i < p.name.len() {
                 let c1 = p.name.chars().nth(i).unwrap().to_lowercase().nth(0).unwrap();
-                let c2 = app_name.chars().nth(i).unwrap().to_lowercase().nth(0).unwrap();
+                let c2 = name.chars().nth(i).unwrap().to_lowercase().nth(0).unwrap();
                 if c1 != c2 {
                     continue 'passwords_loop;
                 }
@@ -308,7 +320,7 @@ impl PasswordStore {
         None
     }
 
-    pub fn has_password(&self, app_name: &str) -> bool {
-        self.get_password(app_name).is_some()
+    pub fn has_password(&self, name: &str) -> bool {
+        self.get_password(name).is_some()
     }
 }

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::fs::File;
 use super::super::getopts;
 use super::super::password;
 use super::super::rand::{Rng, OsRng};
@@ -113,12 +112,12 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
         return Err(1);
     }
 
-    let app_name = matches.free[1].as_ref();
-    let username = matches.free[2].as_ref();
+    let app_name = matches.free[1].clone();
+    let username = matches.free[2].clone();
 
     let password_spec = PasswordSpec::from_matches(matches);
 
-    let mut password_as_string = match password_spec {
+    let password_as_string = match password_spec {
         None => { return Err(1); },
         Some(spec) => {
             generate_hard_password(spec.alnum, spec.len)
@@ -126,13 +125,13 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
     };
 
     // Read the master password and try to save the new password.
-    let mut password = password::v2::Password::new(
-        app_name,
+    let password = password::v2::Password::new(
+        app_name.clone(),
         username,
-        password_as_string.as_ref()
+        password_as_string
     );
 
-    match store.add_password(&password) {
+    match store.add_password(password) {
         Ok(_) => {
             println_ok!("Alright! Your password for {} has been added.", app_name);
             return Ok(());

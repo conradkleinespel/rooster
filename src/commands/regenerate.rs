@@ -17,8 +17,8 @@ use super::generate::PasswordSpec;
 use super::generate::generate_hard_password;
 use super::super::ffi;
 use super::super::password;
-use std::fs::File;
 use std::io::Write;
+use std::ops::Deref;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -36,7 +36,7 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
         return Err(1);
     }
 
-    let app_name: &str = matches.free[1].as_ref();
+    let app_name = matches.free[1].clone();
 
     let password_spec = PasswordSpec::from_matches(matches);
 
@@ -47,15 +47,14 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
         }
     };
 
-    match store.get_password(app_name) {
-        Some(ref mut previous) => {
+    match store.delete_password(app_name.deref()) {
+        Ok(mut previous) => {
             previous.password = password_as_string;
             previous.updated_at = ffi::time();
 
-            let modified = store.delete_password(app_name).and_then(|| store.add_password(previous));
-            match modified {
+            match store.add_password(previous) {
                 Ok(_) => {
-                    println_ok!("Done ! The password for {} has been regenerated.", previous.name);
+                    println_ok!("Done ! The password for {} has been regenerated.", app_name);
                     return Ok(());
                 },
                 Err(err) => {
@@ -64,8 +63,8 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
                 }
             }
         },
-        None => {
-            println_err!("Woops, I couldn't get that password.");
+        Err(err) => {
+            println_err!("Woops, I couldn't get that password ({:?}).", err);
             return Err(1);
         }
     }

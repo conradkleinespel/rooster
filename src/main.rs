@@ -28,8 +28,8 @@ use std::io::Error as IoError;
 use std::io::ErrorKind as IoErrorKind;
 use std::io::stdin;
 use std::io::Write;
+use std::io::Read;
 use std::path::Path;
-use std::ops::Deref;
 use getopts::Options;
 use rpassword::read_password;
 
@@ -117,17 +117,17 @@ fn execute_command_from_filename(matches: &getopts::Matches, command: &Command, 
                 write!(::std::io::stderr(), "Type your master password: ").unwrap();
                 ::std::io::stderr().flush().unwrap();
                 match read_password() {
-                    Ok(ref mut master_password) => {
+                    Ok(master_password) => {
                         let mut input: Vec<u8> = Vec::new();
                         try!(file.read_to_end(&mut input).map_err(|_| 1));
 
 						// Upgrade the rooster file to the newest format supported.
-						let mut store = try!(password::upgrade(master_password.deref(), input.deref(), file).map_err(|_| 1));
+						let mut store = try!(password::upgrade(master_password, input, file).map_err(|_| 1));
 
                         // Execute the command and save the new password list
-                        try!((command.callback_exec)(matches, store).map_err(|_| 1));
+                        try!((command.callback_exec)(matches, &mut store).map_err(|_| 1));
 
-                        store.sync(file);
+                        store.sync(file).map_err(|_| 1)
                     },
                     Err(err) => {
                         println_err!("I could not read your master password ({})", err);

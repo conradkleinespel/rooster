@@ -16,7 +16,7 @@ pub mod v1;
 pub mod v2;
 
 use std::fs::File;
-use std::io::{Seek, SeekFrom, Read, Write, Result as IoResult, Error as IoError, ErrorKind as IoErrorKind};
+use std::io::Error as IoError;
 use std::ops::Deref;
 
 #[derive(Debug)]
@@ -29,10 +29,10 @@ pub enum PasswordError {
     WrongVersionError,
 }
 
-fn upgrade_v1_v2(master_password: &str, input: &[u8], v2_store: &mut v2::PasswordStore) -> Result<(), PasswordError> {
+fn upgrade_v1_v2(master_password: &str, input: Vec<u8>, v2_store: &mut v2::PasswordStore) -> Result<(), PasswordError> {
 	println!("starting v1 to v2");
 
-	let passwords = match v1::get_all_passwords(master_password, input) {
+	let passwords = match v1::get_all_passwords(master_password, input.deref()) {
 		Ok(passwords) => passwords,
 		Err(err) => {
 			match err {
@@ -65,7 +65,7 @@ fn upgrade_v1_v2(master_password: &str, input: &[u8], v2_store: &mut v2::Passwor
 		    created_at: p.created_at,
 		    updated_at: p.updated_at,
 		};
-		try!(v2_store.add_password(&v2_password));
+		try!(v2_store.add_password(v2_password));
 	}
 
 	println!("copied passwords...");
@@ -73,9 +73,9 @@ fn upgrade_v1_v2(master_password: &str, input: &[u8], v2_store: &mut v2::Passwor
 	Ok(())
 }
 
-pub fn upgrade(master_password: &str, input: &[u8], file: &mut File) -> Result<v2::PasswordStore, PasswordError> {
-    let v2_store = try!(v2::PasswordStore::from_input(master_password, input));
-    try!(upgrade_v1_v2(master_password, input, v2_store));
+pub fn upgrade(master_password: String, input: Vec<u8>, file: &mut File) -> Result<v2::PasswordStore, PasswordError> {
+    let mut v2_store = try!(v2::PasswordStore::from_input(master_password.clone(), input.clone()));
+    try!(upgrade_v1_v2(master_password.deref(), input, &mut v2_store));
     try!(v2_store.sync(file));
     Ok(v2_store)
 }

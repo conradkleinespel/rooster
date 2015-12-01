@@ -18,9 +18,7 @@ use super::super::crypto::digest::Digest;
 use super::super::aes;
 use super::PasswordError;
 use rustc_serialize::json;
-use std::io::{Seek, SeekFrom, Read};
 use std::ops::Drop;
-use std::fs::File;
 
 /// The Rooster file format
 ///
@@ -98,7 +96,7 @@ pub fn get_all_passwords(master_password: &str, encrypted: &[u8]) -> Result<Vec<
         let iv = &encrypted[encrypted.len() - IV_LEN ..];
 
         // Derive a 256 bits encryption key from the password.
-        let mut key = generate_encryption_key(master_password);
+        let key = generate_encryption_key(master_password);
 
         // Remove the IV before decoding, otherwise, we cant decrypt the data.
         let encrypted = &encrypted[.. encrypted.len() - IV_LEN];
@@ -108,7 +106,7 @@ pub fn get_all_passwords(master_password: &str, encrypted: &[u8]) -> Result<Vec<
 
         match decrypted_maybe {
             Ok(decrypted) => {
-                let mut encoded = String::from_utf8_lossy(decrypted.as_ref()).into_owned();
+                let encoded = String::from_utf8_lossy(decrypted.as_ref()).into_owned();
 
                 // This should never fail. The file contents should always be
                 // valid JSON.

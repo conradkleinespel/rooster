@@ -14,6 +14,7 @@
 
 use super::super::getopts;
 use super::super::password;
+use super::super::safe_string::SafeString;
 use super::super::rand::{Rng, OsRng};
 use std::io::Write;
 
@@ -128,7 +129,7 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
     let password = password::v2::Password::new(
         app_name.clone(),
         username,
-        password_as_string
+        SafeString::new(password_as_string)
     );
 
     match store.add_password(password) {

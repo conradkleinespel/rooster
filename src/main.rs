@@ -32,6 +32,8 @@ use std::io::Read;
 use std::path::Path;
 use getopts::Options;
 use rpassword::read_password;
+use safe_string::SafeString;
+use safe_vec::SafeVec;
 
 mod macros;
 mod aes;
@@ -119,15 +121,16 @@ fn execute_command_from_filename(matches: &getopts::Matches, command: &Command, 
                 ::std::io::stderr().flush().unwrap();
                 match read_password() {
                     Ok(master_password) => {
+                        let master_password = SafeString::new(master_password);
                         let mut input: Vec<u8> = Vec::new();
                         try!(file.read_to_end(&mut input).map_err(|_| 1));
 
                         // Try to open the file as is.
-                        let mut store = match password::v2::PasswordStore::from_input(master_password.clone(), input.clone()) {
+                        let mut store = match password::v2::PasswordStore::from_input(master_password.clone(), SafeVec::new(input.clone())) {
                             Ok(store) => store,
                             Err(_) => {
                                 // If we can't open the file, we may need to upgrade its format first.
-                                match password::upgrade(master_password.clone(), input.clone(), file) {
+                                match password::upgrade(master_password.clone(), SafeVec::new(input.clone()), file) {
                                     Ok(store) => store,
                                     Err(_) => {
                                         // If we can't upgrade its format either, we show a helpful

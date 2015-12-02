@@ -15,6 +15,7 @@
 use std::ops::Drop;
 use std::ops::Deref;
 
+#[derive(Clone, Debug)]
 pub struct SafeString {
     inner: String,
 }

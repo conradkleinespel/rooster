@@ -17,8 +17,12 @@ use super::super::crypto;
 use super::super::crypto::digest::Digest;
 use super::super::aes;
 use super::PasswordError;
+use super::super::safe_string::SafeString;
+use super::super::safe_vec::SafeVec;
 use rustc_serialize::json;
 use std::ops::Drop;
+use std::ops::DerefMut;
+use std::ops::Deref;
 
 /// The Rooster file format
 ///
@@ -61,31 +65,20 @@ pub struct Password {
     pub name: String,
     pub domain: Option<String>,
     pub username: String,
-    pub password: String,
+    pub password: SafeString,
     pub created_at: ffi::time_t,
     pub updated_at: ffi::time_t
 }
 
-impl Drop for Password {
-    fn drop(&mut self) {
-        self.password.clear();
-        for _ in 0 .. self.password.capacity() {
-            self.password.push('0');
-        }
-    }
-}
-
 /// Derives a 256 bits encryption key from the password.
-fn generate_encryption_key(master_password: &str) -> Vec<u8> {
+fn generate_encryption_key(master_password: &str) -> SafeVec {
     // Generate the key.
-    let mut key: [u8; KEY_LEN] = [0; KEY_LEN];
+    let mut key = SafeVec::new(Vec::<u8>::with_capacity(KEY_LEN));
     let mut hash = crypto::sha2::Sha256::new();
     hash.input(master_password.as_bytes());
-    hash.result(&mut key);
+    hash.result(key.deref_mut());
 
-    let out = key.to_vec();
-
-    out
+    key
 }
 
 pub fn get_all_passwords(master_password: &str, encrypted: &[u8]) -> Result<Vec<Password>, PasswordError> {
@@ -102,15 +95,15 @@ pub fn get_all_passwords(master_password: &str, encrypted: &[u8]) -> Result<Vec<
         let encrypted = &encrypted[.. encrypted.len() - IV_LEN];
 
         // Decrypt the data and remvoe the descryption key from memory.
-        let decrypted_maybe = aes::decrypt(encrypted, key.as_ref(), &iv);
+        let decrypted_maybe = aes::decrypt(encrypted, key.deref(), &iv);
 
         match decrypted_maybe {
             Ok(decrypted) => {
-                let encoded = String::from_utf8_lossy(decrypted.as_ref()).into_owned();
+                let encoded = SafeString::new(String::from_utf8_lossy(decrypted.deref()).into_owned());
 
                 // This should never fail. The file contents should always be
                 // valid JSON.
-                let passwords = json::decode::<Schema>(encoded.as_ref()).unwrap().passwords;
+                let passwords = json::decode::<Schema>(encoded.deref()).unwrap().passwords;
 
                 passwords
             },

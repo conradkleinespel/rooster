@@ -15,6 +15,7 @@
 use super::super::getopts;
 use super::super::password;
 use std::io::Write;
+use std::ops::Deref;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -38,7 +39,7 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
 
     match store.get_password(app_name) {
         Some(ref password) => {
-            write!(::std::io::stdout(), "{}", password.password).unwrap();
+            write!(::std::io::stdout(), "{}", password.password.deref()).unwrap();
             ::std::io::stdout().flush().unwrap();
             write!(::std::io::stderr(), "\n").unwrap();
             ::std::io::stderr().flush().unwrap();

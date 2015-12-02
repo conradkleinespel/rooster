@@ -15,6 +15,7 @@
 use super::super::getopts;
 use super::generate::PasswordSpec;
 use super::generate::generate_hard_password;
+use super::super::safe_string::SafeString;
 use super::super::ffi;
 use super::super::password;
 use std::io::Write;
@@ -49,7 +50,7 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
 
     match store.delete_password(app_name.deref()) {
         Ok(mut previous) => {
-            previous.password = password_as_string;
+            previous.password = SafeString::new(password_as_string);
             previous.updated_at = ffi::time();
 
             match store.add_password(previous) {

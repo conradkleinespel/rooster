@@ -14,7 +14,9 @@
 
 use std::ops::Drop;
 use std::ops::Deref;
+use std::ops::DerefMut;
 
+#[derive(Clone, Debug)]
 pub struct SafeVec {
     inner: Vec<u8>,
 }
@@ -41,5 +43,11 @@ impl Deref for SafeVec {
 
     fn deref(&self) -> &[u8] {
         self.inner.deref()
+    }
+}
+
+impl DerefMut for SafeVec {
+    fn deref_mut(&mut self) -> &mut [u8] {
+        self.inner.deref_mut()
     }
 }

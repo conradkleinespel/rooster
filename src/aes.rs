@@ -8,6 +8,7 @@
 
 use super::crypto::{symmetriccipher, buffer, aes, blockmodes};
 use super::crypto::buffer::{ReadBuffer, WriteBuffer, BufferResult};
+use super::safe_vec::SafeVec;
 
 // Encrypt a buffer with the given key and iv using
 // AES-256/CBC/Pkcs encryption.
@@ -78,7 +79,7 @@ pub fn encrypt(data: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>, symmetricc
 // comments in that function. In non-example code, if desired, it is possible to
 // share much of the implementation using closures to hide the operation
 // being performed. However, such code would make this example less clear.
-pub fn decrypt(encrypted_data: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>, symmetriccipher::SymmetricCipherError> {
+pub fn decrypt(encrypted_data: &[u8], key: &[u8], iv: &[u8]) -> Result<SafeVec, symmetriccipher::SymmetricCipherError> {
     let mut decryptor = aes::cbc_decryptor(
             aes::KeySize::KeySize256,
             key,
@@ -101,5 +102,5 @@ pub fn decrypt(encrypted_data: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>, 
         }
     }
 
-    Ok(final_result)
+    Ok(SafeVec::new(final_result))
 }

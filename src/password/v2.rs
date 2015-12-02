@@ -18,15 +18,16 @@ use super::super::aes;
 use super::super::rand::{Rng, OsRng};
 use super::super::byteorder::{WriteBytesExt, BigEndian, Error as ByteorderError};
 use super::super::rustc_serialize::json;
+use super::super::safe_string::SafeString;
+use super::super::safe_vec::SafeVec;
 use super::PasswordError;
-use std::ops::Deref;
 use std::mem;
 use std::io::{Seek, SeekFrom, Error as IoError, ErrorKind as IoErrorKind, Read, Write};
 use std::borrow::ToOwned;
 use std::fs::File;
 use std::ops::Drop;
-#[cfg(test)]
-use std::fs::OpenOptions;
+use std::ops::DerefMut;
+use std::ops::Deref;
 
 /// The schema of the JSON content in the password file.
 ///
@@ -88,16 +89,16 @@ fn generate_random_salt() -> [u8; SALT_LEN] {
 }
 
 /// Derives a 256 bits encryption key from the password.
-fn generate_encryption_key(master_password: &str, salt: [u8; SALT_LEN]) -> [u8; KEY_LEN] {
+fn generate_encryption_key(master_password: &str, salt: [u8; SALT_LEN]) -> SafeVec {
     let scrypt_params = crypto::scrypt::ScryptParams::new(
         SCRYPT_PARAM_LOG2_N,
         SCRYPT_PARAM_R,
         SCRYPT_PARAM_P
     );
 
-    let mut output: [u8; KEY_LEN] = [0; KEY_LEN];
+    let mut output = SafeVec::new(Vec::<u8>::with_capacity(KEY_LEN));
 
-    crypto::scrypt::scrypt(master_password.as_bytes(), &salt, &scrypt_params, &mut output);
+    crypto::scrypt::scrypt(master_password.as_bytes(), &salt, &scrypt_params, output.deref_mut());
 
     output
 }
@@ -121,13 +122,13 @@ pub struct Password {
     pub name: String,
     pub domain: Option<String>,
     pub username: String,
-    pub password: String,
+    pub password: SafeString,
     pub created_at: ffi::time_t,
     pub updated_at: ffi::time_t
 }
 
 impl Password {
-    pub fn new(name: String, username: String, password: String) -> Password {
+    pub fn new(name: String, username: String, password: SafeString) -> Password {
         let timestamp = ffi::time();
         Password {
             name: name,
@@ -140,33 +141,15 @@ impl Password {
     }
 }
 
-impl Drop for Password {
-    fn drop(&mut self) {
-        self.password.clear();
-        for _ in 0 .. self.password.capacity() {
-            self.password.push('0');
-        }
-    }
-}
-
 pub struct PasswordStore {
-    master_password: String,
-    key: [u8; KEY_LEN],
+    master_password: SafeString,
+    key: SafeVec,
     salt: [u8; SALT_LEN],
     schema: Schema,
 }
 
-impl Drop for PasswordStore {
-    fn drop(&mut self) {
-        self.master_password.clear();
-        for _ in 0 .. self.master_password.capacity() {
-            self.master_password.push('0');
-        }
-    }
-}
-
 impl PasswordStore {
-    pub fn new(master_password: String) -> PasswordStore {
+    pub fn new(master_password: SafeString) -> PasswordStore {
         let salt = generate_random_salt();
 
         let key = generate_encryption_key(master_password.deref(), salt);
@@ -179,8 +162,8 @@ impl PasswordStore {
         }
     }
 
-    pub fn from_input(master_password: String, input: Vec<u8>) -> Result<PasswordStore, PasswordError> {
-        if input.len() == 0 {
+    pub fn from_input(master_password: SafeString, input: SafeVec) -> Result<PasswordStore, PasswordError> {
+        if input.deref().len() == 0 {
             return Ok(PasswordStore::new(master_password));
         }
 

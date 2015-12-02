@@ -18,6 +18,8 @@ pub mod v2;
 use std::fs::File;
 use std::io::Error as IoError;
 use std::ops::Deref;
+use super::safe_string::SafeString;
+use super::safe_vec::SafeVec;
 
 #[derive(Debug)]
 pub enum PasswordError {
@@ -29,7 +31,7 @@ pub enum PasswordError {
     WrongVersionError,
 }
 
-fn upgrade_v1_v2(master_password: &str, input: Vec<u8>, v2_store: &mut v2::PasswordStore) -> Result<(), PasswordError> {
+fn upgrade_v1_v2(master_password: &str, input: SafeVec, v2_store: &mut v2::PasswordStore) -> Result<(), PasswordError> {
 	let passwords = match v1::get_all_passwords(master_password, input.deref()) {
 		Ok(passwords) => passwords,
 		Err(err) => {
@@ -66,7 +68,7 @@ fn upgrade_v1_v2(master_password: &str, input: Vec<u8>, v2_store: &mut v2::Passw
 	Ok(())
 }
 
-pub fn upgrade(master_password: String, input: Vec<u8>, file: &mut File) -> Result<v2::PasswordStore, PasswordError> {
+pub fn upgrade(master_password: SafeString, input: SafeVec, file: &mut File) -> Result<v2::PasswordStore, PasswordError> {
 
     let mut v2_store = v2::PasswordStore::new(master_password.clone());
     try!(upgrade_v1_v2(master_password.deref(), input, &mut v2_store));

@@ -121,8 +121,13 @@ fn execute_command_from_filename(matches: &getopts::Matches, command: &Command, 
                         let mut input: Vec<u8> = Vec::new();
                         try!(file.read_to_end(&mut input).map_err(|_| 1));
 
-						// Upgrade the rooster file to the newest format supported.
-						let mut store = try!(password::upgrade(master_password, input, file).map_err(|_| 1));
+                        let mut store = try!(
+                            // Try to open the file as is.
+                            password::v2::PasswordStore::from_input(master_password.clone(), input.clone())
+                            // If we can't open the file, we may need to upgrade its format first.
+                            .or_else(|_| password::upgrade(master_password.clone(), input.clone(), file))
+                            // No ? Well, our rooster binary is too old. We're screwed.
+                            .map_err(|_| 1));
 
                         // Execute the command and save the new password list
                         try!((command.callback_exec)(matches, &mut store).map_err(|_| 1));

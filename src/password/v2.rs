@@ -166,7 +166,7 @@ impl Drop for PasswordStore {
 }
 
 impl PasswordStore {
-    fn new(master_password: String) -> PasswordStore {
+    pub fn new(master_password: String) -> PasswordStore {
         let salt = generate_random_salt();
 
         let key = generate_encryption_key(master_password.deref(), salt);

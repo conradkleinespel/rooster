@@ -30,8 +30,6 @@ pub enum PasswordError {
 }
 
 fn upgrade_v1_v2(master_password: &str, input: Vec<u8>, v2_store: &mut v2::PasswordStore) -> Result<(), PasswordError> {
-	println!("starting v1 to v2");
-
 	let passwords = match v1::get_all_passwords(master_password, input.deref()) {
 		Ok(passwords) => passwords,
 		Err(err) => {
@@ -52,9 +50,6 @@ fn upgrade_v1_v2(master_password: &str, input: Vec<u8>, v2_store: &mut v2::Passw
 			}
 		}
 	};
-    println!("{:?}", passwords);
-
-	println!("copying passwords to new file");
 
 	for p in passwords.iter() {
 		let v2_password = v2::Password {
@@ -68,13 +63,12 @@ fn upgrade_v1_v2(master_password: &str, input: Vec<u8>, v2_store: &mut v2::Passw
 		try!(v2_store.add_password(v2_password));
 	}
 
-	println!("copied passwords...");
-
 	Ok(())
 }
 
 pub fn upgrade(master_password: String, input: Vec<u8>, file: &mut File) -> Result<v2::PasswordStore, PasswordError> {
-    let mut v2_store = try!(v2::PasswordStore::from_input(master_password.clone(), input.clone()));
+
+    let mut v2_store = v2::PasswordStore::new(master_password.clone());
     try!(upgrade_v1_v2(master_password.deref(), input, &mut v2_store));
     try!(v2_store.sync(file));
     Ok(v2_store)

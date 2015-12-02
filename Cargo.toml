@@ -1,12 +1,12 @@
 [package]
 name = "rooster"
-version = "0.0.1"
+version = "1.0.0"
 authors = ["Conrad Kleinespel <conradk@conradk.com>"]
 
 [dependencies]
-rust-crypto = "*"
-rustc-serialize = "*"
-rand = "*"
-libc = "*"
-rpassword = "*"
-getopts = "*"
+rust-crypto = "0.2"
+rustc-serialize = "0.3"
+rand = "0.3"
+libc = "0.1"
+rpassword = "0.1"
+getopts = "0.2"

@@ -20,7 +20,6 @@ curl -sSf https://raw.githubusercontent.com/conradkleinespel/rooster/master/inst
 
 Here are some things that would be great to have in Rooster. If you want to make a suggestion, feel free to do so by opening an issue. If you are willing to work on Rooster (for free), please open an issue to we can help you and track your progress. If you don't have the time, that's fine too.
 
-- Enhance performance (cache KDF in memory after first use).
 - Signing the Rooster file, maybe with `GPG`, `HMAC` or something similar
 - Building a web frontend
 - Building a mobile app

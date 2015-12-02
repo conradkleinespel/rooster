@@ -121,18 +121,37 @@ fn execute_command_from_filename(matches: &getopts::Matches, command: &Command, 
                         let mut input: Vec<u8> = Vec::new();
                         try!(file.read_to_end(&mut input).map_err(|_| 1));
 
-                        let mut store = try!(
-                            // Try to open the file as is.
-                            password::v2::PasswordStore::from_input(master_password.clone(), input.clone())
-                            // If we can't open the file, we may need to upgrade its format first.
-                            .or_else(|_| password::upgrade(master_password.clone(), input.clone(), file))
-                            // No ? Well, our rooster binary is too old. We're screwed.
-                            .map_err(|_| 1));
+                        // Try to open the file as is.
+                        let mut store = match password::v2::PasswordStore::from_input(master_password.clone(), input.clone()) {
+                            Ok(store) => store,
+                            Err(_) => {
+                                // If we can't open the file, we may need to upgrade its format first.
+                                match password::upgrade(master_password.clone(), input.clone(), file) {
+                                    Ok(store) => store,
+                                    Err(_) => {
+                                        // If we can't upgrade its format either, we show a helpful
+                                        // error message.
+                                        println_err!("I could not upgrade the Rooster file. This could be because:");
+                                        println_err!("- your version of Rooster is outdated,");
+                                        println_err!("- your Rooster file is corrupted,");
+                                        println_err!("- your master password is wrong.");
+                                        println_err!("Try upgrading to the latest version of Rooster.");
+                                        return Err(1);
+                                    }
+                                }
+                            }
+                        };
 
                         // Execute the command and save the new password list
-                        try!((command.callback_exec)(matches, &mut store).map_err(|_| 1));
+                        try!((command.callback_exec)(matches, &mut store));
 
-                        store.sync(file).map_err(|_| 1)
+                        match store.sync(file) {
+                            Ok(()) => { Ok(()) },
+                            Err(err) => {
+                                println_err!("I could not save the password file ({:?}).", err);
+                                return Err(1);
+                            }
+                        }
                     },
                     Err(err) => {
                         println_err!("I could not read your master password ({})", err);

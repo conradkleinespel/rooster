@@ -20,7 +20,6 @@ use super::PasswordError;
 use super::super::safe_string::SafeString;
 use super::super::safe_vec::SafeVec;
 use rustc_serialize::json;
-use std::ops::Drop;
 use std::ops::DerefMut;
 use std::ops::Deref;
 
@@ -72,8 +71,11 @@ pub struct Password {
 
 /// Derives a 256 bits encryption key from the password.
 fn generate_encryption_key(master_password: &str) -> SafeVec {
-    // Generate the key.
-    let mut key = SafeVec::new(Vec::<u8>::with_capacity(KEY_LEN));
+    let mut vec = Vec::<u8>::with_capacity(KEY_LEN);
+    for _ in 0..KEY_LEN {
+        vec.push(0u8);
+    }
+    let mut key = SafeVec::new(vec);
     let mut hash = crypto::sha2::Sha256::new();
     hash.input(master_password.as_bytes());
     hash.result(key.deref_mut());

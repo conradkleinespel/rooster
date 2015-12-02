@@ -25,7 +25,6 @@ use std::mem;
 use std::io::{Seek, SeekFrom, Error as IoError, ErrorKind as IoErrorKind, Read, Write};
 use std::borrow::ToOwned;
 use std::fs::File;
-use std::ops::Drop;
 use std::ops::DerefMut;
 use std::ops::Deref;
 
@@ -96,7 +95,12 @@ fn generate_encryption_key(master_password: &str, salt: [u8; SALT_LEN]) -> SafeV
         SCRYPT_PARAM_P
     );
 
-    let mut output = SafeVec::new(Vec::<u8>::with_capacity(KEY_LEN));
+
+    let mut vec = Vec::<u8>::with_capacity(KEY_LEN);
+    for _ in 0..KEY_LEN {
+        vec.push(0u8);
+    }
+    let mut output = SafeVec::new(vec);
 
     crypto::scrypt::scrypt(master_password.as_bytes(), &salt, &scrypt_params, output.deref_mut());
 
@@ -142,7 +146,6 @@ impl Password {
 }
 
 pub struct PasswordStore {
-    master_password: SafeString,
     key: SafeVec,
     salt: [u8; SALT_LEN],
     schema: Schema,
@@ -155,7 +158,6 @@ impl PasswordStore {
         let key = generate_encryption_key(master_password.deref(), salt);
 
         PasswordStore {
-            master_password: master_password,
             key: key,
             salt: salt,
             schema: Schema::new(),
@@ -206,7 +208,6 @@ impl PasswordStore {
 
         // decrypt the data
         Ok(PasswordStore {
-            master_password: master_password,
             key: key,
             salt: salt,
             schema: Schema {

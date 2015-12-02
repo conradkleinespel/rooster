@@ -40,6 +40,7 @@ mod ffi;
 mod password;
 mod color;
 mod safe_string;
+mod safe_vec;
 
 const ROOSTER_FILE_DEFAULT: &'static str = ".passwords.rooster";
 

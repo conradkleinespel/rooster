@@ -165,9 +165,13 @@ impl PasswordStore {
     }
 
     pub fn from_input(master_password: SafeString, input: SafeVec) -> Result<PasswordStore, PasswordError> {
+        // TODO: is this actually used
         if input.deref().len() == 0 {
             return Ok(PasswordStore::new(master_password));
         }
+
+        // TODO: add minimum length checks on the input to avoid panic!() when we get an index that
+        // is not present in the input.
 
         // Version taken from network byte order (big endian).
         let version = 2u32.pow(3) * (input[0] as u32) + 2u32.pow(2) * (input[1] as u32) + 2u32.pow(1) * (input[2] as u32) + 2u32.pow(0) * (input[3] as u32);

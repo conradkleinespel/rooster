@@ -41,10 +41,15 @@ fn generate_password(alnum: bool, len: usize) -> String {
 
 /// Returns true if the password contains at least one digit, one uppercase letter and one
 /// lowercase letter.
-fn password_is_hard(password: &str) -> bool {
+fn password_is_hard(password: &str, alnum: bool) -> bool {
+    let is_punctuation = |c| -> bool {
+        "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~".find(c).is_some()
+    };
+
     if password.find(char::is_numeric).is_some()
     && password.find(char::is_lowercase).is_some()
-    && password.find(char::is_uppercase).is_some() {
+    && password.find(char::is_uppercase).is_some()
+    && (alnum || password.find(is_punctuation).is_some()) {
         true
     } else {
         false
@@ -54,7 +59,7 @@ fn password_is_hard(password: &str) -> bool {
 pub fn generate_hard_password(alnum: bool, len: usize) -> String {
     loop {
         let password = generate_password(alnum, len);
-        if password_is_hard(password.as_ref()) {
+        if password_is_hard(password.as_ref(), alnum) {
             return password;
         }
     }
@@ -73,11 +78,12 @@ impl PasswordSpec {
             password_len = match len.parse::<usize>() {
                 Ok(parsed_len) => {
                     // We want passwords to contain at least one uppercase letter, one lowercase
-                    // letter and one digit. So we need at least 3 characters for each password.
+                    // letter and one digit. So we need at least 4 characters for each password.
                     // This checks makes sure we don't run into an infinite loop trying to generate
-                    // a password of length 2 with 3 different kinds of characters.
-                    if parsed_len < 3 {
-                        println_err!("Woops! The length of the password must be at least 3. This allows us");
+                    // a password of length <4 with 4 different kinds of characters (uppercase,
+                    // lowercase, numeric, punctuation).
+                    if parsed_len < 4 {
+                        println_err!("Woops! The length of the password must be at least 4. This allows us");
                         println_err!("to make sure each password contains at least one lowercase letter, one");
                         println_err!("uppercase letter and one number.");
                         return None;

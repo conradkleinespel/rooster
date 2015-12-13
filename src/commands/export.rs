@@ -17,8 +17,6 @@ use super::super::password;
 use super::super::safe_string::SafeString;
 use super::super::rustc_serialize::json;
 use std::ops::Deref;
-use std::io::stdin;
-use std::io::Write;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -30,27 +28,6 @@ pub fn callback_help() {
 }
 
 pub fn callback_exec(_matches: &getopts::Matches, store: &mut password::v2::PasswordStore) -> Result<(), i32> {
-    println_err!("Printing all passwords unencrypted can be risky. Are you sure you want to proceed? [y/n]");
-    let msg = format!("I did not understand that. Are you sure you want to print all passwords unencrypted? [y/n]");
-    loop {
-        let mut line = String::new();
-        match stdin().read_line(&mut line) {
-            Ok(_) => {
-                if line.starts_with("n") {
-                    return Ok(());
-                } else if line.starts_with("y") {
-                    break;
-                } else {
-                    println_err!("{}", msg);
-                }
-            },
-            Err(_) => {
-                println_err!("{}", msg);
-                return Err(1);
-            }
-        }
-    }
-
     let passwords_ref = store.get_all_passwords();
     let passwords = SafeString::new(json::encode(&passwords_ref).unwrap());
     println!("{}", passwords.deref());

@@ -87,8 +87,7 @@ fn get_password_file(filename: &str) -> IoResult<File> {
         Err(err) => {
             match err.kind() {
                 IoErrorKind::NotFound => {
-                    println_err!("I could not find the password file \"{}\". Would you like to create it now? [y/n]", filename);
-                    let msg = format!("I did not understand that. Would you like to create the password file \"{}\" now? [y/n]", filename);
+                    println_err!("I cannot find a password file at \"{}\". Would you like to create one now? [y/n]", filename);
                     loop {
                         let mut line = String::new();
                         match stdin().read_line(&mut line) {
@@ -98,11 +97,11 @@ fn get_password_file(filename: &str) -> IoResult<File> {
                                 } else if line.starts_with("n") {
                                     return Err(IoError::new(IoErrorKind::Other, "no password file available"));
                                 } else {
-                                    println_err!("{}", msg);
+                                    println_stderr!("I did not get that. Create a password file now? [y/n]");
                                 }
                             },
-                            Err(_) => {
-                                println_err!("{}", msg);
+                            Err(err) => {
+                                return Err(err);
                             }
                         }
                     }

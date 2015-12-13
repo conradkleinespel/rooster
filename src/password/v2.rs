@@ -62,13 +62,6 @@ const SCRYPT_PARAM_P: u32 = 1;
 /// The version of this lib.
 const VERSION: u32 = 2;
 
-/// The Rooster file format
-///
-/// rooster version (unsigned int, big endian): 32 bits
-/// salt: 256 bits
-/// iv: 256 bits
-/// encrypted blob: variable length
-
 // Create a random IV.
 fn generate_random_iv() -> [u8; IV_LEN] {
     let mut bytes: [u8; IV_LEN] = [0; IV_LEN];
@@ -147,6 +140,13 @@ pub struct PasswordStore {
     schema: Schema,
 }
 
+/// Read and writes to a Rooster file
+///
+/// The Rooster file has the following format:
+/// - rooster version: u32, big endian
+/// - salt: 256 bits
+/// - iv: 256 bits
+/// - encrypted blob: variable length
 impl PasswordStore {
     pub fn new(master_password: SafeString) -> PasswordStore {
         let salt = generate_random_salt();

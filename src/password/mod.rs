@@ -15,7 +15,6 @@
 pub mod v1;
 pub mod v2;
 
-use std::fs::File;
 use std::io::Error as IoError;
 use std::ops::Deref;
 use super::safe_string::SafeString;
@@ -31,29 +30,8 @@ pub enum PasswordError {
     WrongVersionError,
 }
 
-fn upgrade_v1_v2(master_password: &str, input: SafeVec, v2_store: &mut v2::PasswordStore) -> Result<(), PasswordError> {
-	let passwords = match v1::get_all_passwords(master_password, input.deref()) {
-		Ok(passwords) => passwords,
-		Err(err) => {
-			match err {
-				// The Rooster file v1 was not explicitly versioned, so we don't know if a
-				// decryption error is because there was actually an error or because the
-				// file uses a higher version that the v1-upgrader does not understand.
-				//
-				// We let this one through, so we will either get an error on a following
-				// upgrader, or an error in the command specific code, or no error if
-				// everything is fine.
-				PasswordError::DecryptionError => {
-					return Ok(());
-				},
-				_ => {
-					return Err(err);
-				}
-			}
-		}
-	};
-
-	for p in passwords.iter() {
+fn upgrade_v1_v2(v1_passwords: &[v1::Password], v2_store: &mut v2::PasswordStore) -> Result<(), PasswordError> {
+	for p in v1_passwords.iter() {
 		let v2_password = v2::Password {
 			name: p.name.clone(),
 		    username: p.username.clone(),
@@ -67,10 +45,14 @@ fn upgrade_v1_v2(master_password: &str, input: SafeVec, v2_store: &mut v2::Passw
 	Ok(())
 }
 
-pub fn upgrade(master_password: SafeString, input: SafeVec, file: &mut File) -> Result<v2::PasswordStore, PasswordError> {
+pub fn upgrade(master_password: SafeString, input: SafeVec) -> Result<v2::PasswordStore, PasswordError> {
+    // If we can't read v1 passwords, we have a hard error, because we previously tried
+    // to read the passwords as v2. Which failed. That means we can't upgrade.
+    let v1_passwords = try!(v1::get_all_passwords(master_password.deref(), input.deref()));
 
+    // Upgrade from v1 to v2 if we could read v1 passwords.
     let mut v2_store = v2::PasswordStore::new(master_password.clone());
-    try!(upgrade_v1_v2(master_password.deref(), input, &mut v2_store));
-    try!(v2_store.sync(file));
+    try!(upgrade_v1_v2(v1_passwords.deref(), &mut v2_store));
+
     Ok(v2_store)
 }

@@ -61,6 +61,7 @@ static COMMANDS: &'static [Command] = &[
     Command { name: "regenerate", callback_exec: commands::regenerate::callback_exec, callback_help: commands::regenerate::callback_help },
     Command { name: "list", callback_exec: commands::list::callback_exec, callback_help: commands::list::callback_help },
     Command { name: "export", callback_exec: commands::export::callback_exec, callback_help: commands::export::callback_help },
+    Command { name: "change-master", callback_exec: commands::change_master::callback_exec, callback_help: commands::change_master::callback_help },
 ];
 
 fn command_from_name(name: &str) -> Option<&'static Command> {
@@ -132,7 +133,7 @@ fn execute_command_from_filename(matches: &getopts::Matches, command: &Command, 
                             Ok(store) => store,
                             Err(_) => {
                                 // If we can't open the file, we may need to upgrade its format first.
-                                match password::upgrade(master_password.clone(), SafeVec::new(input.clone()), file) {
+                                match password::upgrade(master_password.clone(), SafeVec::new(input.clone())) {
                                     Ok(store) => store,
                                     Err(_) => {
                                         // If we can't upgrade its format either, we show a helpful
@@ -220,13 +221,14 @@ fn usage() {
     println!("    -l, --length      Set a custom length for the generated password, default is 32");
     println!("");
     println!("Commands:");
-    println!("    add               Add a new password.");
+    println!("    add               Add a new password");
     println!("    delete            Delete a password");
     println!("    generate          Generate a password");
     println!("    regenerate        Re-generate a previously existing password");
     println!("    get               Retrieve a password");
     println!("    list              List all apps and usernames");
     println!("    export            List all passwords unencrypted as JSON");
+    println!("    change-master     Change your master password");
 }
 
 fn main() {

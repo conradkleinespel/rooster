@@ -309,4 +309,8 @@ impl PasswordStore {
     pub fn has_password(&self, name: &str) -> bool {
         self.get_password(name).is_some()
     }
+
+    pub fn change_master_password(&mut self, master_password: &str) {
+        self.key = generate_encryption_key(master_password, self.salt);
+    }
 }

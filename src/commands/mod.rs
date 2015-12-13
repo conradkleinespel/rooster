@@ -19,3 +19,4 @@ pub mod generate;
 pub mod list;
 pub mod regenerate;
 pub mod export;
+pub mod change_master;

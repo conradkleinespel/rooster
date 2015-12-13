@@ -206,11 +206,11 @@ impl PasswordStore {
         // Derive a 256 bits encryption key from the password.
         let key = generate_encryption_key(master_password.deref(), salt);
 
-        // Decrypt the data and remvoe the descryption key from memory.
+        // Decrypt the data
         let passwords = match aes::decrypt(blob.deref(), key.as_ref(), iv.as_ref()) {
             Ok(decrypted) => {
-                let encoded = String::from_utf8_lossy(decrypted.as_ref()).into_owned();
-                json::decode::<Schema>(encoded.as_ref()).unwrap().passwords
+                let encoded = SafeString::new(String::from_utf8_lossy(decrypted.as_ref()).into_owned());
+                json::decode::<Schema>(encoded.deref()).unwrap().passwords
             },
             Err(_) => {
                 return Err(PasswordError::DecryptionError);
@@ -229,11 +229,11 @@ impl PasswordStore {
 
     pub fn sync(&self, file: &mut File) -> Result<(), PasswordError> {
         // This should never fail. The structs are all encodable.
-        let encoded_after = json::encode(&self.schema).unwrap();
+        let encoded_after = SafeString::new(json::encode(&self.schema).unwrap());
 
         // Encrypt the data with a new salt and a new IV.
         let iv = generate_random_iv();
-        let encrypted_maybe = aes::encrypt(encoded_after.as_bytes(), self.key.as_ref(), iv.as_ref());
+        let encrypted_maybe = aes::encrypt(encoded_after.deref().as_bytes(), self.key.as_ref(), iv.as_ref());
 
         let encrypted = match encrypted_maybe {
             Ok(val) => { val },

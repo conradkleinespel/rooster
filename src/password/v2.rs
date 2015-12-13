@@ -124,7 +124,6 @@ impl Schema {
 #[derive(Clone, Debug, RustcDecodable, RustcEncodable)]
 pub struct Password {
     pub name: String,
-    pub domain: Option<String>,
     pub username: String,
     pub password: SafeString,
     pub created_at: ffi::time_t,
@@ -136,7 +135,6 @@ impl Password {
         let timestamp = ffi::time();
         Password {
             name: name,
-            domain: None,
             username: username,
             password: password,
             created_at: timestamp,

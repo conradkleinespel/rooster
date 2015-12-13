@@ -56,7 +56,6 @@ fn upgrade_v1_v2(master_password: &str, input: SafeVec, v2_store: &mut v2::Passw
 	for p in passwords.iter() {
 		let v2_password = v2::Password {
 			name: p.name.clone(),
-		    domain: p.domain.clone(),
 		    username: p.username.clone(),
 		    password: p.password.clone(),
 		    created_at: p.created_at,

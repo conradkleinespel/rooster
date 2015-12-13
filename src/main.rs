@@ -59,6 +59,7 @@ static COMMANDS: &'static [Command] = &[
     Command { name: "generate", callback_exec: commands::generate::callback_exec, callback_help: commands::generate::callback_help },
     Command { name: "regenerate", callback_exec: commands::regenerate::callback_exec, callback_help: commands::regenerate::callback_help },
     Command { name: "list", callback_exec: commands::list::callback_exec, callback_help: commands::list::callback_help },
+    Command { name: "export", callback_exec: commands::export::callback_exec, callback_help: commands::export::callback_help },
 ];
 
 fn command_from_name(name: &str) -> Option<&'static Command> {
@@ -223,7 +224,8 @@ fn usage() {
     println!("    generate          Generate a password");
     println!("    regenerate        Re-generate a previously existing password");
     println!("    get               Retrieve a password");
-    println!("    list              List all passwords");
+    println!("    list              List all apps and usernames");
+    println!("    export            List all passwords unencrypted as JSON");
 }
 
 fn main() {

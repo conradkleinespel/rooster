@@ -16,14 +16,12 @@ use super::super::ffi;
 use super::super::crypto;
 use super::super::aes;
 use super::super::rand::{Rng, OsRng};
-use super::super::byteorder::{WriteBytesExt, BigEndian, Error as ByteorderError};
+use super::super::byteorder::{ReadBytesExt, WriteBytesExt, BigEndian, Error as ByteorderError};
 use super::super::rustc_serialize::json;
 use super::super::safe_string::SafeString;
 use super::super::safe_vec::SafeVec;
 use super::PasswordError;
-use std::mem;
-use std::io::{Seek, SeekFrom, Error as IoError, ErrorKind as IoErrorKind, Read, Write};
-use std::borrow::ToOwned;
+use std::io::{Seek, SeekFrom, Error as IoError, ErrorKind as IoErrorKind, Read, Write, Cursor};
 use std::fs::File;
 use std::ops::DerefMut;
 use std::ops::Deref;
@@ -163,36 +161,47 @@ impl PasswordStore {
     }
 
     pub fn from_input(master_password: SafeString, input: SafeVec) -> Result<PasswordStore, PasswordError> {
-        // TODO: is this actually used
-        if input.deref().len() == 0 {
-            return Ok(PasswordStore::new(master_password));
-        }
-
-        // TODO: add minimum length checks on the input to avoid panic!() when we get an index that
-        // is not present in the input.
+        let mut reader = Cursor::new(input.deref());
 
         // Version taken from network byte order (big endian).
-        let version = 2u32.pow(3) * (input[0] as u32) + 2u32.pow(2) * (input[1] as u32) + 2u32.pow(1) * (input[2] as u32) + 2u32.pow(0) * (input[3] as u32);
-        if version != VERSION {
-            return Err(PasswordError::WrongVersionError);
+        match reader.read_u32::<BigEndian>() {
+            Ok(version) => {
+                if version != VERSION {
+                    return Err(PasswordError::WrongVersionError);
+                }
+            }
+            Err(err) => {
+                let err = match err {
+                   ByteorderError::UnexpectedEOF => PasswordError::Io(IoError::new(IoErrorKind::Other, "unexpected eof")),
+                   ByteorderError::Io(io_err) => PasswordError::Io(io_err)
+                };
+                return Err(err);
+            }
         }
 
-		// Copy the salt into a fixed size buffer.
-        let salt_orig = &input[mem::size_of::<u32>() .. mem::size_of::<u32>() + SALT_LEN];
+        // Read the old salt
         let mut salt: [u8; SALT_LEN] = [0u8; SALT_LEN];
-        for (i, byte) in salt_orig.iter().enumerate() {
-            salt[i] = *byte;
-        }
+        try!(reader.read(&mut salt).map_err(|io_err| PasswordError::Io(io_err)).and_then(|num_bytes| {
+            if num_bytes == SALT_LEN {
+                Ok(())
+            } else {
+                Err(PasswordError::Io(IoError::new(IoErrorKind::Other, "unexpected eof")))
+            }
+        }));
 
         // Copy the IV into a fixed size buffer.
-        let iv_orig = &input[mem::size_of::<u32>() + SALT_LEN .. mem::size_of::<u32>() + SALT_LEN + IV_LEN];
         let mut iv: [u8; IV_LEN] = [0u8; IV_LEN];
-        for (i, byte) in iv_orig.iter().enumerate() {
-            iv[i] = *byte;
-        }
+        try!(reader.read(&mut iv).map_err(|io_err| PasswordError::Io(io_err)).and_then(|num_bytes| {
+            if num_bytes == IV_LEN {
+                Ok(())
+            } else {
+                Err(PasswordError::Io(IoError::new(IoErrorKind::Other, "unexpected eof")))
+            }
+        }));
 
         // The encrypted password data.
-        let blob = input[mem::size_of::<u32>() + SALT_LEN + IV_LEN ..].to_owned();
+        let mut blob: Vec<u8> = Vec::new();
+        try!(reader.read_to_end(&mut blob).map_err(|io_err| PasswordError::Io(io_err)));
 
         // Derive a 256 bits encryption key from the password.
         let key = generate_encryption_key(master_password.deref(), salt);

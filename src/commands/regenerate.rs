@@ -13,11 +13,10 @@
 // limitations under the License.
 
 use super::super::getopts;
-use super::generate::PasswordSpec;
-use super::generate::generate_hard_password;
 use super::super::safe_string::SafeString;
 use super::super::ffi;
 use super::super::password;
+use super::super::generate::{PasswordSpec, generate_hard_password};
 use std::io::Write;
 use std::ops::Deref;
 

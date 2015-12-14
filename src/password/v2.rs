@@ -210,7 +210,12 @@ impl PasswordStore {
         let passwords = match aes::decrypt(blob.deref(), key.as_ref(), iv.as_ref()) {
             Ok(decrypted) => {
                 let encoded = SafeString::new(String::from_utf8_lossy(decrypted.as_ref()).into_owned());
-                json::decode::<Schema>(encoded.deref()).unwrap().passwords
+                match json::decode::<Schema>(encoded.deref()) {
+                    Ok(json) => json.passwords,
+                    Err(_) => {
+                        return Err(PasswordError::InvalidJsonError);
+                    }
+                }
             },
             Err(_) => {
                 return Err(PasswordError::DecryptionError);
@@ -229,13 +234,17 @@ impl PasswordStore {
 
     pub fn sync(&self, file: &mut File) -> Result<(), PasswordError> {
         // This should never fail. The structs are all encodable.
-        let encoded_after = SafeString::new(json::encode(&self.schema).unwrap());
+        let json_schema = match json::encode(&self.schema) {
+            Ok(json_schema) => json_schema,
+            Err(_) => {
+                return Err(PasswordError::InvalidJsonError);
+            }
+        };
+        let json_schema = SafeString::new(json_schema);
 
         // Encrypt the data with a new salt and a new IV.
         let iv = generate_random_iv();
-        let encrypted_maybe = aes::encrypt(encoded_after.deref().as_bytes(), self.key.as_ref(), iv.as_ref());
-
-        let encrypted = match encrypted_maybe {
+        let encrypted = match aes::encrypt(json_schema.deref().as_bytes(), self.key.as_ref(), iv.as_ref()) {
             Ok(val) => { val },
             Err(_) => { return Err(PasswordError::EncryptionError) }
         };

@@ -29,6 +29,7 @@ pub enum PasswordError {
     Io(IoError),
     WrongVersionError,
     InvalidJsonError,
+    CorruptionError,
 }
 
 fn upgrade_v1_v2(v1_passwords: &[v1::Password], v2_store: &mut v2::PasswordStore) -> Result<(), PasswordError> {

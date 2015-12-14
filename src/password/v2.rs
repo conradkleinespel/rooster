@@ -13,7 +13,9 @@
 // limitations under the License.
 
 use super::super::ffi;
-use super::super::crypto;
+use super::super::crypto::{scrypt, hmac, sha2};
+use super::super::crypto::digest::Digest;
+use super::super::crypto::mac::{Mac, MacResult};
 use super::super::aes;
 use super::super::rand::{Rng, OsRng};
 use super::super::byteorder::{ReadBytesExt, WriteBytesExt, BigEndian, Error as ByteorderError};
@@ -54,12 +56,15 @@ const KEY_LEN: usize = 32;
 /// Length of the salt passed to the key derivation function.
 const SALT_LEN: usize = 32;
 
-/// Scrypt parameters. Set in November 2015.
+/// Length of the HMAC signature
+const SIGNATURE_LEN: usize = 64;
+
+/// Scrypt parameters
 const SCRYPT_PARAM_LOG2_N: u8 = 12;
 const SCRYPT_PARAM_R: u32 = 8;
 const SCRYPT_PARAM_P: u32 = 1;
 
-/// The version of this lib.
+/// The version of this lib
 const VERSION: u32 = 2;
 
 // Create a random IV.
@@ -80,7 +85,7 @@ fn generate_random_salt() -> [u8; SALT_LEN] {
 
 /// Derives a 256 bits encryption key from the password.
 fn generate_encryption_key(master_password: &str, salt: [u8; SALT_LEN]) -> SafeVec {
-    let scrypt_params = crypto::scrypt::ScryptParams::new(
+    let scrypt_params = scrypt::ScryptParams::new(
         SCRYPT_PARAM_LOG2_N,
         SCRYPT_PARAM_R,
         SCRYPT_PARAM_P
@@ -93,10 +98,28 @@ fn generate_encryption_key(master_password: &str, salt: [u8; SALT_LEN]) -> SafeV
     }
     let mut output = SafeVec::new(vec);
 
-    crypto::scrypt::scrypt(master_password.as_bytes(), &salt, &scrypt_params, output.deref_mut());
+    scrypt::scrypt(master_password.as_bytes(), &salt, &scrypt_params, output.deref_mut());
 
     output
 }
+
+/// Creates a HMAC struct
+fn digest(key: &[u8], version: u32, iv: &[u8], salt: &[u8], blob: &[u8]) -> hmac::Hmac<sha2::Sha512> {
+    let mut digest = hmac::Hmac::new(sha2::Sha512::new(), key);
+
+    let mut version_bytes_cursor: Cursor<Vec<u8>> = Cursor::new(Vec::new());
+    version_bytes_cursor.write_u32::<BigEndian>(version).unwrap();
+
+    let version_bytes = version_bytes_cursor.into_inner();
+
+    digest.input(version_bytes.deref());
+    digest.input(&iv);
+    digest.input(&salt);
+    digest.input(blob.deref());
+
+    digest
+}
+
 
 /// The format of the encrypted JSON content in the password file v1.
 #[derive(RustcDecodable, RustcEncodable, Clone)]
@@ -146,6 +169,7 @@ pub struct PasswordStore {
 /// - rooster version: u32, big endian
 /// - salt: 256 bits
 /// - iv: 256 bits
+/// - signature: 512 bits HMAC-SHA512
 /// - encrypted blob: variable length
 impl PasswordStore {
     pub fn new(master_password: SafeString) -> PasswordStore {
@@ -164,12 +188,8 @@ impl PasswordStore {
         let mut reader = Cursor::new(input.deref());
 
         // Version taken from network byte order (big endian).
-        match reader.read_u32::<BigEndian>() {
-            Ok(version) => {
-                if version != VERSION {
-                    return Err(PasswordError::WrongVersionError);
-                }
-            }
+        let version = match reader.read_u32::<BigEndian>() {
+            Ok(version) => version,
             Err(err) => {
                 let err = match err {
                    ByteorderError::UnexpectedEOF => PasswordError::Io(IoError::new(IoErrorKind::Other, "unexpected eof")),
@@ -177,9 +197,12 @@ impl PasswordStore {
                 };
                 return Err(err);
             }
+        };
+        if version != VERSION {
+            return Err(PasswordError::WrongVersionError);
         }
 
-        // Read the old salt
+        // Read the old salt.
         let mut salt: [u8; SALT_LEN] = [0u8; SALT_LEN];
         try!(reader.read(&mut salt).map_err(|io_err| PasswordError::Io(io_err)).and_then(|num_bytes| {
             if num_bytes == SALT_LEN {
@@ -189,10 +212,20 @@ impl PasswordStore {
             }
         }));
 
-        // Copy the IV into a fixed size buffer.
+        // Read the old IV.
         let mut iv: [u8; IV_LEN] = [0u8; IV_LEN];
         try!(reader.read(&mut iv).map_err(|io_err| PasswordError::Io(io_err)).and_then(|num_bytes| {
             if num_bytes == IV_LEN {
+                Ok(())
+            } else {
+                Err(PasswordError::Io(IoError::new(IoErrorKind::Other, "unexpected eof")))
+            }
+        }));
+
+        // Read the HMAC signature.
+        let mut signature: [u8; SIGNATURE_LEN] = [0u8; SIGNATURE_LEN];
+        try!(reader.read(&mut signature).map_err(|io_err| PasswordError::Io(io_err)).and_then(|num_bytes| {
+            if num_bytes == SIGNATURE_LEN {
                 Ok(())
             } else {
                 Err(PasswordError::Io(IoError::new(IoErrorKind::Other, "unexpected eof")))
@@ -206,7 +239,14 @@ impl PasswordStore {
         // Derive a 256 bits encryption key from the password.
         let key = generate_encryption_key(master_password.deref(), salt);
 
-        // Decrypt the data
+        // Check the signature against what it should be.
+        let new_signature_mac = digest(key.deref(), version, &iv, &salt, blob.deref()).result();
+        let old_signature_mac = MacResult::new(&signature);
+        if new_signature_mac != old_signature_mac {
+            return Err(PasswordError::CorruptionError);
+        }
+
+        // Decrypt the data.
         let passwords = match aes::decrypt(blob.deref(), key.as_ref(), iv.as_ref()) {
             Ok(decrypted) => {
                 let encoded = SafeString::new(String::from_utf8_lossy(decrypted.as_ref()).into_owned());
@@ -222,7 +262,6 @@ impl PasswordStore {
             }
         };
 
-        // decrypt the data
         Ok(PasswordStore {
             key: key,
             salt: salt,
@@ -268,6 +307,10 @@ impl PasswordStore {
 
         // Write the encryption IV.
         try!(file.write_all(&iv).map_err(|err| PasswordError::Io(err)));
+
+        // Write the file signature.
+        let signature = digest(self.key.deref(), VERSION, &iv, &self.salt, encrypted.as_ref()).result();
+        try!(file.write_all(signature.code()).map_err(|err| PasswordError::Io(err)));
 
         // Write the encrypted password data.
         try!(file.write_all(&encrypted.as_ref()).map_err(|err| PasswordError::Io(err)));

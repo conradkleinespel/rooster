@@ -28,7 +28,7 @@ fn generate_password(alnum: bool, len: usize) -> String {
                 1 => { password_as_string.push(rng.gen_range(65, 91) as u8 as char) },
                 // Lowercase a-z
                 2 => { password_as_string.push(rng.gen_range(97, 123) as u8 as char) },
-                _ => { panic!("Unexpected random value.") }
+                _ => { unreachable!() }
             }
         } else {
             password_as_string.push(rng.gen_range(33, 127) as u8 as char);

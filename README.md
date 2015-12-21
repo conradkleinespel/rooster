@@ -1,28 +1,28 @@
-[![Rooster Banner](http://conradk.com/rooster/images/rooster-banner.png)](http://conradk.com/rooster/)
+# Rooster — the simple password manager for geeks
 
-## Basic commands
+Rooster is a simple and secure password manager for geeks.
 
-You can find basic commands on the [Rooster website](http://conradk.com/rooster/).
+By geeks, we mean those that are not afraid to use the command line.
 
 ## Installation
 
 The installation depends on [Rust & Cargo](https://www.rust-lang.org/downloads.html) being installed on your system.
 
+Once you have those installed, you can run the following command to install Rooster:
 ```shell
 cargo install --git https://github.com/conradkleinespel/rooster.git
 ```
+
+Once you have installed Rooster, you can view documentation with:
+```shell
+rooster --help
+```
+
+If Rooster does not work the way you expect it to, feel free to
+[open an issue](https://github.com/conradkleinespel/rooster/issues/new) and tell us about it.
 
 ## Contributors
 
 - [@conradkleinespel](https://github.com/conradkleinespel)
 - [@jaezun](https://github.com/jaezun)
 - Awesome people from the Rust community at the [Rust Paris](http://www.meetup.com/Rust-Paris/) meetup
-
-## Ideas and possible enhancements
-
-Here are some things that would be great to have in Rooster. If you want to make a suggestion, feel free to do so by opening an issue. If you are willing to work on Rooster (for free), please open an issue to we can help you and track your progress. If you don't have the time, that's fine too.
-
-- Building a web frontend
-- Building a mobile app
-- Better error messages
-- Prevent swapping passwords in clear text

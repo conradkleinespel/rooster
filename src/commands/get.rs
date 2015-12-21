@@ -24,8 +24,8 @@ pub fn callback_help() {
     println!("");
     println!("Example:");
     println!("    rooster get youtube");
-    println!("    rooster get youtube | pbcopy              # for Mac users");
-    println!("    rooster get youtube | xsel -i --clipboard # for Linux users");
+    println!("    rooster get youtube | pbcopy   # for Mac users");
+    println!("    rooster get youtube | xsel -ib # for Linux users");
 }
 
 pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::PasswordStore) -> Result<(), i32> {

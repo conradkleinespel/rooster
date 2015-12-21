@@ -33,6 +33,23 @@ pub fn callback_exec(_matches: &getopts::Matches, store: &mut password::v2::Pass
     match read_password() {
         Ok(master_password) => {
             let master_password = SafeString::new(master_password);
+
+            print_stderr!("Type your new master password once more: ");
+            let master_password_confirmation = match read_password() {
+                Ok(master_password_confirmation) => {
+                    SafeString::new(master_password_confirmation)
+                }
+                Err(err) => {
+                    println_err!("I could not read your new master password ({:?}).", err);
+                    return Err(1);
+                }
+            };
+
+            if master_password != master_password_confirmation {
+                println_err!("The master password confirmation did not match. Aborting.");
+                return Err(1);
+            }
+
             store.change_master_password(master_password.deref());
         }
         Err(err) => {

@@ -19,7 +19,7 @@ use super::rustc_serialize::Decodable;
 use super::rustc_serialize::Encoder;
 use super::rustc_serialize::Decoder;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SafeString {
     inner: String,
 }

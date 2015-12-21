@@ -16,7 +16,7 @@ use std::ops::Drop;
 use std::ops::Deref;
 use std::ops::DerefMut;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SafeVec {
     inner: Vec<u8>,
 }

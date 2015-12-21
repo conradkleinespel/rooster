@@ -258,13 +258,15 @@ fn main() {
         std::process::exit(0);
     }
 
-    // No command was given, this is abnormal.
-    if matches.free.is_empty() {
-        usage(password_file_path.deref());
-        std::process::exit(1);
-    }
+    // No command was given, this is abnormal, so we'll show the docs.
+    let command_name = match matches.free.get(0) {
+        Some(command_name) => command_name,
+        None => {
+            usage(password_file_path.deref());
+            std::process::exit(1);
+        }
+    };
 
-    let command_name = matches.free.get(0).unwrap();
     match command_from_name(command_name.as_ref()) {
         Some(command) => {
             match execute_command_from_filename(&matches, command, password_file_path.deref()) {

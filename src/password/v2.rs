@@ -23,7 +23,7 @@ use super::super::rustc_serialize::json;
 use super::super::safe_string::SafeString;
 use super::super::safe_vec::SafeVec;
 use super::PasswordError;
-use std::io::{Seek, SeekFrom, Error as IoError, ErrorKind as IoErrorKind, Read, Write, Cursor};
+use std::io::{Seek, SeekFrom, Result as IoResult, Error as IoError, ErrorKind as IoErrorKind, Read, Write, Cursor};
 use std::fs::File;
 use std::ops::DerefMut;
 use std::ops::Deref;
@@ -68,19 +68,19 @@ const SCRYPT_PARAM_P: u32 = 1;
 const VERSION: u32 = 2;
 
 // Create a random IV.
-fn generate_random_iv() -> [u8; IV_LEN] {
+fn generate_random_iv() -> IoResult<[u8; IV_LEN]> {
     let mut bytes: [u8; IV_LEN] = [0; IV_LEN];
-    let mut rng = OsRng::new().unwrap();
+    let mut rng = try!(OsRng::new());
     rng.fill_bytes(&mut bytes);
-    bytes
+    Ok(bytes)
 }
 
 // Create a random salt.
-fn generate_random_salt() -> [u8; SALT_LEN] {
+fn generate_random_salt() -> IoResult<[u8; SALT_LEN]> {
     let mut bytes: [u8; SALT_LEN] = [0; SALT_LEN];
-    let mut rng = OsRng::new().unwrap();
+    let mut rng = try!(OsRng::new());
     rng.fill_bytes(&mut bytes);
-    bytes
+    Ok(bytes)
 }
 
 /// Derives a 256 bits encryption key from the password.
@@ -104,11 +104,16 @@ fn generate_encryption_key(master_password: &str, salt: [u8; SALT_LEN]) -> SafeV
 }
 
 /// Creates a HMAC struct
-fn digest(key: &[u8], version: u32, iv: &[u8], salt: &[u8], blob: &[u8]) -> hmac::Hmac<sha2::Sha512> {
+fn digest(key: &[u8], version: u32, iv: &[u8], salt: &[u8], blob: &[u8]) -> IoResult<hmac::Hmac<sha2::Sha512>> {
     let mut digest = hmac::Hmac::new(sha2::Sha512::new(), key);
 
     let mut version_bytes_cursor: Cursor<Vec<u8>> = Cursor::new(Vec::new());
-    version_bytes_cursor.write_u32::<BigEndian>(version).unwrap();
+    try!(version_bytes_cursor.write_u32::<BigEndian>(version).map_err(|be| {
+        match be {
+            ByteorderError::Io(io_err) => io_err,
+            ByteorderError::UnexpectedEOF => IoError::new(IoErrorKind::Other, "unexpected eof")
+        }
+    }));
 
     let version_bytes = version_bytes_cursor.into_inner();
 
@@ -117,7 +122,7 @@ fn digest(key: &[u8], version: u32, iv: &[u8], salt: &[u8], blob: &[u8]) -> hmac
     digest.input(&salt);
     digest.input(blob.deref());
 
-    digest
+    Ok(digest)
 }
 
 
@@ -172,16 +177,16 @@ pub struct PasswordStore {
 /// - signature: 512 bits HMAC-SHA512
 /// - encrypted blob: variable length
 impl PasswordStore {
-    pub fn new(master_password: SafeString) -> PasswordStore {
-        let salt = generate_random_salt();
+    pub fn new(master_password: SafeString) -> IoResult<PasswordStore> {
+        let salt = try!(generate_random_salt());
 
         let key = generate_encryption_key(master_password.deref(), salt);
 
-        PasswordStore {
+        Ok(PasswordStore {
             key: key,
             salt: salt,
             schema: Schema::new(),
-        }
+        })
     }
 
     pub fn from_input(master_password: SafeString, input: SafeVec) -> Result<PasswordStore, PasswordError> {
@@ -240,7 +245,9 @@ impl PasswordStore {
         let key = generate_encryption_key(master_password.deref(), salt);
 
         // Check the signature against what it should be.
-        let new_signature_mac = digest(key.deref(), version, &iv, &salt, blob.deref()).result();
+        let new_signature_mac = try!(digest(key.deref(), version, &iv, &salt, blob.deref()).map_err(|io_err| {
+            PasswordError::Io(io_err)
+        })).result();
         let old_signature_mac = MacResult::new(&signature);
         if new_signature_mac != old_signature_mac {
             return Err(PasswordError::CorruptionError);
@@ -282,7 +289,7 @@ impl PasswordStore {
         let json_schema = SafeString::new(json_schema);
 
         // Encrypt the data with a new salt and a new IV.
-        let iv = generate_random_iv();
+        let iv = try!(generate_random_iv().map_err(|io_err| PasswordError::Io(io_err)));
         let encrypted = match aes::encrypt(json_schema.deref().as_bytes(), self.key.as_ref(), iv.as_ref()) {
             Ok(val) => { val },
             Err(_) => { return Err(PasswordError::EncryptionError) }
@@ -309,7 +316,9 @@ impl PasswordStore {
         try!(file.write_all(&iv).map_err(|err| PasswordError::Io(err)));
 
         // Write the file signature.
-        let signature = digest(self.key.deref(), VERSION, &iv, &self.salt, encrypted.as_ref()).result();
+        let signature = try!(digest(self.key.deref(), VERSION, &iv, &self.salt, encrypted.as_ref()).map_err(|io_err| {
+            PasswordError::Io(io_err)
+        })).result();
         try!(file.write_all(signature.code()).map_err(|err| PasswordError::Io(err)));
 
         // Write the encrypted password data.
@@ -355,8 +364,8 @@ impl PasswordStore {
             // We're looking for the exact same app name, without regard to casing.
             let mut i: usize = 0;
             while i < p.name.len() {
-                let c1 = p.name.chars().nth(i).unwrap().to_lowercase().nth(0).unwrap();
-                let c2 = name.chars().nth(i).unwrap().to_lowercase().nth(0).unwrap();
+                let c1 = p.name.chars().nth(i).map(|c| c.to_lowercase().nth(0));
+                let c2 = name.chars().nth(i).map(|c| c.to_lowercase().nth(0));
                 if c1 != c2 {
                     continue 'passwords_loop;
                 }

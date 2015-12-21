@@ -77,7 +77,7 @@ pub fn upgrade(master_password: SafeString, input: SafeVec) -> Result<v2::Passwo
     }
 
     // Upgrade from v1 to v2 if we could read v1 passwords.
-    let mut v2_store = v2::PasswordStore::new(master_password.clone());
+    let mut v2_store = try!(v2::PasswordStore::new(master_password.clone()).map_err(|io_err| PasswordError::Io(io_err)));
     try!(upgrade_v1_v2(v1_passwords.deref(), &mut v2_store));
 
     Ok(v2_store)

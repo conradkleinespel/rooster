@@ -34,6 +34,7 @@ use getopts::Options;
 use rpassword::read_password;
 use safe_string::SafeString;
 use safe_vec::SafeVec;
+use std::ops::Deref;
 
 mod macros;
 mod aes;
@@ -45,6 +46,7 @@ mod safe_string;
 mod safe_vec;
 mod generate;
 
+const ROOSTER_FILE_ENV_VAR: &'static str = "ROOSTER_FILE";
 const ROOSTER_FILE_DEFAULT: &'static str = ".passwords.rooster";
 
 struct Command {
@@ -173,41 +175,35 @@ fn execute_command_from_filename(matches: &getopts::Matches, command: &Command, 
     }
 }
 
-fn execute_command(matches: &getopts::Matches, command: &Command) -> Result<(), i32> {
-    match env::var("ROOSTER_FILE") {
+fn get_password_file_path() -> Result<String, i32> {
+    match env::var(ROOSTER_FILE_ENV_VAR) {
         Ok(filename) => {
-            return execute_command_from_filename(matches, command, filename.as_ref());
+            Ok(filename)
         },
         Err(env::VarError::NotPresent) => {
-            match env::home_dir() {
-                Some(path) => {
-                    match path.as_os_str().to_os_string().into_string() {
-                        Ok(ref mut filename) => {
-                            filename.push(PATH_SEP);
-                            filename.push_str(ROOSTER_FILE_DEFAULT);
-                            return execute_command_from_filename(matches, command, filename.as_ref());
-                        },
-                        Err(oss) => {
-                            println_err!("The password filename, {:?}, is invalid. It must be valid UTF8.", oss);
-                            return Err(1);
-                        }
-                    }
-                },
+            let mut filename = match env::home_dir() {
+                Some(home) => {
+                    try!(home.as_os_str().to_os_string().into_string().map_err(|_| 1))
+                }
                 None => {
-                    println_err!("I couldn't figure out what file to use for the passwords.");
                     return Err(1);
                 }
-            }
+            };
+            filename.push(PATH_SEP);
+            filename.push_str(ROOSTER_FILE_DEFAULT);
+            Ok(filename)
         },
-        Err(env::VarError::NotUnicode(oss)) => {
-            println_err!("The password filename, {:?}, is invalid. It must be valid UTF8.", oss);
-            return Err(1);
+        Err(env::VarError::NotUnicode(_)) => {
+            Err(1)
         }
-    };
+    }
 }
 
-fn usage() {
+fn usage(password_file: &str) {
     println!("Welcome to Rooster, the simple password manager for geeks :-)");
+    println!("");
+    println!("The current password file is: {}", password_file);
+    println!("You may override this path in the $ROOSTER_FILE environment variable.");
     println!("");
     println!("Usage:");
     println!("    rooster -h");
@@ -246,22 +242,33 @@ fn main() {
         }
     };
 
+    // Fetch the Rooster file path now, so we can display it in help messages.
+    let password_file_path = match get_password_file_path() {
+        Ok(path) => path,
+        Err(_) => {
+            println_err!("Woops, I could not determine where your password file is.");
+            println_err!("I recommend you try setting the $ROOSTER_FILE environment");
+            println_err!("variable with the absolute path to your password file.");
+            std::process::exit(1);
+        }
+    };
+
     // Global help was requested.
     if matches.opt_present("h") && matches.free.is_empty() {
-        usage();
+        usage(password_file_path.deref());
         std::process::exit(0);
     }
 
     // No command was given, this is abnormal.
     if matches.free.is_empty() {
-        usage();
+        usage(password_file_path.deref());
         std::process::exit(1);
     }
 
     let command_name = matches.free.get(0).unwrap();
     match command_from_name(command_name.as_ref()) {
         Some(command) => {
-            match execute_command(&matches, command) {
+            match execute_command_from_filename(&matches, command, password_file_path.deref()) {
                 Err(i) => std::process::exit(i),
                 _ => std::process::exit(0)
             }

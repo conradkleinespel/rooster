@@ -6,8 +6,10 @@ You can find basic commands on the [Rooster website](http://conradk.com/rooster/
 
 ## Installation
 
+The installation depends on [Rust & Cargo](https://www.rust-lang.org/downloads.html) being installed on your system.
+
 ```shell
-curl -sSf https://raw.githubusercontent.com/conradkleinespel/rooster/master/install | bash
+cargo install --git https://github.com/conradkleinespel/rooster.git
 ```
 
 ## Contributors

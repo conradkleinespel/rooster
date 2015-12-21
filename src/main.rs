@@ -19,9 +19,12 @@ extern crate crypto;
 extern crate rpassword;
 extern crate rand;
 extern crate byteorder;
+extern crate hyper;
+extern crate chrono;
 
 use std::fs::File;
 use std::env;
+use std::env::VarError;
 use std::path::MAIN_SEPARATOR as PATH_SEP;
 use std::io::Result as IoResult;
 use std::io::Error as IoError;
@@ -29,7 +32,7 @@ use std::io::ErrorKind as IoErrorKind;
 use std::io::stdin;
 use std::io::Write;
 use std::io::Read;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use getopts::Options;
 use rpassword::read_password;
 use safe_string::SafeString;
@@ -45,9 +48,11 @@ mod color;
 mod safe_string;
 mod safe_vec;
 mod generate;
+mod analytics;
 
-const ROOSTER_FILE_ENV_VAR: &'static str = "ROOSTER_FILE";
-const ROOSTER_FILE_DEFAULT: &'static str = ".passwords.rooster";
+const ROOSTER_ANALYTICS_OPT_OUT_ENV_VAR: &'static str = "ROOSTER_ANALYTICS_OPT_OUT";
+const ROOSTER_FILE_ENV_VAR: &'static str              = "ROOSTER_FILE";
+const ROOSTER_FILE_DEFAULT: &'static str              = ".passwords.rooster";
 
 struct Command {
     name: &'static str,
@@ -174,13 +179,13 @@ fn execute_command_from_filename(matches: &getopts::Matches, command: &Command, 
     }
 }
 
-fn get_password_file_path() -> Result<String, i32> {
-    match env::var(ROOSTER_FILE_ENV_VAR) {
+fn get_password_file_path(rooster_file: Result<String, VarError>, home_dir: Option<PathBuf>) -> Result<String, i32> {
+    match rooster_file {
         Ok(filename) => {
             Ok(filename)
         },
-        Err(env::VarError::NotPresent) => {
-            let mut filename = match env::home_dir() {
+        Err(VarError::NotPresent) => {
+            let mut filename = match home_dir {
                 Some(home) => {
                     try!(home.as_os_str().to_os_string().into_string().map_err(|_| 1))
                 }
@@ -192,7 +197,7 @@ fn get_password_file_path() -> Result<String, i32> {
             filename.push_str(ROOSTER_FILE_DEFAULT);
             Ok(filename)
         },
-        Err(env::VarError::NotUnicode(_)) => {
+        Err(VarError::NotUnicode(_)) => {
             Err(1)
         }
     }
@@ -242,12 +247,25 @@ fn main() {
     };
 
     // Fetch the Rooster file path now, so we can display it in help messages.
-    let password_file_path = match get_password_file_path() {
+    let password_file_path = match get_password_file_path(env::var(ROOSTER_FILE_ENV_VAR), env::home_dir()) {
         Ok(path) => path,
         Err(_) => {
             println_err!("Woops, I could not determine where your password file is.");
             println_err!("I recommend you try setting the $ROOSTER_FILE environment");
             println_err!("variable with the absolute path to your password file.");
+            std::process::exit(1);
+        }
+    };
+
+    // Check if we want to opt-out of analytics tracking for this session.
+    let _analytics = match env::var(ROOSTER_ANALYTICS_OPT_OUT_ENV_VAR) {
+        // If the OPT_OUT is true, disable analytics.
+        Ok(analytics) => analytics.deref() != "true",
+        // Enable analytics by default.
+        Err(VarError::NotPresent) => true,
+        Err(VarError::NotUnicode(_)) => {
+            println_err!("The currently set $ROOSTER_ANALYTICS_OPT_OUT variable is");
+            println_err!("is invalid. It must be valid UTF-8.");
             std::process::exit(1);
         }
     };

@@ -17,6 +17,7 @@ use super::super::password;
 use super::super::safe_string::SafeString;
 use super::super::rustc_serialize::json;
 use std::ops::Deref;
+use std::io::Write;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -29,7 +30,15 @@ pub fn callback_help() {
 
 pub fn callback_exec(_matches: &getopts::Matches, store: &mut password::v2::PasswordStore) -> Result<(), i32> {
     let passwords_ref = store.get_all_passwords();
-    let passwords = SafeString::new(json::encode(&passwords_ref).unwrap());
+
+    let passwords_json = match json::encode(&passwords_ref) {
+        Ok(passwords_json) => passwords_json,
+        Err(json_err) => {
+            println_stderr!("Woops, I could not encode the passwords into JSON ({:?}).", json_err);
+            return Err(1);
+        }
+    };
+    let passwords = SafeString::new(passwords_json);
     println!("{}", passwords.deref());
     Ok(())
 }

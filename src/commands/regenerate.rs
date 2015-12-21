@@ -43,7 +43,13 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
     let password_as_string = match password_spec {
         None => { return Err(1); },
         Some(spec) => {
-            generate_hard_password(spec.alnum, spec.len)
+            match generate_hard_password(spec.alnum, spec.len) {
+                Ok(password_as_string) => password_as_string,
+                Err(io_err) => {
+                    println_stderr!("Woops, I could not generate the password ({:?}).", io_err);
+                    return Err(1);
+                }
+            }
         }
     };
 

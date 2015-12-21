@@ -103,8 +103,6 @@ pub fn get_all_passwords(master_password: &str, encrypted: &[u8]) -> Result<Vec<
             Ok(decrypted) => {
                 let encoded = SafeString::new(String::from_utf8_lossy(decrypted.deref()).into_owned());
 
-                // This should never fail. The file contents should always be
-                // valid JSON.
                 match json::decode::<Schema>(encoded.deref()) {
                     Ok(schema) => schema.passwords,
                     Err(_) => {

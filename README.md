@@ -22,7 +22,6 @@ cargo install --git https://github.com/conradkleinespel/rooster.git
 
 Here are some things that would be great to have in Rooster. If you want to make a suggestion, feel free to do so by opening an issue. If you are willing to work on Rooster (for free), please open an issue to we can help you and track your progress. If you don't have the time, that's fine too.
 
-- Signing the Rooster file, maybe with `GPG`, `HMAC` or something similar
 - Building a web frontend
 - Building a mobile app
 - Better error messages

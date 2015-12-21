@@ -43,8 +43,7 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
         return Err(1);
     }
 
-    write!(::std::io::stderr(), "What password do you want for {}? ", app_name).unwrap();
-    ::std::io::stderr().flush().unwrap();
+    print_stderr!("What password do you want for {}? ", app_name);
     match read_password() {
         Ok(password_as_string) => {
             let password = password::v2::Password::new(

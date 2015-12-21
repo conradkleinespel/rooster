@@ -39,10 +39,8 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
 
     match store.get_password(app_name) {
         Some(ref password) => {
-            write!(::std::io::stdout(), "{}", password.password.deref()).unwrap();
-            ::std::io::stdout().flush().unwrap();
-            write!(::std::io::stderr(), "\n").unwrap();
-            ::std::io::stderr().flush().unwrap();
+            print_stdout!("{}", password.password.deref());
+            print_stderr!("\n");
             return Ok(());
         },
         None => {

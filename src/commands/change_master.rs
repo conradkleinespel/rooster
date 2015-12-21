@@ -29,8 +29,7 @@ pub fn callback_help() {
 }
 
 pub fn callback_exec(_matches: &getopts::Matches, store: &mut password::v2::PasswordStore) -> Result<(), i32> {
-    write!(::std::io::stderr(), "Type your new master password: ").unwrap();
-    ::std::io::stderr().flush().unwrap();
+    print_stderr!("Type your new master password: ");
     match read_password() {
         Ok(master_password) => {
             let master_password = SafeString::new(master_password);

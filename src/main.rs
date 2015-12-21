@@ -121,8 +121,7 @@ fn execute_command_from_filename(matches: &getopts::Matches, command: &Command, 
                 (command.callback_help)();
                 return Ok(());
             } else {
-                write!(::std::io::stderr(), "Type your master password: ").unwrap();
-                ::std::io::stderr().flush().unwrap();
+                print_stderr!("Type your master password: ");
                 match read_password() {
                     Ok(master_password) => {
                         let master_password = SafeString::new(master_password);

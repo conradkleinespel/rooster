@@ -105,9 +105,12 @@ pub fn get_all_passwords(master_password: &str, encrypted: &[u8]) -> Result<Vec<
 
                 // This should never fail. The file contents should always be
                 // valid JSON.
-                let passwords = json::decode::<Schema>(encoded.deref()).unwrap().passwords;
-
-                passwords
+                match json::decode::<Schema>(encoded.deref()) {
+                    Ok(schema) => schema.passwords,
+                    Err(_) => {
+                        return Err(PasswordError::InvalidJsonError);
+                    }
+                }
             },
             Err(_) => {
                 return Err(PasswordError::DecryptionError);

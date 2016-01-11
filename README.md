@@ -2,6 +2,8 @@
 
 ## Installation
 
+[![Join the chat at https://gitter.im/conradkleinespel/rooster](https://badges.gitter.im/conradkleinespel/rooster.svg)](https://gitter.im/conradkleinespel/rooster?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Rooster depends on [Rust & Cargo](https://www.rust-lang.org/downloads.html) being installed on your system.
 
 Once you have those installed, you can run the following command to install Rooster:

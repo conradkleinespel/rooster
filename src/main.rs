@@ -130,23 +130,28 @@ fn execute_command_from_filename(matches: &getopts::Matches, command: &Command, 
                         let mut input: Vec<u8> = Vec::new();
                         try!(file.read_to_end(&mut input).map_err(|_| 1));
 
-                        // Try to open the file as is.
-                        let mut store = match password::v2::PasswordStore::from_input(master_password.clone(), SafeVec::new(input.clone())) {
-                            Ok(store) => store,
-                            Err(_) => {
-                                // If we can't open the file, we may need to upgrade its format first.
-                                match password::upgrade(master_password.clone(), SafeVec::new(input.clone())) {
-                                    Ok(store) => store,
-                                    Err(_) => {
-                                        // If we can't upgrade its format either, we show a helpful
-                                        // error message.
-                                        println_err!("I could not upgrade the Rooster file. This could be because:");
-                                        println_err!("- you explicitly told Rooster not to open the file,");
-                                        println_err!("- your version of Rooster is outdated,");
-                                        println_err!("- your Rooster file is corrupted,");
-                                        println_err!("- your master password is wrong.");
-                                        println_err!("Try upgrading to the latest version of Rooster.");
-                                        return Err(1);
+                        // If the password file is empty (ie new), we'll make a new, empty store.
+                        let mut store = if input.len() == 0 {
+                            try!(password::v2::PasswordStore::new(master_password.clone()).map_err(|_| 1))
+                        } else {
+                            // Try to open the file as is.
+                            match password::v2::PasswordStore::from_input(master_password.clone(), SafeVec::new(input.clone())) {
+                                Ok(store) => store,
+                                Err(_) => {
+                                    // If we can't open the file, we may need to upgrade its format first.
+                                    match password::upgrade(master_password.clone(), SafeVec::new(input.clone())) {
+                                        Ok(store) => store,
+                                        Err(_) => {
+                                            // If we can't upgrade its format either, we show a helpful
+                                            // error message.
+                                            println_err!("I could not upgrade the Rooster file. This could be because:");
+                                            println_err!("- you explicitly told Rooster not to open the file,");
+                                            println_err!("- your version of Rooster is outdated,");
+                                            println_err!("- your Rooster file is corrupted,");
+                                            println_err!("- your master password is wrong.");
+                                            println_err!("Try upgrading to the latest version of Rooster.");
+                                            return Err(1);
+                                        }
                                     }
                                 }
                             }

@@ -17,6 +17,7 @@ use super::super::password;
 use super::super::safe_string::SafeString;
 use super::super::generate::{PasswordSpec, generate_hard_password};
 use std::io::Write;
+use std::ops::Deref;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -36,6 +37,11 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
 
     let app_name = matches.free[1].clone();
     let username = matches.free[2].clone();
+
+    if store.has_password(app_name.deref()) {
+        println_err!("Woops, there is already an app with that name.");
+        return Err(1);
+    }
 
     let password_spec = PasswordSpec::from_matches(matches);
 

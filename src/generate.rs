@@ -81,9 +81,8 @@ impl PasswordSpec {
                     // a password of length <4 with 4 different kinds of characters (uppercase,
                     // lowercase, numeric, punctuation).
                     if parsed_len < 4 {
-                        println_err!("Woops! The length of the password must be at least 4. This allows us");
-                        println_err!("to make sure each password contains at least one lowercase letter, one");
-                        println_err!("uppercase letter and one number.");
+                        println_err!("Woops! The length of the password must be at least 4. This");
+                        println_err!("allows us to make sure your password is secure.");
                         return None;
                     }
                     parsed_len

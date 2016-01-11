@@ -19,8 +19,6 @@ extern crate crypto;
 extern crate rpassword;
 extern crate rand;
 extern crate byteorder;
-extern crate hyper;
-extern crate chrono;
 
 use std::fs::File;
 use std::env;
@@ -48,7 +46,6 @@ mod color;
 mod safe_string;
 mod safe_vec;
 mod generate;
-mod analytics;
 
 const ROOSTER_ANALYTICS_OPT_OUT_ENV_VAR: &'static str = "ROOSTER_ANALYTICS_OPT_OUT";
 const ROOSTER_FILE_ENV_VAR: &'static str              = "ROOSTER_FILE";
@@ -144,6 +141,7 @@ fn execute_command_from_filename(matches: &getopts::Matches, command: &Command, 
                                         // If we can't upgrade its format either, we show a helpful
                                         // error message.
                                         println_err!("I could not upgrade the Rooster file. This could be because:");
+                                        println_err!("- you explicitly told Rooster not to open the file,");
                                         println_err!("- your version of Rooster is outdated,");
                                         println_err!("- your Rooster file is corrupted,");
                                         println_err!("- your master password is wrong.");

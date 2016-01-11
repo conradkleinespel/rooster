@@ -30,4 +30,5 @@ If Rooster does not work the way you expect it to, feel free to
 
 - [@conradkleinespel](https://github.com/conradkleinespel)
 - [@jaezun](https://github.com/jaezun)
+- [@qmx](https://github.com/qmx)
 - Awesome people from the Rust community at the [Rust Paris](http://www.meetup.com/Rust-Paris/) meetup

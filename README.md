@@ -2,7 +2,7 @@
 
 ## Installation
 
-Rooster depends on [Rust & Cargo](https://www.rust-lang.org/downloads.html) being installed on your system.
+Rooster depends on [Rust & Cargo][0] being installed on your system.
 
 Once you have those installed, you can run the following command to install Rooster:
 ```shell
@@ -14,15 +14,19 @@ Once you have installed Rooster, you can view documentation with:
 rooster --help
 ```
 
-If Rooster does not work the way you expect it to, feel free to
-[open an issue](https://github.com/conradkleinespel/rooster/issues/new) and tell us about it.
+If you want to talk about password management or talk about Rooster, feel free to
+join [our community chat][2].
+
+We welcome contribution from everyone. Head over to [CONTRIBUTING.md][3] to learn
+more about how to contribute to the project.
 
 ## Ideas
 
 - Add analytics tracking
+- Remove useless newline on `get` command output
 - Better error messages
-- Building a web frontend
-- Building a mobile app
+- Web frontend
+- Mobile app
 - Import from other password managers
 
 ## Contributors
@@ -30,4 +34,9 @@ If Rooster does not work the way you expect it to, feel free to
 - [@conradkleinespel](https://github.com/conradkleinespel)
 - [@jaezun](https://github.com/jaezun)
 - [@qmx](https://github.com/qmx)
-- Awesome people from the Rust community at the [Rust Paris](http://www.meetup.com/Rust-Paris/) meetup
+- Awesome Rustaceans from the [Rust Paris meetup](http://www.meetup.com/Rust-Paris/)
+
+[0]: https://www.rust-lang.org/downloads.html "How to install Rust & Cargo"
+[1]: https://github.com/conradkleinespel/rooster/issues/new "Open an issue"
+[2]: https://discord.gg/0lYgGUEC78GMWx6S "Rooster community chat"
+[3]: CONTRIBUTING.md "Contribution guidelines"

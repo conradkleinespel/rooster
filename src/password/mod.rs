@@ -15,8 +15,10 @@
 pub mod v1;
 pub mod v2;
 
-use std::io::{Error as IoError, stdin, Write};
+use std::io::{Error as IoError, ErrorKind as IoErrorKind, stdin, Write};
 use std::ops::Deref;
+use std::convert::From;
+use super::byteorder::Error as ByteorderError;
 use super::safe_string::SafeString;
 use super::safe_vec::SafeVec;
 
@@ -30,6 +32,23 @@ pub enum PasswordError {
     WrongVersionError,
     InvalidJsonError,
     CorruptionError,
+}
+
+impl From<IoError> for PasswordError {
+    fn from(err: IoError) -> PasswordError {
+        PasswordError::Io(err)
+    }
+}
+
+impl From<ByteorderError> for PasswordError {
+    fn from(err: ByteorderError) -> PasswordError {
+        let err = match err {
+            ByteorderError::Io(io_err) => io_err,
+            ByteorderError::UnexpectedEOF => IoError::new(IoErrorKind::Other, "unexpected eof")
+        };
+
+        PasswordError::Io(err)
+    }
 }
 
 fn upgrade_v1_v2(v1_passwords: &[v1::Password], v2_store: &mut v2::PasswordStore) -> Result<(), PasswordError> {
@@ -77,7 +96,7 @@ pub fn upgrade(master_password: SafeString, input: SafeVec) -> Result<v2::Passwo
     }
 
     // Upgrade from v1 to v2 if we could read v1 passwords.
-    let mut v2_store = try!(v2::PasswordStore::new(master_password.clone()).map_err(|io_err| PasswordError::Io(io_err)));
+    let mut v2_store = try!(v2::PasswordStore::new(master_password.clone()));
     try!(upgrade_v1_v2(v1_passwords.deref(), &mut v2_store));
 
     Ok(v2_store)

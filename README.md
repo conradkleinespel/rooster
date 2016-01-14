@@ -21,7 +21,6 @@ If Rooster does not work the way you expect it to, feel free to
 
 - Add analytics tracking
 - Better error messages
-- Automatic error conversion with `std::convert::From` trait
 - Building a web frontend
 - Building a mobile app
 - Import from other password managers

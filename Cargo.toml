@@ -1,6 +1,6 @@
 [package]
 name = "rooster"
-version = "2.0.0"
+version = "2.0.1"
 authors = ["Conrad Kleinespel <conradk@conradk.com>"]
 license = "Apache-2.0"
 repository = "https://github.com/conradkleinespel/rooster"
@@ -13,6 +13,6 @@ rust-crypto = "0.2"
 rustc-serialize = "0.3"
 rand = "0.3"
 libc = "0.2"
-rpassword = "0.1"
+rpassword = "0.2"
 getopts = "0.2"
-byteorder = "0.4"
+byteorder = "0.5"

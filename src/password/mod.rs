@@ -15,10 +15,9 @@
 pub mod v1;
 pub mod v2;
 
-use std::io::{Error as IoError, ErrorKind as IoErrorKind, stdin, Write};
+use std::io::{Error as IoError, stdin, Write};
 use std::ops::Deref;
 use std::convert::From;
-use super::byteorder::Error as ByteorderError;
 use super::safe_string::SafeString;
 use super::safe_vec::SafeVec;
 
@@ -36,17 +35,6 @@ pub enum PasswordError {
 
 impl From<IoError> for PasswordError {
     fn from(err: IoError) -> PasswordError {
-        PasswordError::Io(err)
-    }
-}
-
-impl From<ByteorderError> for PasswordError {
-    fn from(err: ByteorderError) -> PasswordError {
-        let err = match err {
-            ByteorderError::Io(io_err) => io_err,
-            ByteorderError::UnexpectedEOF => IoError::new(IoErrorKind::Other, "unexpected eof")
-        };
-
         PasswordError::Io(err)
     }
 }

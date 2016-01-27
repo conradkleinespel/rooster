@@ -18,7 +18,7 @@ use super::super::crypto::digest::Digest;
 use super::super::crypto::mac::{Mac, MacResult};
 use super::super::aes;
 use super::super::rand::{Rng, OsRng};
-use super::super::byteorder::{ReadBytesExt, WriteBytesExt, BigEndian, Error as ByteorderError};
+use super::super::byteorder::{ReadBytesExt, WriteBytesExt, BigEndian};
 use super::super::rustc_serialize::json;
 use super::super::safe_string::SafeString;
 use super::super::safe_vec::SafeVec;
@@ -204,51 +204,15 @@ impl PasswordStore {
         let mut reader = Cursor::new(input.deref());
 
         // Version taken from network byte order (big endian).
-        let version = match reader.read_u32::<BigEndian>() {
-            Ok(version) => version,
-            Err(err) => {
-                let err = match err {
-                   ByteorderError::UnexpectedEOF => PasswordError::Io(IoError::new(IoErrorKind::Other, "unexpected eof")),
-                   ByteorderError::Io(io_err) => PasswordError::Io(io_err)
-                };
-                return Err(err);
-            }
-        };
+        let version = try!(reader.read_u32::<BigEndian>());
         if version != VERSION {
             return Err(PasswordError::WrongVersionError);
         }
 
         // Read the scrypt params.
-        let scrypt_log2_n = match reader.read_u8() {
-            Ok(n) => n,
-            Err(err) => {
-                let err = match err {
-                   ByteorderError::UnexpectedEOF => PasswordError::Io(IoError::new(IoErrorKind::Other, "unexpected eof")),
-                   ByteorderError::Io(io_err) => PasswordError::Io(io_err)
-                };
-                return Err(err);
-            }
-        };
-        let scrypt_r = match reader.read_u32::<BigEndian>() {
-            Ok(n) => n,
-            Err(err) => {
-                let err = match err {
-                   ByteorderError::UnexpectedEOF => PasswordError::Io(IoError::new(IoErrorKind::Other, "unexpected eof")),
-                   ByteorderError::Io(io_err) => PasswordError::Io(io_err)
-                };
-                return Err(err);
-            }
-        };
-        let scrypt_p = match reader.read_u32::<BigEndian>() {
-            Ok(n) => n,
-            Err(err) => {
-                let err = match err {
-                   ByteorderError::UnexpectedEOF => PasswordError::Io(IoError::new(IoErrorKind::Other, "unexpected eof")),
-                   ByteorderError::Io(io_err) => PasswordError::Io(io_err)
-                };
-                return Err(err);
-            }
-        };
+        let scrypt_log2_n = try!(reader.read_u8());
+        let scrypt_r = try!(reader.read_u32::<BigEndian>());
+        let scrypt_p = try!(reader.read_u32::<BigEndian>());
 
         // Read the old salt.
         let mut salt: [u8; SALT_LEN] = [0u8; SALT_LEN];
@@ -353,45 +317,12 @@ impl PasswordStore {
         try!(file.seek(SeekFrom::Start(0)).and_then(|_| file.set_len(0)));
 
         // Write the file version.
-        try!(match file.write_u32::<BigEndian>(VERSION) {
-            Ok(_) => Ok(()),
-            Err(err) => {
-                match err {
-                    ByteorderError::Io(err) => Err(err),
-                    _ => Err(IoError::new(IoErrorKind::Other, "unknown"))
-                }
-            }
-        });
+        try!(file.write_u32::<BigEndian>(VERSION));
 
         // Write the scrypt params.
-        try!(match file.write_u8(self.scrypt_log2_n) {
-            Ok(_) => Ok(()),
-            Err(err) => {
-                match err {
-                    ByteorderError::Io(err) => Err(PasswordError::Io(err)),
-                    _ => Err(PasswordError::Io(IoError::new(IoErrorKind::Other, "unknown")))
-                }
-            }
-        });
-        try!(match file.write_u32::<BigEndian>(self.scrypt_r) {
-            Ok(_) => Ok(()),
-            Err(err) => {
-                match err {
-                    ByteorderError::Io(err) => Err(PasswordError::Io(err)),
-                    _ => Err(PasswordError::Io(IoError::new(IoErrorKind::Other, "unknown")))
-                }
-            }
-        });
-        try!(match file.write_u32::<BigEndian>(self.scrypt_p) {
-            Ok(_) => Ok(()),
-            Err(err) => {
-                match err {
-                    ByteorderError::Io(err) => Err(PasswordError::Io(err)),
-                    _ => Err(PasswordError::Io(IoError::new(IoErrorKind::Other, "unknown")))
-                }
-            }
-        });
-
+        try!(file.write_u8(self.scrypt_log2_n));
+        try!(file.write_u32::<BigEndian>(self.scrypt_r));
+        try!(file.write_u32::<BigEndian>(self.scrypt_p));
 
         // Write the key derivation salt.
         try!(file.write_all(&self.salt));

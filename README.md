@@ -14,17 +14,12 @@ Once you have installed Rooster, you can view documentation with:
 rooster --help
 ```
 
-If you want to talk about password management or talk about Rooster, feel free to
-join [our community chat][2].
-
-We welcome contribution from everyone. Head over to [CONTRIBUTING.md][3] to learn
+We welcome contribution from everyone. Head over to [CONTRIBUTING.md][2] to learn
 more about how to contribute to the project.
 
 ## Ideas
 
 - Add analytics tracking
-- Remove useless newline on `get` command output
-- Better error messages
 - Web frontend
 - Mobile app
 - Import from other password managers
@@ -38,5 +33,4 @@ more about how to contribute to the project.
 
 [0]: https://www.rust-lang.org/downloads.html "How to install Rust & Cargo"
 [1]: https://github.com/conradkleinespel/rooster/issues/new "Open an issue"
-[2]: https://discord.gg/0lYgGUEC78GMWx6S "Rooster community chat"
-[3]: CONTRIBUTING.md "Contribution guidelines"
+[2]: CONTRIBUTING.md "Contribution guidelines"

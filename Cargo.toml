@@ -1,6 +1,6 @@
 [package]
 name = "rooster"
-version = "2.0.1"
+version = "2.1.0"
 authors = ["Conrad Kleinespel <conradk@conradk.com>"]
 license = "Apache-2.0"
 repository = "https://github.com/conradkleinespel/rooster"
@@ -16,3 +16,13 @@ libc = "0.2"
 rpassword = "0.2"
 getopts = "0.2"
 byteorder = "0.5"
+clipboard = "0.1"
+unix-daemonize = "0.1"
+
+[[bin]]
+name = "rooster"
+path = "src/main-rooster.rs"
+
+[[bin]]
+name = "rooster-clipboard"
+path = "src/main-rooster-clipboard.rs"

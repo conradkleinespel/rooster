@@ -46,6 +46,9 @@ mod color;
 mod safe_string;
 mod safe_vec;
 mod generate;
+mod clipboard;
+
+const ROOSTER_VERSION: &'static str = "v2.1.0";
 
 const ROOSTER_ANALYTICS_OPT_OUT_ENV_VAR: &'static str = "ROOSTER_ANALYTICS_OPT_OUT";
 const ROOSTER_FILE_ENV_VAR: &'static str              = "ROOSTER_FILE";
@@ -219,6 +222,7 @@ fn usage(password_file: &str) {
     println!("");
     println!("Options:");
     println!("    -h, --help        Display a help message");
+    println!("    -v, --version     Display the version of Rooster you are using");
     println!("    -a, --alnum       Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords");
     println!("    -l, --length      Set a custom length for the generated password, default is 32");
     println!("");
@@ -238,6 +242,7 @@ fn main() {
 
     let mut opts = Options::new();
     opts.optflag("h", "help", "Display a help message");
+    opts.optflag("v", "version", "Display the version of Rooster you are using");
     opts.optflag("a", "alnum", "Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords");
     opts.optopt("l", "length", "Set a custom length for the generated password", "32");
 
@@ -276,6 +281,11 @@ fn main() {
     // Global help was requested.
     if matches.opt_present("h") && matches.free.is_empty() {
         usage(password_file_path.deref());
+        std::process::exit(0);
+    }
+
+    if matches.opt_present("v") {
+        println!("{}", ROOSTER_VERSION);
         std::process::exit(0);
     }
 

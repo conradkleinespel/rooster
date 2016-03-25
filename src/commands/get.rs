@@ -14,6 +14,7 @@
 
 use super::super::getopts;
 use super::super::password;
+use super::super::clipboard::{copy_to_clipboard, paste_keys};
 use std::io::Write;
 use std::ops::Deref;
 
@@ -24,8 +25,6 @@ pub fn callback_help() {
     println!("");
     println!("Example:");
     println!("    rooster get youtube");
-    println!("    rooster get youtube | pbcopy   # for Mac users");
-    println!("    rooster get youtube | xsel -ib # for Linux users");
 }
 
 pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::PasswordStore) -> Result<(), i32> {
@@ -39,8 +38,11 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
 
     match store.get_password(app_name) {
         Some(ref password) => {
-            print_stdout!("{}", password.password.deref());
-            print_stderr!("\n");
+            if copy_to_clipboard(password.password.deref()).is_err() {
+                println_err!("Alright! Here is your password: {}", password.password.deref());
+                return Err(1);
+            }
+            println_ok!("Alright! You can paste your password anywhere with {}.", paste_keys());
             return Ok(());
         },
         None => {

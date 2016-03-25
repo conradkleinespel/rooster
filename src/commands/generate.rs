@@ -16,6 +16,7 @@ use super::super::getopts;
 use super::super::password;
 use super::super::safe_string::SafeString;
 use super::super::generate::{PasswordSpec, generate_hard_password};
+use super::super::clipboard::{copy_to_clipboard, paste_keys};
 use std::io::Write;
 use std::ops::Deref;
 
@@ -59,6 +60,7 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
     };
 
     // Read the master password and try to save the new password.
+    let password_as_string_clipboard = SafeString::new(password_as_string.clone());
     let password = password::v2::Password::new(
         app_name.clone(),
         username,
@@ -67,7 +69,11 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
 
     match store.add_password(password) {
         Ok(_) => {
-            println_ok!("Alright! Your password for {} has been added.", app_name);
+            if copy_to_clipboard(password_as_string_clipboard.deref()).is_err() {
+                println_ok!("Alright! I've saved your new password for {}. Here it is: {}", app_name, password_as_string_clipboard.deref());
+                return Err(1);
+            }
+            println_ok!("Alright! I've saved your new password for {}. You can paste it anywhere with {}.", app_name, paste_keys());
             return Ok(());
         },
         Err(err) => {

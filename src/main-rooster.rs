@@ -48,8 +48,6 @@ mod safe_vec;
 mod generate;
 mod clipboard;
 
-const ROOSTER_VERSION: &'static str = "v2.1.0";
-
 const ROOSTER_ANALYTICS_OPT_OUT_ENV_VAR: &'static str = "ROOSTER_ANALYTICS_OPT_OUT";
 const ROOSTER_FILE_ENV_VAR: &'static str              = "ROOSTER_FILE";
 const ROOSTER_FILE_DEFAULT: &'static str              = ".passwords.rooster";
@@ -119,60 +117,50 @@ fn get_password_file(filename: &str) -> IoResult<File> {
     }
 }
 
-fn execute_command_from_filename(matches: &getopts::Matches, command: &Command, filename: &str) -> Result<(), i32> {
+fn execute_command_from_filename(matches: &getopts::Matches, command: &Command, filename: &str, master_password: SafeString) -> Result<(), i32> {
     match get_password_file(filename) {
         Ok(ref mut file) => {
             if matches.opt_present("help") {
                 (command.callback_help)();
                 return Ok(());
             } else {
-                print_stderr!("Type your master password: ");
-                match read_password() {
-                    Ok(master_password) => {
-                        let master_password = SafeString::new(master_password);
-                        let mut input: Vec<u8> = Vec::new();
-                        try!(file.read_to_end(&mut input).map_err(|_| 1));
+                let mut input: Vec<u8> = Vec::new();
+                try!(file.read_to_end(&mut input).map_err(|_| 1));
 
-                        // If the password file is empty (ie new), we'll make a new, empty store.
-                        let mut store = if input.len() == 0 {
-                            try!(password::v2::PasswordStore::new(master_password.clone()).map_err(|_| 1))
-                        } else {
-                            // Try to open the file as is.
-                            match password::v2::PasswordStore::from_input(master_password.clone(), SafeVec::new(input.clone())) {
+                // If the password file is empty (ie new), we'll make a new, empty store.
+                let mut store = if input.len() == 0 {
+                    try!(password::v2::PasswordStore::new(master_password.clone()).map_err(|_| 1))
+                } else {
+                    // Try to open the file as is.
+                    match password::v2::PasswordStore::from_input(master_password.clone(), SafeVec::new(input.clone())) {
+                        Ok(store) => store,
+                        Err(_) => {
+                            // If we can't open the file, we may need to upgrade its format first.
+                            match password::upgrade(master_password.clone(), SafeVec::new(input.clone())) {
                                 Ok(store) => store,
                                 Err(_) => {
-                                    // If we can't open the file, we may need to upgrade its format first.
-                                    match password::upgrade(master_password.clone(), SafeVec::new(input.clone())) {
-                                        Ok(store) => store,
-                                        Err(_) => {
-                                            // If we can't upgrade its format either, we show a helpful
-                                            // error message.
-                                            println_err!("I could not upgrade the Rooster file. This could be because:");
-                                            println_err!("- you explicitly told Rooster not to open the file,");
-                                            println_err!("- your version of Rooster is outdated,");
-                                            println_err!("- your Rooster file is corrupted,");
-                                            println_err!("- your master password is wrong.");
-                                            println_err!("Try upgrading to the latest version of Rooster.");
-                                            return Err(1);
-                                        }
-                                    }
+                                    // If we can't upgrade its format either, we show a helpful
+                                    // error message.
+                                    println_err!("I could not upgrade the Rooster file. This could be because:");
+                                    println_err!("- you explicitly told Rooster not to open the file,");
+                                    println_err!("- your version of Rooster is outdated,");
+                                    println_err!("- your Rooster file is corrupted,");
+                                    println_err!("- your master password is wrong.");
+                                    println_err!("Try upgrading to the latest version of Rooster.");
+                                    return Err(1);
                                 }
                             }
-                        };
-
-                        // Execute the command and save the new password list
-                        try!((command.callback_exec)(matches, &mut store));
-
-                        match store.sync(file) {
-                            Ok(()) => { Ok(()) },
-                            Err(err) => {
-                                println_err!("I could not save the password file ({:?}).", err);
-                                return Err(1);
-                            }
                         }
-                    },
+                    }
+                };
+
+                // Execute the command and save the new password list
+                try!((command.callback_exec)(matches, &mut store));
+
+                match store.sync(file) {
+                    Ok(()) => { Ok(()) },
                     Err(err) => {
-                        println_err!("I could not read your master password ({})", err);
+                        println_err!("I could not save the password file ({:?}).", err);
                         return Err(1);
                     }
                 }
@@ -209,6 +197,11 @@ fn get_password_file_path(rooster_file: Result<String, VarError>, home_dir: Opti
     }
 }
 
+fn ask_master_password() -> IoResult<SafeString> {
+    print_stderr!("Type your master password: ");
+    read_password().map(|inner| SafeString::new(inner))
+}
+
 fn usage(password_file: &str) {
     println!("Welcome to Rooster, the simple password manager for geeks :-)");
     println!("");
@@ -225,6 +218,8 @@ fn usage(password_file: &str) {
     println!("    -v, --version     Display the version of Rooster you are using");
     println!("    -a, --alnum       Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords");
     println!("    -l, --length      Set a custom length for the generated password, default is 32");
+    println!("    -p, --prompt      Ask the master password in a GUI window instead of the terminal");
+    println!("    -s, --show        Show the password instead of copying it to the clipboard");
     println!("");
     println!("Commands:");
     println!("    add                        Add a new password");
@@ -242,9 +237,11 @@ fn main() {
 
     let mut opts = Options::new();
     opts.optflag("h", "help", "Display a help message");
+    opts.optflag("p", "prompt", "Ask the master password in a GUI window instead of the terminal");
     opts.optflag("v", "version", "Display the version of Rooster you are using");
     opts.optflag("a", "alnum", "Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords");
     opts.optopt("l", "length", "Set a custom length for the generated password", "32");
+    opts.optflag("s", "show", "Show the password instead of copying it to the clipboard");
 
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => { m },
@@ -285,7 +282,7 @@ fn main() {
     }
 
     if matches.opt_present("v") {
-        println!("{}", ROOSTER_VERSION);
+        println!("v{}", env!("CARGO_PKG_VERSION"));
         std::process::exit(0);
     }
 
@@ -298,9 +295,17 @@ fn main() {
         }
     };
 
+    let master_password = match ask_master_password() {
+        Ok(p) => p,
+        Err(err) => {
+            println_err!("Woops, I could not read your master password ({:?}).", err);
+            std::process::exit(1);
+        }
+    };
+
     match command_from_name(command_name.as_ref()) {
         Some(command) => {
-            match execute_command_from_filename(&matches, command, password_file_path.deref()) {
+            match execute_command_from_filename(&matches, command, password_file_path.deref(), master_password) {
                 Err(i) => std::process::exit(i),
                 _ => std::process::exit(0)
             }

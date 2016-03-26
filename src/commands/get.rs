@@ -25,6 +25,7 @@ pub fn callback_help() {
     println!("");
     println!("Example:");
     println!("    rooster get youtube");
+    println!("    rooster get -s youtube");
 }
 
 pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::PasswordStore) -> Result<(), i32> {
@@ -38,6 +39,11 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
 
     match store.get_password(app_name) {
         Some(ref password) => {
+            if matches.opt_present("show") {
+                println_ok!("Alright! Here is your password: {}", password.password.deref());
+                return Ok(());
+            }
+
             if copy_to_clipboard(password.password.deref()).is_err() {
                 println_err!("Alright! Here is your password: {}", password.password.deref());
                 return Err(1);

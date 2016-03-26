@@ -17,7 +17,7 @@ rpassword = "0.2"
 getopts = "0.2"
 byteorder = "0.5"
 clipboard = "0.1"
-unix-daemonize = "0.1"
+unix-daemonize = "0.1" # only needed for linux
 
 [[bin]]
 name = "rooster"

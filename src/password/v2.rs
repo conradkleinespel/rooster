@@ -14,7 +14,6 @@
 
 use super::super::ffi;
 use super::super::crypto::{scrypt, hmac, sha2};
-use super::super::crypto::digest::Digest;
 use super::super::crypto::mac::{Mac, MacResult};
 use super::super::aes;
 use super::super::rand::{Rng, OsRng};

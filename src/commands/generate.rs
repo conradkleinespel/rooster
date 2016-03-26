@@ -69,10 +69,16 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
 
     match store.add_password(password) {
         Ok(_) => {
+            if matches.opt_present("show") {
+                println_ok!("Alright! Here is your password: {}", password_as_string_clipboard.deref());
+                return Ok(());
+            }
+
             if copy_to_clipboard(password_as_string_clipboard.deref()).is_err() {
                 println_ok!("Alright! I've saved your new password for {}. Here it is: {}", app_name, password_as_string_clipboard.deref());
                 return Err(1);
             }
+            
             println_ok!("Alright! I've saved your new password for {}. You can paste it anywhere with {}.", app_name, paste_keys());
             return Ok(());
         },

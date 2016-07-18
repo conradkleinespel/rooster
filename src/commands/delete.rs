@@ -32,17 +32,17 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
         return Err(1);
     }
 
-    let ref app_name = matches.free[1];
+    let app_name = &matches.free[1];
 
     match store.delete_password(app_name) {
         Ok(_) => {
             println_ok!("Done! I've deleted the password for {}.", app_name);
-            return Ok(());
+            Ok(())
         },
         Err(err) => {
             println_err!("Woops, I couldn't find a password for this app ({:?}). Make sure you didn't make a typo.", err);
             println_err!("You can use 'rooster list' to see a list of available passwords.");
-            return Err(1);
+            Err(1)
         }
     }
 }

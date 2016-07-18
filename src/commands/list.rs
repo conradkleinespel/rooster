@@ -14,8 +14,7 @@
 
 use super::super::getopts;
 use super::super::password;
-use std::iter::repeat;
-use std::iter::FromIterator;
+use std::iter::{Iterator, FromIterator, repeat};
 
 pub fn callback_help() {
     println!("Usage:");
@@ -34,10 +33,8 @@ pub fn callback_exec(_matches: &getopts::Matches, store: &mut password::v2::Pass
     println!("{}", horizontal_border);
     println!("| {:2} | {:30} | {:30} |", "id", "app", "username");
     println!("{}", horizontal_border);
-    let mut i = 0;
-    for p in store.get_all_passwords().iter() {
+    for (i, p) in store.get_all_passwords().iter().enumerate() {
         println!("| {:2?} | {:30} | {:30} |", i, p.name, p.username);
-        i += 1;
     }
     println!("{}", horizontal_border);
 

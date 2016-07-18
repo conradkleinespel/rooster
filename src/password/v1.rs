@@ -97,7 +97,7 @@ pub fn get_all_passwords(master_password: &str, encrypted: &[u8]) -> Result<Vec<
         let encrypted = &encrypted[.. encrypted.len() - IV_LEN];
 
         // Decrypt the data and remvoe the descryption key from memory.
-        let decrypted_maybe = aes::decrypt(encrypted, key.deref(), &iv);
+        let decrypted_maybe = aes::decrypt(encrypted, key.deref(), iv);
 
         match decrypted_maybe {
             Ok(decrypted) => {

@@ -29,10 +29,10 @@ pub fn copy_to_clipboard(s: &str) -> IoResult<()> {
 
 #[cfg(target_os="macos")]
 pub fn paste_keys() -> String {
-    format!("Cmd+V")
+    "Cmd+V".to_string()
 }
 
 #[cfg(not(target_os="macos"))]
 pub fn paste_keys() -> String {
-    format!("Ctrl+V")
+    "Ctrl+V".to_string()
 }

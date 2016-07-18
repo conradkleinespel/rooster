@@ -57,6 +57,6 @@ impl Encodable for SafeString {
 
 impl Decodable for SafeString {
     fn decode<D: Decoder>(d: &mut D) -> Result<SafeString, D::Error> {
-        String::decode(d).map(|s| SafeString::new(s))
+        String::decode(d).map(SafeString::new)
     }
 }

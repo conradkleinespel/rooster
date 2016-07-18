@@ -35,7 +35,7 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
         return Err(1);
     }
 
-    let ref app_name = matches.free[1];
+    let app_name = &matches.free[1];
 
     match store.get_password(app_name) {
         Some(ref password) => {
@@ -49,13 +49,13 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
                 return Err(1);
             }
             println_ok!("Alright! You can paste your password anywhere with {}.", paste_keys());
-            return Ok(());
+            Ok(())
         },
         None => {
             println_err!("I couldn't find a password for this app. Make sure you");
             println_err!("didn't make a typo. For a list of passwords, try:");
             println_err!("    rooster list");
-            return Err(1);
+            Err(1)
         }
     }
 }

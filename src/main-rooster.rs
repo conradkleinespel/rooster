@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// #![allow(useless_format, too_many_arguments)]
+
 extern crate libc;
 extern crate getopts;
 extern crate rustc_serialize;
@@ -72,7 +74,7 @@ static COMMANDS: &'static [Command] = &[
 fn command_from_name(name: &str) -> Option<&'static Command> {
     for c in COMMANDS.iter() {
         if c.name == name {
-            return Some(&c);
+            return Some(c);
         }
     }
     None
@@ -97,9 +99,9 @@ fn get_password_file(filename: &str) -> IoResult<File> {
                         let mut line = String::new();
                         match stdin().read_line(&mut line) {
                             Ok(_) => {
-                                if line.starts_with("y") {
+                                if line.starts_with('y') {
                                     return open_password_file(filename, true);
-                                } else if line.starts_with("n") {
+                                } else if line.starts_with('n') {
                                     return Err(IoError::new(IoErrorKind::Other, "no password file available"));
                                 } else {
                                     println_stderr!("I did not get that. Create a password file now? [y/n]");
@@ -122,13 +124,13 @@ fn execute_command_from_filename(matches: &getopts::Matches, command: &Command, 
         Ok(ref mut file) => {
             if matches.opt_present("help") {
                 (command.callback_help)();
-                return Ok(());
+                Ok(())
             } else {
                 let mut input: Vec<u8> = Vec::new();
                 try!(file.read_to_end(&mut input).map_err(|_| 1));
 
                 // If the password file is empty (ie new), we'll make a new, empty store.
-                let mut store = if input.len() == 0 {
+                let mut store = if input.is_empty() {
                     try!(password::v2::PasswordStore::new(master_password.clone()).map_err(|_| 1))
                 } else {
                     // Try to open the file as is.
@@ -161,14 +163,14 @@ fn execute_command_from_filename(matches: &getopts::Matches, command: &Command, 
                     Ok(()) => { Ok(()) },
                     Err(err) => {
                         println_err!("I could not save the password file ({:?}).", err);
-                        return Err(1);
+                        Err(1)
                     }
                 }
             }
         },
         Err(err) => {
             println_err!("I could not open the password file \"{}\" :( ({})", filename, err);
-            return Err(1);
+            Err(1)
         }
     }
 }
@@ -199,7 +201,7 @@ fn get_password_file_path(rooster_file: Result<String, VarError>, home_dir: Opti
 
 fn ask_master_password() -> IoResult<SafeString> {
     print_stderr!("Type your master password: ");
-    read_password().map(|inner| SafeString::new(inner))
+    read_password().map(SafeString::new)
 }
 
 fn usage(password_file: &str) {

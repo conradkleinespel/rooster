@@ -64,7 +64,7 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
                         println_ok!("Alright! I've saved your new password for {}. Here it is, one more time: {}", app_name, password_as_string_clipboard.deref());
                         return Err(1);
                     }
-                    
+
                     println_ok!("Alright! I've saved your new password for {}. You can paste it anywhere with {}.", app_name, paste_keys());
                 },
                 Err(err) => {
@@ -73,11 +73,11 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
                 }
             }
 
-            return Ok(());
+            Ok(())
         },
         Err(err) => {
             println_err!("\nI couldn't read the app's password ({:?}).", err);
-            return Err(1);
+            Err(1)
         }
     }
 }

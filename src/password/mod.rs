@@ -69,9 +69,9 @@ pub fn upgrade(master_password: SafeString, input: SafeVec) -> Result<v2::Passwo
         let mut line = String::new();
         match stdin().read_line(&mut line) {
             Ok(_) => {
-                if line.starts_with("y") {
+                if line.starts_with('y') {
                     break;
-                } else if line.starts_with("n") {
+                } else if line.starts_with('n') {
                     return Err(PasswordError::WrongVersionError);
                 } else {
                     println_stderr!("I did not get that. Upgrade from v1 to v2? [y/n]");

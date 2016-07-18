@@ -113,8 +113,8 @@ fn digest(key: &[u8], version: u32, scrypt_log2_n: u8, scrypt_r: u32, scrypt_p: 
     let scrypt_bytes = scrypt_bytes_cursor.into_inner();
     digest.input(scrypt_bytes.deref());
 
-    digest.input(&iv);
-    digest.input(&salt);
+    digest.input(iv);
+    digest.input(salt);
     digest.input(blob.deref());
 
     Ok(digest)
@@ -170,13 +170,13 @@ pub struct PasswordStore {
 ///
 /// The Rooster file has the following format:
 /// - rooster version: u32, big endian
-/// - scrypt log2_n:  u8
-/// - scrypt r:       u32, big endian
-/// - scrypt p:       u32, big endian
-/// - salt:           256 bits
-/// - iv:             256 bits
-/// - signature:      512 bits HMAC-SHA512
-/// - encrypted blob: variable length
+/// - scrypt log2n:    u8
+/// - scrypt r:        u32, big endian
+/// - scrypt p:        u32, big endian
+/// - salt:            256 bits
+/// - iv:              256 bits
+/// - signature:       512 bits HMAC-SHA512
+/// - encrypted blob:  variable length
 impl PasswordStore {
     pub fn new(master_password: SafeString) -> IoResult<PasswordStore> {
         let salt = try!(generate_random_salt());
@@ -187,7 +187,7 @@ impl PasswordStore {
             SCRYPT_PARAM_P
         );
 
-        let key = generate_encryption_key(scrypt_params.clone(), master_password.deref(), salt);
+        let key = generate_encryption_key(scrypt_params, master_password.deref(), salt);
 
         Ok(PasswordStore {
             key: key,
@@ -372,7 +372,7 @@ impl PasswordStore {
     }
 
     pub fn get_password(&self, name: &str) -> Option<Password> {
-        'passwords_loop: for p in self.schema.passwords.iter() {
+        'passwords_loop: for p in &self.schema.passwords {
             // Since the app name must be the same, we need the same length.
             if p.name.len() != name.len() {
                 continue 'passwords_loop;

@@ -44,14 +44,10 @@ fn password_is_hard(password: &str, alnum: bool) -> bool {
         "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~".find(c).is_some()
     };
 
-    if password.find(char::is_numeric).is_some()
+    password.find(char::is_numeric).is_some()
     && password.find(char::is_lowercase).is_some()
     && password.find(char::is_uppercase).is_some()
-    && (alnum || password.find(is_punctuation).is_some()) {
-        true
-    } else {
-        false
-    }
+    && (alnum || password.find(is_punctuation).is_some())
 }
 
 pub fn generate_hard_password(alnum: bool, len: usize) -> IoResult<String> {

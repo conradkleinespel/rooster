@@ -73,17 +73,17 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
                     }
 
                     println_ok!("Done! I've saved your new password for {}. You can paste it anywhere with {}.", app_name, paste_keys());
-                    return Ok(());
+                    Ok(())
                 },
                 Err(err) => {
                     println_err!("Woops, I couldn't save the new password ({:?}).", err);
-                    return Err(1);
+                    Err(1)
                 }
             }
         },
         Err(err) => {
             println_err!("Woops, I couldn't get that password ({:?}).", err);
-            return Err(1);
+            Err(1)
         }
     }
 }

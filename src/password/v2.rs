@@ -397,6 +397,12 @@ impl PasswordStore {
         self.get_password(name).is_some()
     }
 
+    pub fn change_password(&mut self, app_name: &str, closure: &Fn(Password) -> Password) -> Result<(), PasswordError> {
+        let old_p = try!(self.delete_password(app_name.deref()));
+
+        self.add_password(closure(old_p))
+    }
+
     pub fn change_master_password(&mut self, master_password: &str) {
         let scrypt_params = scrypt::ScryptParams::new(
             self.scrypt_log2_n,

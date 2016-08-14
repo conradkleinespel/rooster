@@ -69,6 +69,8 @@ static COMMANDS: &'static [Command] = &[
     Command { name: "list", callback_exec: commands::list::callback_exec, callback_help: commands::list::callback_help },
     Command { name: "export", callback_exec: commands::export::callback_exec, callback_help: commands::export::callback_help },
     Command { name: "change-master-password", callback_exec: commands::change_master_password::callback_exec, callback_help: commands::change_master_password::callback_help },
+    Command { name: "rename", callback_exec: commands::rename::callback_exec, callback_help: commands::rename::callback_help },
+    Command { name: "change", callback_exec: commands::change::callback_exec, callback_help: commands::change::callback_help },
 ];
 
 fn command_from_name(name: &str) -> Option<&'static Command> {
@@ -224,11 +226,13 @@ fn usage(password_file: &str) {
     println!("    -s, --show        Show the password instead of copying it to the clipboard");
     println!("");
     println!("Commands:");
-    println!("    add                        Add a new password");
+    println!("    add                        Add a new password manually");
+    println!("    change                     Change a password manually");
     println!("    delete                     Delete a password");
     println!("    generate                   Generate a password");
     println!("    regenerate                 Re-generate a previously existing password");
     println!("    get                        Retrieve a password");
+    println!("    rename                     Rename the app for a password");
     println!("    list                       List all apps and usernames");
     println!("    export                     List all passwords in unencrypted JSON");
     println!("    change-master-password     Change your master password");

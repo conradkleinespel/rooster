@@ -20,3 +20,5 @@ pub mod list;
 pub mod regenerate;
 pub mod export;
 pub mod change_master_password;
+pub mod rename;
+pub mod change;

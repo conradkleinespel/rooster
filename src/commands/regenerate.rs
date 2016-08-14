@@ -54,35 +54,33 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
         }
     };
 
-    match store.delete_password(app_name.deref()) {
-        Ok(mut previous) => {
-            let password_as_string_clipboard = SafeString::new(password_as_string.clone());
-            previous.password = SafeString::new(password_as_string);
-            previous.updated_at = ffi::time();
+    let change_result = store.change_password(app_name.deref(), &|old_password: password::v2::Password| {
+        password::v2::Password {
+            name: old_password.name.clone(),
+            username: old_password.username.clone(),
+            password: SafeString::new(password_as_string.clone()),
+            created_at: old_password.created_at,
+            updated_at: ffi::time(),
+        }
+    });
 
-            match store.add_password(previous) {
-                Ok(_) => {
-                    if matches.opt_present("show") {
-                        println_ok!("Alright! Here is your password: {}", password_as_string_clipboard.deref());
-                        return Ok(());
-                    }
-
-                    if copy_to_clipboard(password_as_string_clipboard.deref()).is_err() {
-                        println_ok!("Alright! I've saved your new password for {}. Here it is: {}", app_name, password_as_string_clipboard.deref());
-                        return Err(1);
-                    }
-
-                    println_ok!("Done! I've saved your new password for {}. You can paste it anywhere with {}.", app_name, paste_keys());
-                    Ok(())
-                },
-                Err(err) => {
-                    println_err!("Woops, I couldn't save the new password ({:?}).", err);
-                    Err(1)
-                }
+    match change_result {
+        Ok(_) => {
+            if matches.opt_present("show") {
+                println_ok!("Alright! Here is your password: {}", password_as_string.deref());
+                return Ok(());
             }
-        },
+
+            if copy_to_clipboard(password_as_string.deref()).is_err() {
+                println_ok!("Alright! I've saved your new password for {}. Here it is: {}", app_name, password_as_string.deref());
+                return Err(1);
+            }
+
+            println_ok!("Done! I've saved your new password for {}. You can paste it anywhere with {}.", app_name, paste_keys());
+            Ok(())
+        }
         Err(err) => {
-            println_err!("Woops, I couldn't get that password ({:?}).", err);
+            println_err!("Woops, I couldn't save the new password ({:?}).", err);
             Err(1)
         }
     }

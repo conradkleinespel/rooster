@@ -49,11 +49,11 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
 
     match change_result {
         Ok(_) => {
-            println_ok!("Done! I've renamed `{}` to `{}`", old_name, new_name);
+            println_ok!("Done! I've renamed {} to {}", old_name, new_name);
             Ok(())
         }
         Err(err) => {
-            println_err!("Woops, I couldn't save the new password ({:?}).", err);
+            println_err!("Woops, I couldn't save the new app name ({:?}).", err);
             Err(1)
         }
     }

@@ -14,7 +14,12 @@
 
 use super::super::getopts;
 use super::super::password;
+use super::super::rpassword::read_password;
+use super::super::safe_string::SafeString;
+use super::super::clipboard::{copy_to_clipboard, paste_keys};
+use super::super::ffi;
 use std::io::Write;
+use std::ops::Deref;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -32,5 +37,47 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
         return Err(1);
     }
 
-    unimplemented!();
+    let app_name = matches.free[1].clone();
+
+    print_stderr!("What password do you want for \"{}\"? ", app_name);
+    match read_password() {
+        Ok(password_as_string) => {
+            let password_as_string = SafeString::new(password_as_string.clone());
+
+            let change_result = store.change_password(app_name.deref(), &|old_password: password::v2::Password| {
+                password::v2::Password {
+                    name: old_password.name.clone(),
+                    username: old_password.username.clone(),
+                    password: password_as_string.clone(),
+                    created_at: old_password.created_at,
+                    updated_at: ffi::time(),
+                }
+            });
+
+            match change_result {
+                Ok(_) => {
+                    if matches.opt_present("show") {
+                        println_ok!("Alright! Here is your new password: {}", password_as_string.deref());
+                        return Ok(());
+                    }
+
+                    if copy_to_clipboard(password_as_string.deref()).is_err() {
+                        println_ok!("Alright! Here is your new password: {}", password_as_string.deref());
+                        return Err(1);
+                    }
+
+                    println_ok!("Done! I've saved your new password for \"{}\". You can paste it anywhere with {}.", app_name, paste_keys());
+                    Ok(())
+                }
+                Err(err) => {
+                    println_err!("Woops, I couldn't save the new password ({:?}).", err);
+                    Err(1)
+                }
+            }
+        },
+        Err(err) => {
+            println_err!("\nI couldn't read the app's password ({:?}).", err);
+            Err(1)
+        }
+    }
 }

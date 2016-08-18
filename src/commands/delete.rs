@@ -37,10 +37,10 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
     for app_name in &matches.free[1..] {
         match store.delete_password(app_name) {
             Ok(_) => {
-                println_ok!("Done! I've deleted the password for {}.", app_name);
+                println_ok!("Done! I've deleted the password for \"{}\".", app_name);
             },
             Err(err) => {
-                println_err!("Woops! I couldn't find a password for the app `{}` (error: {:?}).", app_name, err);
+                println_err!("Woops! I couldn't find a password for \"{}\" (error: {:?}).", app_name, err);
                 has_error = true;
             }
         }

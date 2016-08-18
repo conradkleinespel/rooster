@@ -44,7 +44,7 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
         return Err(1);
     }
 
-    print_stderr!("What password do you want for {}? ", app_name);
+    print_stderr!("What password do you want for \"{}\"? ", app_name);
     match read_password() {
         Ok(password_as_string) => {
             let password_as_string_clipboard = SafeString::new(password_as_string.clone());
@@ -61,11 +61,11 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
                     }
 
                     if copy_to_clipboard(password_as_string_clipboard.deref()).is_err() {
-                        println_ok!("Alright! I've saved your new password for {}. Here it is, one more time: {}", app_name, password_as_string_clipboard.deref());
+                        println_ok!("Alright! Here is your password: {}", password_as_string_clipboard.deref());
                         return Err(1);
                     }
 
-                    println_ok!("Alright! I've saved your new password for {}. You can paste it anywhere with {}.", app_name, paste_keys());
+                    println_ok!("Alright! I've saved your new password. You can paste it anywhere with {}.", paste_keys());
                 },
                 Err(err) => {
                     println_err!("Woops, I couldn't add the password ({:?}).", err);

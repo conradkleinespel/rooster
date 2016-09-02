@@ -2,6 +2,8 @@
 
 ## Installation
 
+[![Build Status](https://drone.conradk.com/api/badges/conradk/rooster/status.svg)](https://drone.conradk.com/conradk/rooster)
+
 Rooster depends on [Rust & Cargo][0] being installed on your system.
 
 Once you have those installed, you can run the following command to install Rooster:

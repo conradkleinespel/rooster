@@ -1,4 +1,4 @@
-[![Rooster Banner](http://conradk.com/rooster/images/rooster-banner.png)](http://conradk.com/rooster/)
+![Rooster Banner](rooster-banner.png)
 
 ## Installation
 

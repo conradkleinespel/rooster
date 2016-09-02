@@ -7,8 +7,8 @@ build:
         - cargo build --release
 
 matrix:
-  RUST_VERSION:
-    - '1.8'
-    - '1.9'
-    - '1.10'
-    - 'stable'
+    RUST_VERSION:
+        - '1.8'
+        - '1.9'
+        - '1.10'
+        - 'stable'

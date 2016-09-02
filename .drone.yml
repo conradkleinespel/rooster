@@ -1,14 +1,13 @@
 build:
     image: rust:$$RUST_VERSION
     commands:
+        - apt-get update
+        - apt-get install libxmu-dev libx11-dev pkg-config
         - cargo test
         - cargo build --release
 
 matrix:
   RUST_VERSION:
-    - '1.5'
-    - '1.6'
-    - '1.7'
     - '1.8'
     - '1.9'
     - '1.10'

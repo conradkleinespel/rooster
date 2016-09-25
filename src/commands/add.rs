@@ -62,10 +62,9 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
 
                     if copy_to_clipboard(password_as_string_clipboard.deref()).is_err() {
                         println_ok!("Alright! Here is your password: {}", password_as_string_clipboard.deref());
-                        return Err(1);
+                    } else {
+                        println_ok!("Alright! I've saved your new password. You can paste it anywhere with {}.", paste_keys());
                     }
-
-                    println_ok!("Alright! I've saved your new password. You can paste it anywhere with {}.", paste_keys());
                 },
                 Err(err) => {
                     println_err!("Woops, I couldn't add the password ({:?}).", err);

@@ -63,10 +63,10 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
 
                     if copy_to_clipboard(password_as_string.deref()).is_err() {
                         println_ok!("Alright! Here is your new password: {}", password_as_string.deref());
-                        return Err(1);
+                    } else {
+                        println_ok!("Done! I've saved your new password for \"{}\". You can paste it anywhere with {}.", app_name, paste_keys());
                     }
 
-                    println_ok!("Done! I've saved your new password for \"{}\". You can paste it anywhere with {}.", app_name, paste_keys());
                     Ok(())
                 }
                 Err(err) => {

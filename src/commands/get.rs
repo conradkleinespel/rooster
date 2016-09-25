@@ -46,9 +46,9 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
 
             if copy_to_clipboard(password.password.deref()).is_err() {
                 println_err!("Alright! Here is your password: {}", password.password.deref());
-                return Err(1);
+            } else {
+                println_ok!("Alright! You can paste your password anywhere with {}.", paste_keys());
             }
-            println_ok!("Alright! You can paste your password anywhere with {}.", paste_keys());
             Ok(())
         },
         None => {

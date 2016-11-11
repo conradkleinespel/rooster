@@ -34,6 +34,7 @@ more about how to contribute to the project.
 
 - [@conradkleinespel](https://github.com/conradkleinespel)
 - [@jaezun](https://github.com/jaezun)
+- [@maxjacobson](https://github.com/maxjacobson)
 - [@qmx](https://github.com/qmx)
 - Awesome Rustaceans from the [Rust Paris meetup](http://www.meetup.com/Rust-Paris/)
 

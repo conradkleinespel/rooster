@@ -50,7 +50,6 @@ mod safe_vec;
 mod generate;
 mod clipboard;
 
-const ROOSTER_ANALYTICS_OPT_OUT_ENV_VAR: &'static str = "ROOSTER_ANALYTICS_OPT_OUT";
 const ROOSTER_FILE_ENV_VAR: &'static str              = "ROOSTER_FILE";
 const ROOSTER_FILE_DEFAULT: &'static str              = ".passwords.rooster";
 
@@ -264,19 +263,6 @@ fn main() {
             println_err!("Woops, I could not determine where your password file is.");
             println_err!("I recommend you try setting the $ROOSTER_FILE environment");
             println_err!("variable with the absolute path to your password file.");
-            std::process::exit(1);
-        }
-    };
-
-    // Check if we want to opt-out of analytics tracking for this session.
-    let _analytics = match env::var(ROOSTER_ANALYTICS_OPT_OUT_ENV_VAR) {
-        // If the OPT_OUT is true, disable analytics.
-        Ok(analytics) => analytics.deref() != "true",
-        // Enable analytics by default.
-        Err(VarError::NotPresent) => true,
-        Err(VarError::NotUnicode(_)) => {
-            println_err!("The currently set $ROOSTER_ANALYTICS_OPT_OUT variable is");
-            println_err!("is invalid. It must be valid UTF-8.");
             std::process::exit(1);
         }
     };

@@ -21,10 +21,9 @@ more about how to contribute to the project.
 
 ## Ideas
 
-- Add analytics tracking
-- Web frontend
-- Mobile app
 - Import from other password managers
+- Avoid retyping master password every time (see https://github.com/conradkleinespel/rooster/issues/2)
+- Easy to install packages (see https://github.com/conradkleinespel/rooster/issues/6)
 
 ## Contributors
 

@@ -6,6 +6,11 @@
 
 Rooster depends on [Rust & Cargo][0] being installed on your system.
 
+On Ubuntu Linux, you need to install some packages before installing Rooster:
+```shell
+sudo apt-get install pkg-config libx11-dev libxmu-dev
+```
+
 Once you have those installed, you can run the following command to install Rooster:
 ```shell
 cargo install rooster

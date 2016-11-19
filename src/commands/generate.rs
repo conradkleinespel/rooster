@@ -75,7 +75,7 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
             }
 
             if copy_to_clipboard(password_as_string_clipboard.deref()).is_err() {
-                println_ok!("Hmm, we tried to copy your new password to your clipboard, but something went wrong. Don't worry, it's saved, and you can see it with `rooster get {} --show`", app_name);
+                println_ok!("Hmm, I tried to copy your new password to your clipboard, but something went wrong. Don't worry, it's saved, and you can see it with `rooster get {} --show`", app_name);
             } else {
                 println_ok!("Alright! I've saved your new password. You can paste it anywhere with {}.", paste_keys());
             }

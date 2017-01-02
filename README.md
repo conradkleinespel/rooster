@@ -2,11 +2,12 @@
 
 ## Installation
 
-[![Build Status](https://drone.conradk.com/api/badges/conradk/rooster/status.svg)](https://drone.conradk.com/conradk/rooster)
+Rooster depends on [Rust & Cargo][0] being installed on your system:
+```shell
+curl https://sh.rustup.rs -sSf | sh
+```
 
-Rooster depends on [Rust & Cargo][0] being installed on your system.
-
-On Ubuntu Linux, you need to install some packages before installing Rooster:
+On **Ubuntu Linux**, you need to install some packages before installing Rooster:
 ```shell
 sudo apt-get install pkg-config libx11-dev libxmu-dev
 ```

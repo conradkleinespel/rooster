@@ -15,7 +15,7 @@ rand = "0.3"
 libc = "0.2"
 rpassword = "0.3"
 getopts = "0.2"
-byteorder = "0.5"
+byteorder = "1.0"
 clipboard = "0.1"
 unix-daemonize = "0.1" # only needed for linux
 

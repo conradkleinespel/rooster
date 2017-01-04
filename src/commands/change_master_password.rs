@@ -14,7 +14,7 @@
 
 use super::super::getopts;
 use super::super::password;
-use super::super::rpassword::read_password;
+use super::super::rpassword::prompt_password_stderr;
 use super::super::safe_string::SafeString;
 use std::io::Write;
 use std::ops::Deref;
@@ -31,13 +31,13 @@ pub fn callback_help() {
 pub fn callback_exec(_matches: &getopts::Matches,
                      store: &mut password::v2::PasswordStore)
                      -> Result<(), i32> {
-    print_stderr!("Type your new master password: ");
-    match read_password() {
+    match prompt_password_stderr("Type your new master password: ") {
         Ok(master_password) => {
             let master_password = SafeString::new(master_password);
 
-            print_stderr!("Type your new master password once more: ");
-            let master_password_confirmation = match read_password() {
+            let master_password_confirmation = match prompt_password_stderr("Type your new \
+                                                                             master password \
+                                                                             once more: ") {
                 Ok(master_password_confirmation) => SafeString::new(master_password_confirmation),
                 Err(err) => {
                     println_err!("I could not read your new master password ({:?}).", err);

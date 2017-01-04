@@ -14,7 +14,7 @@
 
 use super::super::getopts;
 use super::super::password;
-use super::super::rpassword::read_password;
+use super::super::rpassword::prompt_password_stderr;
 use super::super::safe_string::SafeString;
 use super::super::clipboard::{copy_to_clipboard, paste_keys};
 use super::super::ffi;
@@ -41,8 +41,8 @@ pub fn callback_exec(matches: &getopts::Matches,
 
     let app_name = matches.free[1].clone();
 
-    print_stderr!("What password do you want for \"{}\"? ", app_name);
-    match read_password() {
+    match prompt_password_stderr(format!("What password do you want for \"{}\"? ", app_name)
+        .as_str()) {
         Ok(password_as_string) => {
             let password_as_string = SafeString::new(password_as_string.clone());
 

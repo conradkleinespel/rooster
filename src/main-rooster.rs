@@ -34,7 +34,7 @@ use std::io::Write;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use getopts::Options;
-use rpassword::read_password;
+use rpassword::prompt_password_stderr;
 use safe_string::SafeString;
 use safe_vec::SafeVec;
 use std::ops::Deref;
@@ -250,8 +250,7 @@ fn get_password_file_path(rooster_file: Result<String, VarError>,
 }
 
 fn ask_master_password() -> IoResult<SafeString> {
-    print_stderr!("Type your master password: ");
-    read_password().map(SafeString::new)
+    prompt_password_stderr("Type your master password: ").map(SafeString::new)
 }
 
 fn usage(password_file: &str) {

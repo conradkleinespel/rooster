@@ -25,7 +25,9 @@ pub fn callback_help() {
     println!("    rooster list");
 }
 
-pub fn callback_exec(_matches: &getopts::Matches, store: &mut password::v2::PasswordStore) -> Result<(), i32> {
+pub fn callback_exec(_matches: &getopts::Matches,
+                     store: &mut password::v2::PasswordStore)
+                     -> Result<(), i32> {
     let all_passwords = store.get_all_passwords();
 
     if all_passwords.len() == 0 {

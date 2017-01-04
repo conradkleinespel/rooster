@@ -13,8 +13,8 @@
 // limitations under the License.
 
 // static COLOR_BLACK: &'static str   = "\x1b[30m";
-static COLOR_RED: &'static str     = "\x1b[31m";
-static COLOR_GREEN: &'static str   = "\x1b[32m";
+static COLOR_RED: &'static str = "\x1b[31m";
+static COLOR_GREEN: &'static str = "\x1b[32m";
 // static COLOR_YELLOW: &'static str  = "\x1b[33m";
 // static COLOR_BLUE: &'static str    = "\x1b[34m";
 // static COLOR_MAGENTA: &'static str = "\x1b[35m";
@@ -24,20 +24,19 @@ static COLOR_GREEN: &'static str   = "\x1b[32m";
 pub enum Color {
     // Black,
     Red,
-    Green,
-    // Yellow,
-    // Blue,
-    // Magenta,
-    // Cyan,
-    // White,
+    Green, /* Yellow,
+            * Blue,
+            * Magenta,
+            * Cyan,
+            * White, */
 }
 
 impl Color {
     pub fn to_color_code(&self) -> &'static str {
         match *self {
             // Color::Black   => COLOR_BLACK,
-            Color::Red     => COLOR_RED,
-            Color::Green   => COLOR_GREEN,
+            Color::Red => COLOR_RED,
+            Color::Green => COLOR_GREEN,
             // Color::Yellow  => COLOR_YELLOW,
             // Color::Blue    => COLOR_BLUE,
             // Color::Magenta => COLOR_MAGENTA,

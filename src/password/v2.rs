@@ -22,7 +22,8 @@ use super::super::rustc_serialize::json;
 use super::super::safe_string::SafeString;
 use super::super::safe_vec::SafeVec;
 use super::PasswordError;
-use std::io::{Seek, SeekFrom, Result as IoResult, Error as IoError, ErrorKind as IoErrorKind, Read, Write, Cursor};
+use std::io::{Seek, SeekFrom, Result as IoResult, Error as IoError, ErrorKind as IoErrorKind,
+              Read, Write, Cursor};
 use std::fs::File;
 use std::ops::DerefMut;
 use std::ops::Deref;
@@ -83,20 +84,34 @@ fn generate_random_salt() -> IoResult<[u8; SALT_LEN]> {
 }
 
 /// Derives a 256 bits encryption key from the password.
-fn generate_encryption_key(scrypt_params: scrypt::ScryptParams, master_password: &str, salt: [u8; SALT_LEN]) -> SafeVec {
+fn generate_encryption_key(scrypt_params: scrypt::ScryptParams,
+                           master_password: &str,
+                           salt: [u8; SALT_LEN])
+                           -> SafeVec {
     let mut vec = Vec::<u8>::with_capacity(KEY_LEN);
     for _ in 0..KEY_LEN {
         vec.push(0u8);
     }
     let mut output = SafeVec::new(vec);
 
-    scrypt::scrypt(master_password.as_bytes(), &salt, &scrypt_params, output.deref_mut());
+    scrypt::scrypt(master_password.as_bytes(),
+                   &salt,
+                   &scrypt_params,
+                   output.deref_mut());
 
     output
 }
 
 /// Creates a HMAC struct
-fn digest(key: &[u8], version: u32, scrypt_log2_n: u8, scrypt_r: u32, scrypt_p: u32, iv: &[u8], salt: &[u8], blob: &[u8]) -> Result<hmac::Hmac<sha2::Sha512>, PasswordError> {
+fn digest(key: &[u8],
+          version: u32,
+          scrypt_log2_n: u8,
+          scrypt_r: u32,
+          scrypt_p: u32,
+          iv: &[u8],
+          salt: &[u8],
+          blob: &[u8])
+          -> Result<hmac::Hmac<sha2::Sha512>, PasswordError> {
     let mut digest = hmac::Hmac::new(sha2::Sha512::new(), key);
 
     let mut version_bytes_cursor: Cursor<Vec<u8>> = Cursor::new(Vec::new());
@@ -129,9 +144,7 @@ pub struct Schema {
 
 impl Schema {
     fn new() -> Schema {
-        Schema {
-            passwords: Vec::new(),
-        }
+        Schema { passwords: Vec::new() }
     }
 }
 
@@ -141,7 +154,7 @@ pub struct Password {
     pub username: String,
     pub password: SafeString,
     pub created_at: ffi::time_t,
-    pub updated_at: ffi::time_t
+    pub updated_at: ffi::time_t,
 }
 
 impl Password {
@@ -152,7 +165,7 @@ impl Password {
             username: username,
             password: password,
             created_at: timestamp,
-            updated_at: timestamp
+            updated_at: timestamp,
         }
     }
 }
@@ -181,11 +194,8 @@ impl PasswordStore {
     pub fn new(master_password: SafeString) -> IoResult<PasswordStore> {
         let salt = try!(generate_random_salt());
 
-        let scrypt_params = scrypt::ScryptParams::new(
-            SCRYPT_PARAM_LOG2_N,
-            SCRYPT_PARAM_R,
-            SCRYPT_PARAM_P
-        );
+        let scrypt_params =
+            scrypt::ScryptParams::new(SCRYPT_PARAM_LOG2_N, SCRYPT_PARAM_R, SCRYPT_PARAM_P);
 
         let key = generate_encryption_key(scrypt_params, master_password.deref(), salt);
 
@@ -199,7 +209,9 @@ impl PasswordStore {
         })
     }
 
-    pub fn from_input(master_password: SafeString, input: SafeVec) -> Result<PasswordStore, PasswordError> {
+    pub fn from_input(master_password: SafeString,
+                      input: SafeVec)
+                      -> Result<PasswordStore, PasswordError> {
         let mut reader = Cursor::new(input.deref());
 
         // Version taken from network byte order (big endian).
@@ -248,20 +260,19 @@ impl PasswordStore {
         try!(reader.read_to_end(&mut blob));
 
         // Derive a 256 bits encryption key from the password.
-        let scrypt_params = scrypt::ScryptParams::new(
-            scrypt_log2_n,
-            scrypt_r,
-            scrypt_p
-        );
+        let scrypt_params = scrypt::ScryptParams::new(scrypt_log2_n, scrypt_r, scrypt_p);
         let key = generate_encryption_key(scrypt_params, master_password.deref(), salt);
 
         // Check the signature against what it should be.
-        let new_signature_mac = try!(digest(
-                key.deref(),
-                version,
-                scrypt_log2_n, scrypt_r, scrypt_p,
-                &iv, &salt, blob.deref()
-        )).result();
+        let new_signature_mac = try!(digest(key.deref(),
+                                            version,
+                                            scrypt_log2_n,
+                                            scrypt_r,
+                                            scrypt_p,
+                                            &iv,
+                                            &salt,
+                                            blob.deref()))
+            .result();
         let old_signature_mac = MacResult::new(&signature);
         if new_signature_mac != old_signature_mac {
             return Err(PasswordError::CorruptionError);
@@ -270,14 +281,15 @@ impl PasswordStore {
         // Decrypt the data.
         let passwords = match aes::decrypt(blob.deref(), key.as_ref(), iv.as_ref()) {
             Ok(decrypted) => {
-                let encoded = SafeString::new(String::from_utf8_lossy(decrypted.as_ref()).into_owned());
+                let encoded = SafeString::new(String::from_utf8_lossy(decrypted.as_ref())
+                    .into_owned());
                 match json::decode::<Schema>(encoded.deref()) {
                     Ok(json) => json.passwords,
                     Err(_) => {
                         return Err(PasswordError::InvalidJsonError);
                     }
                 }
-            },
+            }
             Err(_) => {
                 return Err(PasswordError::DecryptionError);
             }
@@ -289,9 +301,7 @@ impl PasswordStore {
             scrypt_r: scrypt_r,
             scrypt_p: scrypt_p,
             salt: salt,
-            schema: Schema {
-                passwords: passwords,
-            },
+            schema: Schema { passwords: passwords },
         })
     }
 
@@ -307,9 +317,11 @@ impl PasswordStore {
 
         // Encrypt the data with a new salt and a new IV.
         let iv = try!(generate_random_iv());
-        let encrypted = match aes::encrypt(json_schema.deref().as_bytes(), self.key.as_ref(), iv.as_ref()) {
-            Ok(val) => { val },
-            Err(_) => { return Err(PasswordError::EncryptionError) }
+        let encrypted = match aes::encrypt(json_schema.deref().as_bytes(),
+                                           self.key.as_ref(),
+                                           iv.as_ref()) {
+            Ok(val) => val,
+            Err(_) => return Err(PasswordError::EncryptionError),
         };
 
         // Reset the file pointer.
@@ -330,12 +342,15 @@ impl PasswordStore {
         try!(file.write_all(&iv));
 
         // Write the file signature.
-        let signature = try!(digest(
-            self.key.deref(),
-            VERSION,
-            self.scrypt_log2_n, self.scrypt_r, self.scrypt_p,
-            &iv, &self.salt, encrypted.as_ref()
-        )).result();
+        let signature = try!(digest(self.key.deref(),
+                                    VERSION,
+                                    self.scrypt_log2_n,
+                                    self.scrypt_r,
+                                    self.scrypt_p,
+                                    &iv,
+                                    &self.salt,
+                                    encrypted.as_ref()))
+            .result();
         try!(file.write_all(signature.code()));
 
         // Write the encrypted password data.
@@ -350,7 +365,7 @@ impl PasswordStore {
     }
 
     /// Adds a password to the file.
-    pub fn add_password(&mut self, password: Password)-> Result<(), PasswordError> {
+    pub fn add_password(&mut self, password: Password) -> Result<(), PasswordError> {
         if self.has_password(password.name.deref()) {
             return Err(PasswordError::AppExistsError);
         }
@@ -397,18 +412,18 @@ impl PasswordStore {
         self.get_password(name).is_some()
     }
 
-    pub fn change_password(&mut self, app_name: &str, closure: &Fn(Password) -> Password) -> Result<(), PasswordError> {
+    pub fn change_password(&mut self,
+                           app_name: &str,
+                           closure: &Fn(Password) -> Password)
+                           -> Result<(), PasswordError> {
         let old_p = try!(self.delete_password(app_name.deref()));
 
         self.add_password(closure(old_p))
     }
 
     pub fn change_master_password(&mut self, master_password: &str) {
-        let scrypt_params = scrypt::ScryptParams::new(
-            self.scrypt_log2_n,
-            self.scrypt_r,
-            self.scrypt_p
-        );
+        let scrypt_params =
+            scrypt::ScryptParams::new(self.scrypt_log2_n, self.scrypt_r, self.scrypt_p);
         self.key = generate_encryption_key(scrypt_params, master_password, self.salt);
     }
 }

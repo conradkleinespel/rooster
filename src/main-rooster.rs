@@ -50,8 +50,8 @@ mod safe_vec;
 mod generate;
 mod clipboard;
 
-const ROOSTER_FILE_ENV_VAR: &'static str              = "ROOSTER_FILE";
-const ROOSTER_FILE_DEFAULT: &'static str              = ".passwords.rooster";
+const ROOSTER_FILE_ENV_VAR: &'static str = "ROOSTER_FILE";
+const ROOSTER_FILE_DEFAULT: &'static str = ".passwords.rooster";
 
 struct Command {
     name: &'static str,
@@ -59,18 +59,57 @@ struct Command {
     callback_help: fn(),
 }
 
-static COMMANDS: &'static [Command] = &[
-    Command { name: "get", callback_exec: commands::get::callback_exec, callback_help: commands::get::callback_help },
-    Command { name: "add", callback_exec: commands::add::callback_exec, callback_help: commands::add::callback_help },
-    Command { name: "delete", callback_exec: commands::delete::callback_exec, callback_help: commands::delete::callback_help },
-    Command { name: "generate", callback_exec: commands::generate::callback_exec, callback_help: commands::generate::callback_help },
-    Command { name: "regenerate", callback_exec: commands::regenerate::callback_exec, callback_help: commands::regenerate::callback_help },
-    Command { name: "list", callback_exec: commands::list::callback_exec, callback_help: commands::list::callback_help },
-    Command { name: "export", callback_exec: commands::export::callback_exec, callback_help: commands::export::callback_help },
-    Command { name: "change-master-password", callback_exec: commands::change_master_password::callback_exec, callback_help: commands::change_master_password::callback_help },
-    Command { name: "rename", callback_exec: commands::rename::callback_exec, callback_help: commands::rename::callback_help },
-    Command { name: "change", callback_exec: commands::change::callback_exec, callback_help: commands::change::callback_help },
-];
+static COMMANDS: &'static [Command] =
+    &[Command {
+          name: "get",
+          callback_exec: commands::get::callback_exec,
+          callback_help: commands::get::callback_help,
+      },
+      Command {
+          name: "add",
+          callback_exec: commands::add::callback_exec,
+          callback_help: commands::add::callback_help,
+      },
+      Command {
+          name: "delete",
+          callback_exec: commands::delete::callback_exec,
+          callback_help: commands::delete::callback_help,
+      },
+      Command {
+          name: "generate",
+          callback_exec: commands::generate::callback_exec,
+          callback_help: commands::generate::callback_help,
+      },
+      Command {
+          name: "regenerate",
+          callback_exec: commands::regenerate::callback_exec,
+          callback_help: commands::regenerate::callback_help,
+      },
+      Command {
+          name: "list",
+          callback_exec: commands::list::callback_exec,
+          callback_help: commands::list::callback_help,
+      },
+      Command {
+          name: "export",
+          callback_exec: commands::export::callback_exec,
+          callback_help: commands::export::callback_help,
+      },
+      Command {
+          name: "change-master-password",
+          callback_exec: commands::change_master_password::callback_exec,
+          callback_help: commands::change_master_password::callback_help,
+      },
+      Command {
+          name: "rename",
+          callback_exec: commands::rename::callback_exec,
+          callback_help: commands::rename::callback_help,
+      },
+      Command {
+          name: "change",
+          callback_exec: commands::change::callback_exec,
+          callback_help: commands::change::callback_help,
+      }];
 
 fn command_from_name(name: &str) -> Option<&'static Command> {
     for c in COMMANDS.iter() {
@@ -95,7 +134,9 @@ fn get_password_file(filename: &str) -> IoResult<File> {
         Err(err) => {
             match err.kind() {
                 IoErrorKind::NotFound => {
-                    println_err!("I cannot find a password file at \"{}\". Would you like to create one now? [y/n]", filename);
+                    println_err!("I cannot find a password file at \"{}\". Would you like to \
+                                  create one now? [y/n]",
+                                 filename);
                     loop {
                         let mut line = String::new();
                         match stdin().read_line(&mut line) {
@@ -103,24 +144,30 @@ fn get_password_file(filename: &str) -> IoResult<File> {
                                 if line.starts_with('y') {
                                     return open_password_file(filename, true);
                                 } else if line.starts_with('n') {
-                                    return Err(IoError::new(IoErrorKind::Other, "no password file available"));
+                                    return Err(IoError::new(IoErrorKind::Other,
+                                                            "no password file available"));
                                 } else {
-                                    println_stderr!("I did not get that. Create a password file now? [y/n]");
+                                    println_stderr!("I did not get that. Create a password file \
+                                                     now? [y/n]");
                                 }
-                            },
+                            }
                             Err(err) => {
                                 return Err(err);
                             }
                         }
                     }
-                },
-                _ => Err(err)
+                }
+                _ => Err(err),
             }
         }
     }
 }
 
-fn execute_command_from_filename(matches: &getopts::Matches, command: &Command, filename: &str, master_password: SafeString) -> Result<(), i32> {
+fn execute_command_from_filename(matches: &getopts::Matches,
+                                 command: &Command,
+                                 filename: &str,
+                                 master_password: SafeString)
+                                 -> Result<(), i32> {
     match get_password_file(filename) {
         Ok(ref mut file) => {
             if matches.opt_present("help") {
@@ -135,17 +182,21 @@ fn execute_command_from_filename(matches: &getopts::Matches, command: &Command, 
                     try!(password::v2::PasswordStore::new(master_password.clone()).map_err(|_| 1))
                 } else {
                     // Try to open the file as is.
-                    match password::v2::PasswordStore::from_input(master_password.clone(), SafeVec::new(input.clone())) {
+                    match password::v2::PasswordStore::from_input(master_password.clone(),
+                                                                  SafeVec::new(input.clone())) {
                         Ok(store) => store,
                         Err(_) => {
                             // If we can't open the file, we may need to upgrade its format first.
-                            match password::upgrade(master_password.clone(), SafeVec::new(input.clone())) {
+                            match password::upgrade(master_password.clone(),
+                                                    SafeVec::new(input.clone())) {
                                 Ok(store) => store,
                                 Err(_) => {
                                     // If we can't upgrade its format either, we show a helpful
                                     // error message.
-                                    println_err!("I could not upgrade the Rooster file. This could be because:");
-                                    println_err!("- you explicitly told Rooster not to open the file,");
+                                    println_err!("I could not upgrade the Rooster file. This \
+                                                  could be because:");
+                                    println_err!("- you explicitly told Rooster not to open the \
+                                                  file,");
                                     println_err!("- your version of Rooster is outdated,");
                                     println_err!("- your Rooster file is corrupted,");
                                     println_err!("- your master password is wrong.");
@@ -161,31 +212,31 @@ fn execute_command_from_filename(matches: &getopts::Matches, command: &Command, 
                 try!((command.callback_exec)(matches, &mut store));
 
                 match store.sync(file) {
-                    Ok(()) => { Ok(()) },
+                    Ok(()) => { Ok(()) }
                     Err(err) => {
                         println_err!("I could not save the password file ({:?}).", err);
                         Err(1)
                     }
                 }
             }
-        },
+        }
         Err(err) => {
-            println_err!("I could not open the password file \"{}\" :( ({})", filename, err);
+            println_err!("I could not open the password file \"{}\" :( ({})",
+                         filename,
+                         err);
             Err(1)
         }
     }
 }
 
-fn get_password_file_path(rooster_file: Result<String, VarError>, home_dir: Option<PathBuf>) -> Result<String, i32> {
+fn get_password_file_path(rooster_file: Result<String, VarError>,
+                          home_dir: Option<PathBuf>)
+                          -> Result<String, i32> {
     match rooster_file {
-        Ok(filename) => {
-            Ok(filename)
-        },
+        Ok(filename) => Ok(filename),
         Err(VarError::NotPresent) => {
             let mut filename = match home_dir {
-                Some(home) => {
-                    try!(home.as_os_str().to_os_string().into_string().map_err(|_| 1))
-                }
+                Some(home) => try!(home.as_os_str().to_os_string().into_string().map_err(|_| 1)),
                 None => {
                     return Err(1);
                 }
@@ -193,10 +244,8 @@ fn get_password_file_path(rooster_file: Result<String, VarError>, home_dir: Opti
             filename.push(PATH_SEP);
             filename.push_str(ROOSTER_FILE_DEFAULT);
             Ok(filename)
-        },
-        Err(VarError::NotUnicode(_)) => {
-            Err(1)
         }
+        Err(VarError::NotUnicode(_)) => Err(1),
     }
 }
 
@@ -221,7 +270,8 @@ fn usage(password_file: &str) {
     println!("    -v, --version     Display the version of Rooster you are using");
     println!("    -a, --alnum       Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords");
     println!("    -l, --length      Set a custom length for the generated password, default is 32");
-    println!("    -p, --prompt      Ask the master password in a GUI window instead of the terminal");
+    println!("    -p, --prompt      Ask the master password in a GUI window instead of the \
+              terminal");
     println!("    -s, --show        Show the password instead of copying it to the clipboard");
     println!("");
     println!("Commands:");
@@ -242,22 +292,34 @@ fn main() {
 
     let mut opts = Options::new();
     opts.optflag("h", "help", "Display a help message");
-    opts.optflag("p", "prompt", "Ask the master password in a GUI window instead of the terminal");
-    opts.optflag("v", "version", "Display the version of Rooster you are using");
-    opts.optflag("a", "alnum", "Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords");
-    opts.optopt("l", "length", "Set a custom length for the generated password", "32");
-    opts.optflag("s", "show", "Show the password instead of copying it to the clipboard");
+    opts.optflag("p",
+                 "prompt",
+                 "Ask the master password in a GUI window instead of the terminal");
+    opts.optflag("v",
+                 "version",
+                 "Display the version of Rooster you are using");
+    opts.optflag("a",
+                 "alnum",
+                 "Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords");
+    opts.optopt("l",
+                "length",
+                "Set a custom length for the generated password",
+                "32");
+    opts.optflag("s",
+                 "show",
+                 "Show the password instead of copying it to the clipboard");
 
     let matches = match opts.parse(&args[1..]) {
-        Ok(m) => { m },
+        Ok(m) => m,
         Err(err) => {
             println_err!("{}", err);
-             std::process::exit(1);
+            std::process::exit(1);
         }
     };
 
     // Fetch the Rooster file path now, so we can display it in help messages.
-    let password_file_path = match get_password_file_path(env::var(ROOSTER_FILE_ENV_VAR), env::home_dir()) {
+    let password_file_path = match get_password_file_path(env::var(ROOSTER_FILE_ENV_VAR),
+                                                          env::home_dir()) {
         Ok(path) => path,
         Err(_) => {
             println_err!("Woops, I could not determine where your password file is.");
@@ -297,16 +359,18 @@ fn main() {
 
     match command_from_name(command_name.as_ref()) {
         Some(command) => {
-            match execute_command_from_filename(&matches, command, password_file_path.deref(), master_password) {
+            match execute_command_from_filename(&matches,
+                                                command,
+                                                password_file_path.deref(),
+                                                master_password) {
                 Err(i) => std::process::exit(i),
-                _ => std::process::exit(0)
+                _ => std::process::exit(0),
             }
-        },
+        }
         None => {
-            println_err!(
-                "Woops, the command `{}` does not exist. Try the --help option for more info.",
-                command_name
-            );
+            println_err!("Woops, the command `{}` does not exist. Try the --help option for more \
+                          info.",
+                         command_name);
             std::process::exit(1);
         }
     }

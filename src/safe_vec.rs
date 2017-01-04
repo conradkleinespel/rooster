@@ -23,16 +23,14 @@ pub struct SafeVec {
 
 impl SafeVec {
     pub fn new(inner: Vec<u8>) -> SafeVec {
-        SafeVec {
-            inner: inner,
-        }
+        SafeVec { inner: inner }
     }
 }
 
 impl Drop for SafeVec {
     fn drop(&mut self) {
         self.inner.clear();
-        for _ in 0 .. self.inner.capacity() {
+        for _ in 0..self.inner.capacity() {
             self.inner.push(0u8);
         }
     }

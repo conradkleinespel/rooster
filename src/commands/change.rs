@@ -30,7 +30,9 @@ pub fn callback_help() {
     println!("    rooster change youtube");
 }
 
-pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::PasswordStore) -> Result<(), i32> {
+pub fn callback_exec(matches: &getopts::Matches,
+                     store: &mut password::v2::PasswordStore)
+                     -> Result<(), i32> {
     if matches.free.len() < 2 {
         println_err!("Woops, seems like the app name is missing here. For help, try:");
         println_err!("    rooster change -h");
@@ -44,7 +46,8 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
         Ok(password_as_string) => {
             let password_as_string = SafeString::new(password_as_string.clone());
 
-            let change_result = store.change_password(app_name.deref(), &|old_password: password::v2::Password| {
+            let change_result = store.change_password(app_name.deref(),
+                                                      &|old_password: password::v2::Password| {
                 password::v2::Password {
                     name: old_password.name.clone(),
                     username: old_password.username.clone(),
@@ -57,14 +60,21 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
             match change_result {
                 Ok(_) => {
                     if matches.opt_present("show") {
-                        println_ok!("Alright! Here is your new password: {}", password_as_string.deref());
+                        println_ok!("Alright! Here is your new password: {}",
+                                    password_as_string.deref());
                         return Ok(());
                     }
 
                     if copy_to_clipboard(password_as_string.deref()).is_err() {
-                        println_ok!("Hmm, I tried to copy your changed password to your clipboard, but something went wrong. Don't worry, it's saved, and you can see it with `rooster get {} --show`", app_name);
+                        println_ok!("Hmm, I tried to copy your changed password to your \
+                                     clipboard, but something went wrong. Don't worry, it's \
+                                     saved, and you can see it with `rooster get {} --show`",
+                                    app_name);
                     } else {
-                        println_ok!("Done! I've saved your new password for \"{}\". You can paste it anywhere with {}.", app_name, paste_keys());
+                        println_ok!("Done! I've saved your new password for \"{}\". You can \
+                                     paste it anywhere with {}.",
+                                    app_name,
+                                    paste_keys());
                     }
 
                     Ok(())
@@ -74,7 +84,7 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
                     Err(1)
                 }
             }
-        },
+        }
         Err(err) => {
             println_err!("\nI couldn't read the app's password ({:?}).", err);
             Err(1)

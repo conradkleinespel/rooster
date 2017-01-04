@@ -56,7 +56,7 @@ const KEY_LEN: usize = 32;
 /// The format of the encrypted JSON content in the password file v1.
 #[derive(RustcDecodable, RustcEncodable)]
 pub struct Schema {
-    passwords: Vec<Password>
+    passwords: Vec<Password>,
 }
 
 #[derive(Clone, Debug, RustcDecodable, RustcEncodable)]
@@ -66,7 +66,7 @@ pub struct Password {
     pub username: String,
     pub password: SafeString,
     pub created_at: ffi::time_t,
-    pub updated_at: ffi::time_t
+    pub updated_at: ffi::time_t,
 }
 
 /// Derives a 256 bits encryption key from the password.
@@ -83,25 +83,28 @@ fn generate_encryption_key(master_password: &str) -> SafeVec {
     key
 }
 
-pub fn get_all_passwords(master_password: &str, encrypted: &[u8]) -> Result<Vec<Password>, PasswordError> {
+pub fn get_all_passwords(master_password: &str,
+                         encrypted: &[u8])
+                         -> Result<Vec<Password>, PasswordError> {
     // If there were already some password, we'll decrypt them. Otherwise, we'll
     // start off with an empty list of passwords.
     let passwords: Vec<Password> = if encrypted.len() > 0 {
         // Get previous IV. It is located after the encrypted data in the file.
-        let iv = &encrypted[encrypted.len() - IV_LEN ..];
+        let iv = &encrypted[encrypted.len() - IV_LEN..];
 
         // Derive a 256 bits encryption key from the password.
         let key = generate_encryption_key(master_password);
 
         // Remove the IV before decoding, otherwise, we cant decrypt the data.
-        let encrypted = &encrypted[.. encrypted.len() - IV_LEN];
+        let encrypted = &encrypted[..encrypted.len() - IV_LEN];
 
         // Decrypt the data and remvoe the descryption key from memory.
         let decrypted_maybe = aes::decrypt(encrypted, key.deref(), iv);
 
         match decrypted_maybe {
             Ok(decrypted) => {
-                let encoded = SafeString::new(String::from_utf8_lossy(decrypted.deref()).into_owned());
+                let encoded = SafeString::new(String::from_utf8_lossy(decrypted.deref())
+                    .into_owned());
 
                 match json::decode::<Schema>(encoded.deref()) {
                     Ok(schema) => schema.passwords,
@@ -109,7 +112,7 @@ pub fn get_all_passwords(master_password: &str, encrypted: &[u8]) -> Result<Vec<
                         return Err(PasswordError::InvalidJsonError);
                     }
                 }
-            },
+            }
             Err(_) => {
                 return Err(PasswordError::DecryptionError);
             }

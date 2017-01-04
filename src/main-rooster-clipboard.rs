@@ -30,7 +30,10 @@ fn get_data_from_args() -> String {
 // the X selection needs a daemon that makes the copied text available.
 #[cfg(target_os="linux")]
 fn main() {
-    unix_daemonize::daemonize_redirect(Some("/dev/null"), Some("/dev/null"), unix_daemonize::ChdirMode::ChdirRoot).unwrap();
+    unix_daemonize::daemonize_redirect(Some("/dev/null"),
+                                       Some("/dev/null"),
+                                       unix_daemonize::ChdirMode::ChdirRoot)
+        .unwrap();
 
     let data = get_data_from_args();
     let context = do_copy(data.clone()).unwrap();

@@ -25,7 +25,9 @@ pub fn callback_help() {
     println!("    rooster delete youtube");
 }
 
-pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::PasswordStore) -> Result<(), i32> {
+pub fn callback_exec(matches: &getopts::Matches,
+                     store: &mut password::v2::PasswordStore)
+                     -> Result<(), i32> {
     if matches.free.len() < 2 {
         println_err!("Woops, seems like the app name is missing here. For help, try:");
         println_err!("    rooster delete -h");
@@ -38,17 +40,15 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
         match store.delete_password(app_name) {
             Ok(_) => {
                 println_ok!("Done! I've deleted the password for \"{}\".", app_name);
-            },
+            }
             Err(err) => {
-                println_err!("Woops! I couldn't find a password for \"{}\" (error: {:?}).", app_name, err);
+                println_err!("Woops! I couldn't find a password for \"{}\" (error: {:?}).",
+                             app_name,
+                             err);
                 has_error = true;
             }
         }
     }
 
-    if has_error {
-        Err(1)
-    } else {
-        Ok(())
-    }
+    if has_error { Err(1) } else { Ok(()) }
 }

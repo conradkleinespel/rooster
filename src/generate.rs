@@ -19,16 +19,16 @@ use std::io::{Write, Result as IoResult};
 fn generate_password(alnum: bool, len: usize) -> IoResult<String> {
     let mut password_as_string = String::new();
     let mut rng = try!(OsRng::new());
-    for _ in 0 .. len {
+    for _ in 0..len {
         if alnum {
             match rng.gen_range(0, 3) {
                 // Numbers 0-9
-                0 => { password_as_string.push(rng.gen_range(48, 58) as u8 as char) },
+                0 => password_as_string.push(rng.gen_range(48, 58) as u8 as char),
                 // Uppercase A-Z
-                1 => { password_as_string.push(rng.gen_range(65, 91) as u8 as char) },
+                1 => password_as_string.push(rng.gen_range(65, 91) as u8 as char),
                 // Lowercase a-z
-                2 => { password_as_string.push(rng.gen_range(97, 123) as u8 as char) },
-                _ => { unreachable!() }
+                2 => password_as_string.push(rng.gen_range(97, 123) as u8 as char),
+                _ => unreachable!(),
             }
         } else {
             password_as_string.push(rng.gen_range(33, 127) as u8 as char);
@@ -40,14 +40,11 @@ fn generate_password(alnum: bool, len: usize) -> IoResult<String> {
 /// Returns true if the password contains at least one digit, one uppercase letter and one
 /// lowercase letter.
 fn password_is_hard(password: &str, alnum: bool) -> bool {
-    let is_punctuation = |c| -> bool {
-        "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~".find(c).is_some()
-    };
+    let is_punctuation = |c| -> bool { "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~".find(c).is_some() };
 
-    password.find(char::is_numeric).is_some()
-    && password.find(char::is_lowercase).is_some()
-    && password.find(char::is_uppercase).is_some()
-    && (alnum || password.find(is_punctuation).is_some())
+    password.find(char::is_numeric).is_some() && password.find(char::is_lowercase).is_some() &&
+    password.find(char::is_uppercase).is_some() &&
+    (alnum || password.find(is_punctuation).is_some())
 }
 
 pub fn generate_hard_password(alnum: bool, len: usize) -> IoResult<String> {
@@ -61,7 +58,7 @@ pub fn generate_hard_password(alnum: bool, len: usize) -> IoResult<String> {
 
 pub struct PasswordSpec {
     pub alnum: bool,
-    pub len: usize
+    pub len: usize,
 }
 
 impl PasswordSpec {
@@ -82,16 +79,17 @@ impl PasswordSpec {
                         return None;
                     }
                     parsed_len
-                },
+                }
                 Err(_) => {
-                    println_err!("Woops! The length option must be a valid number, for instance 8 or 16.");
+                    println_err!("Woops! The length option must be a valid number, for instance \
+                                  8 or 16.");
                     return None;
                 }
             }
         }
         Some(PasswordSpec {
             alnum: alnum,
-            len: password_len
+            len: password_len,
         })
     }
 }

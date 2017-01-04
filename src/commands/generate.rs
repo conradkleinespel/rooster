@@ -29,9 +29,12 @@ pub fn callback_help() {
     println!("    rooster generate YouTube me@example.com");
 }
 
-pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::PasswordStore) -> Result<(), i32> {
+pub fn callback_exec(matches: &getopts::Matches,
+                     store: &mut password::v2::PasswordStore)
+                     -> Result<(), i32> {
     if matches.free.len() < 3 {
-        println_err!("Woops, seems like the app name or the username is missing here. For help, try:");
+        println_err!("Woops, seems like the app name or the username is missing here. For help, \
+                      try:");
         println_err!("    rooster generate -h");
         return Err(1);
     }
@@ -47,7 +50,9 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
     let password_spec = PasswordSpec::from_matches(matches);
 
     let password_as_string = match password_spec {
-        None => { return Err(1); },
+        None => {
+            return Err(1);
+        }
         Some(spec) => {
             match generate_hard_password(spec.alnum, spec.len) {
                 Ok(password_as_string) => password_as_string,
@@ -61,27 +66,31 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
 
     // Read the master password and try to save the new password.
     let password_as_string_clipboard = SafeString::new(password_as_string.clone());
-    let password = password::v2::Password::new(
-        app_name.clone(),
-        username,
-        SafeString::new(password_as_string)
-    );
+    let password = password::v2::Password::new(app_name.clone(),
+                                               username,
+                                               SafeString::new(password_as_string));
 
     match store.add_password(password) {
         Ok(_) => {
             if matches.opt_present("show") {
-                println_ok!("Alright! Here is your password: {}", password_as_string_clipboard.deref());
+                println_ok!("Alright! Here is your password: {}",
+                            password_as_string_clipboard.deref());
                 return Ok(());
             }
 
             if copy_to_clipboard(password_as_string_clipboard.deref()).is_err() {
-                println_ok!("Hmm, I tried to copy your new password to your clipboard, but something went wrong. Don't worry, it's saved, and you can see it with `rooster get {} --show`", app_name);
+                println_ok!("Hmm, I tried to copy your new password to your clipboard, but \
+                             something went wrong. Don't worry, it's saved, and you can see it \
+                             with `rooster get {} --show`",
+                            app_name);
             } else {
-                println_ok!("Alright! I've saved your new password. You can paste it anywhere with {}.", paste_keys());
+                println_ok!("Alright! I've saved your new password. You can paste it anywhere \
+                             with {}.",
+                            paste_keys());
             }
 
             Ok(())
-        },
+        }
         Err(err) => {
             println_err!("\nI couldn't add this password ({:?}).", err);
             Err(1)

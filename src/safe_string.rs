@@ -26,16 +26,14 @@ pub struct SafeString {
 
 impl SafeString {
     pub fn new(inner: String) -> SafeString {
-        SafeString {
-            inner: inner,
-        }
+        SafeString { inner: inner }
     }
 }
 
 impl Drop for SafeString {
     fn drop(&mut self) {
         self.inner.clear();
-        for _ in 0 .. self.inner.capacity() {
+        for _ in 0..self.inner.capacity() {
             self.inner.push('0');
         }
     }

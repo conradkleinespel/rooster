@@ -28,7 +28,9 @@ pub fn callback_help() {
     println!("    rooster change-master");
 }
 
-pub fn callback_exec(_matches: &getopts::Matches, store: &mut password::v2::PasswordStore) -> Result<(), i32> {
+pub fn callback_exec(_matches: &getopts::Matches,
+                     store: &mut password::v2::PasswordStore)
+                     -> Result<(), i32> {
     print_stderr!("Type your new master password: ");
     match read_password() {
         Ok(master_password) => {
@@ -36,9 +38,7 @@ pub fn callback_exec(_matches: &getopts::Matches, store: &mut password::v2::Pass
 
             print_stderr!("Type your new master password once more: ");
             let master_password_confirmation = match read_password() {
-                Ok(master_password_confirmation) => {
-                    SafeString::new(master_password_confirmation)
-                }
+                Ok(master_password_confirmation) => SafeString::new(master_password_confirmation),
                 Err(err) => {
                     println_err!("I could not read your new master password ({:?}).", err);
                     return Err(1);

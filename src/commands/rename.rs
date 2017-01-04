@@ -27,7 +27,9 @@ pub fn callback_help() {
     println!("    rooster rename youtube Dailymotion");
 }
 
-pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::PasswordStore) -> Result<(), i32> {
+pub fn callback_exec(matches: &getopts::Matches,
+                     store: &mut password::v2::PasswordStore)
+                     -> Result<(), i32> {
     if matches.free.len() < 3 {
         println_err!("Woops, seems like the app name is missing here. For help, try:");
         println_err!("    rooster rename -h");
@@ -37,7 +39,8 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut password::v2::Passw
     let old_name = matches.free[1].clone();
     let new_name = matches.free[2].clone();
 
-    let change_result = store.change_password(old_name.deref(), &|old_password: password::v2::Password| {
+    let change_result = store.change_password(old_name.deref(),
+                                              &|old_password: password::v2::Password| {
         password::v2::Password {
             name: new_name.clone(),
             username: old_password.username.clone(),

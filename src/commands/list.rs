@@ -26,17 +26,23 @@ pub fn callback_help() {
 }
 
 pub fn callback_exec(_matches: &getopts::Matches, store: &mut password::v2::PasswordStore) -> Result<(), i32> {
-    // We'll now print the password in a table.
-    // The table is delimited by borders.
-    let horizontal_border = String::from_iter(repeat('-').take(73));
+    let all_passwords = store.get_all_passwords();
 
-    println!("{}", horizontal_border);
-    println!("| {:2} | {:30} | {:30} |", "id", "app", "username");
-    println!("{}", horizontal_border);
-    for (i, p) in store.get_all_passwords().iter().enumerate() {
-        println!("| {:2?} | {:30} | {:30} |", i, p.name, p.username);
+    if all_passwords.len() == 0 {
+        println!("No passwords on record yet. Add one with 'rooster add <app> <username>'.");
+    } else {
+        // We'll now print the password in a table.
+        // The table is delimited by borders.
+        let horizontal_border = String::from_iter(repeat('-').take(73));
+
+        println!("{}", horizontal_border);
+        println!("| {:2} | {:30} | {:30} |", "id", "app", "username");
+        println!("{}", horizontal_border);
+        for (i, p) in all_passwords.iter().enumerate() {
+            println!("| {:2?} | {:30} | {:30} |", i, p.name, p.username);
+        }
+        println!("{}", horizontal_border);
     }
-    println!("{}", horizontal_border);
 
     Ok(())
 }

@@ -386,6 +386,52 @@ impl PasswordStore {
         unreachable!();
     }
 
+    pub fn search_passwords(&self, name: &str) -> Vec<&Password> {
+        // Fuzzy search password app names.
+        let mut keys = self.schema
+            .passwords
+            .iter()
+            .map(|p| p.name.to_lowercase())
+            .collect::<Vec<String>>();
+        keys.sort();
+
+        let mut search_results = vec![];
+        // Check if each app name can be matched against the search query.
+        //
+        // It's fine if there are some characters left out in the query. For instance, you can
+        // search for the app "Facebook" with just "fcbk".
+        for app_name in keys.iter().map(|s| s.as_str()) {
+            let mut matches_query = true;
+            let mut last_i = 0;
+            for c in name.chars() {
+                match app_name[last_i..].find(c.to_lowercase().next().unwrap()) {
+                    // Query chars must be present in the app name in the right order.
+                    Some(ic) => {
+                        last_i += ic + 1;
+                    }
+                    // Query char is not present, no match.
+                    None => {
+                        matches_query = false;
+                        break;
+                    }
+                }
+            }
+
+            if matches_query {
+                search_results.push(app_name.to_owned());
+            }
+        }
+
+        let mut passwords = vec![];
+        for p in self.schema.passwords.iter() {
+            if search_results.contains(&p.name.to_lowercase()) {
+                passwords.push(p);
+            }
+        }
+
+        passwords
+    }
+
     pub fn get_password(&self, name: &str) -> Option<Password> {
         'passwords_loop: for p in &self.schema.passwords {
             // Since the app name must be the same, we need the same length.

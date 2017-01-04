@@ -109,6 +109,11 @@ static COMMANDS: &'static [Command] =
           name: "change",
           callback_exec: commands::change::callback_exec,
           callback_help: commands::change::callback_help,
+      },
+      Command {
+          name: "search",
+          callback_exec: commands::search::callback_exec,
+          callback_help: commands::search::callback_help,
       }];
 
 fn command_from_name(name: &str) -> Option<&'static Command> {
@@ -278,7 +283,8 @@ fn usage(password_file: &str) {
     println!("    get                        Retrieve a password");
     println!("    rename                     Rename the app for a password");
     println!("    list                       List all apps and usernames");
-    println!("    export                     List all passwords in unencrypted JSON");
+    println!("    search                     Search for a specific password");
+    println!("    export                     Dump all passwords in unencrypted JSON");
     println!("    change-master-password     Change your master password");
 }
 

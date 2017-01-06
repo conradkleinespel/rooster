@@ -36,7 +36,7 @@ pub fn callback_exec(_matches: &getopts::Matches,
     let passwords_json = match json::encode(&passwords_ref) {
         Ok(passwords_json) => passwords_json,
         Err(json_err) => {
-            println_stderr!("Woops, I could not encode the passwords into JSON ({:?}).",
+            println_stderr!("Woops, I could not encode the passwords into JSON (reason: {:?}).",
                             json_err);
             return Err(1);
         }

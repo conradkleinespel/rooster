@@ -80,13 +80,14 @@ pub fn callback_exec(matches: &getopts::Matches,
                     Ok(())
                 }
                 Err(err) => {
-                    println_err!("Woops, I couldn't save the new password ({:?}).", err);
+                    println_err!("Woops, I couldn't save the new password (reason: {:?}).",
+                                 err);
                     Err(1)
                 }
             }
         }
         Err(err) => {
-            println_err!("\nI couldn't read the app's password ({:?}).", err);
+            println_err!("\nI couldn't read the app's password (reason: {:?}).", err);
             Err(1)
         }
     }

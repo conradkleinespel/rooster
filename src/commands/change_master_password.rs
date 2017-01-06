@@ -40,7 +40,8 @@ pub fn callback_exec(_matches: &getopts::Matches,
                                                                              once more: ") {
                 Ok(master_password_confirmation) => SafeString::new(master_password_confirmation),
                 Err(err) => {
-                    println_err!("I could not read your new master password ({:?}).", err);
+                    println_err!("I could not read your new master password (reason: {:?}).",
+                                 err);
                     return Err(1);
                 }
             };
@@ -53,7 +54,8 @@ pub fn callback_exec(_matches: &getopts::Matches,
             store.change_master_password(master_password.deref());
         }
         Err(err) => {
-            println_err!("I could not read your new master password ({:?}).", err);
+            println_err!("I could not read your new master password (reason: {:?}).",
+                         err);
             return Err(1);
         }
     }

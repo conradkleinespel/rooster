@@ -56,7 +56,8 @@ pub fn callback_exec(matches: &getopts::Matches,
             Ok(())
         }
         Err(err) => {
-            println_err!("Woops, I couldn't save the new app name ({:?}).", err);
+            println_err!("Woops, I couldn't save the new app name (reason: {:?}).",
+                         err);
             Err(1)
         }
     }

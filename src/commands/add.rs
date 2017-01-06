@@ -74,7 +74,7 @@ pub fn callback_exec(matches: &getopts::Matches,
                     }
                 }
                 Err(err) => {
-                    println_err!("Woops, I couldn't add the password ({:?}).", err);
+                    println_err!("Woops, I couldn't add the password (reason: {:?}).", err);
                     return Err(1);
                 }
             }
@@ -82,7 +82,7 @@ pub fn callback_exec(matches: &getopts::Matches,
             Ok(())
         }
         Err(err) => {
-            println_err!("\nI couldn't read the app's password ({:?}).", err);
+            println_err!("\nI couldn't read the app's password (reason: {:?}).", err);
             Err(1)
         }
     }

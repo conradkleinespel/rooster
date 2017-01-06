@@ -51,7 +51,8 @@ pub fn callback_exec(matches: &getopts::Matches,
             match generate_hard_password(spec.alnum, spec.len) {
                 Ok(password_as_string) => password_as_string,
                 Err(io_err) => {
-                    println_stderr!("Woops, I could not generate the password ({:?}).", io_err);
+                    println_stderr!("Woops, I could not generate the password (reason: {:?}).",
+                                    io_err);
                     return Err(1);
                 }
             }
@@ -92,7 +93,8 @@ pub fn callback_exec(matches: &getopts::Matches,
             Ok(())
         }
         Err(err) => {
-            println_err!("Woops, I couldn't save the new password ({:?}).", err);
+            println_err!("Woops, I couldn't save the new password (reason: {:?}).",
+                         err);
             Err(1)
         }
     }

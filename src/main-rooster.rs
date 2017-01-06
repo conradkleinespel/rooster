@@ -279,8 +279,6 @@ fn usage(password_file: &str) {
     println!("    -v, --version     Display the version of Rooster you are using");
     println!("    -a, --alnum       Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords");
     println!("    -l, --length      Set a custom length for the generated password, default is 32");
-    println!("    -p, --prompt      Ask the master password in a GUI window instead of the \
-              terminal");
     println!("    -s, --show        Show the password instead of copying it to the clipboard");
     println!("");
     println!("Commands:");
@@ -302,9 +300,6 @@ fn main() {
 
     let mut opts = Options::new();
     opts.optflag("h", "help", "Display a help message");
-    opts.optflag("p",
-                 "prompt",
-                 "Ask the master password in a GUI window instead of the terminal");
     opts.optflag("v",
                  "version",
                  "Display the version of Rooster you are using");
@@ -340,12 +335,12 @@ fn main() {
     };
 
     // Global help was requested.
-    if matches.opt_present("h") && matches.free.is_empty() {
+    if matches.opt_present("help") && matches.free.is_empty() {
         usage(password_file_path.deref());
         std::process::exit(0);
     }
 
-    if matches.opt_present("v") {
+    if matches.opt_present("version") {
         println!("v{}", env!("CARGO_PKG_VERSION"));
         std::process::exit(0);
     }
@@ -369,7 +364,7 @@ fn main() {
         }
     };
 
-    if matches.opt_present("h") {
+    if matches.opt_present("help") {
         (command.callback_help)();
         std::process::exit(0);
     }

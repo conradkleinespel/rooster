@@ -14,7 +14,10 @@
 
 use super::super::getopts;
 use super::super::password;
+use super::super::clipboard::{copy_to_clipboard, paste_keys};
 use std::io::Write;
+use std::io::stdin;
+use std::ops::Deref;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -38,17 +41,85 @@ pub fn callback_exec(matches: &getopts::Matches,
 
     let passwords = store.search_passwords(query.as_str());
 
+    if passwords.len() == 0 {
+        println_stderr!("I can't find any passwords for \"{}\"", query);
+        return Ok(());
+    }
+
     let longest_app_name = passwords.iter().fold(0, |acc, p| if p.name.len() > acc {
         p.name.len()
     } else {
         acc
     });
 
-    for p in passwords.iter() {
-        println!("{:width$} {:30}",
+    println_stderr!("");
+    for (i, p) in passwords.iter().enumerate() {
+        println!("{:3} {:width$} {:30}",
+                 i + 1,
                  p.name,
                  p.username,
                  width = longest_app_name);
+    }
+    println_stderr!("");
+
+    let show = matches.opt_present("show");
+    if show {
+        println_stderr!("Which password would you like to see? ");
+    } else {
+        println_stderr!("Which password would you like me to copy to your clipboard? ");
+    }
+
+
+    // Read the index from the command line and convert to a number
+    let mut line = String::new();
+    let mut index: usize;
+    loop {
+        line.clear();
+        match stdin().read_line(&mut line) {
+            Ok(_) => {}
+            Err(err) => {
+                println_err!("I couldn't read that (reason: {}).", err);
+                println_err!("Would you mind trying that out again please?");
+            }
+        }
+
+        index = match line.trim().parse() {
+            Ok(index) => index,
+            Err(err) => {
+                println_err!("This isn't a valid number (reason: {}). Please give me a number \
+                              between 1 and {}:",
+                             err,
+                             passwords.len());
+                continue;
+            }
+        };
+
+        if index == 0 || index > passwords.len() {
+            println_err!("Sorry, I need a number between 1 and {}. Let's try this again:",
+                         passwords.len());
+            continue;
+        }
+
+        break;
+    }
+
+    let app_name = passwords[index - 1].name.as_str();
+    // This whould never fail, since we've just checked that this password exists
+    let password = store.get_password(app_name).unwrap();
+    if show {
+        println_ok!("Alright! Here is your password for {}: {}",
+                    password.name,
+                    password.password.deref());
+    } else {
+        if copy_to_clipboard(password.password.deref()).is_err() {
+            println_ok!("Hmm, I tried to copy your new password to your clipboard, but \
+                         something went wrong. You can see it with `rooster get '{}' --show`",
+                        password.name);
+        } else {
+            println_ok!("Alright! You can paste your {} password anywhere with {}.",
+                        password.name,
+                        paste_keys());
+        }
     }
 
     Ok(())

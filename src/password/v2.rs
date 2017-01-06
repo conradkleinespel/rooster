@@ -70,7 +70,7 @@ const VERSION: u32 = 2;
 // Create a random IV.
 fn generate_random_iv() -> IoResult<[u8; IV_LEN]> {
     let mut bytes: [u8; IV_LEN] = [0; IV_LEN];
-    let mut rng = try!(OsRng::new());
+    let mut rng = OsRng::new()?;
     rng.fill_bytes(&mut bytes);
     Ok(bytes)
 }
@@ -78,7 +78,7 @@ fn generate_random_iv() -> IoResult<[u8; IV_LEN]> {
 // Create a random salt.
 fn generate_random_salt() -> IoResult<[u8; SALT_LEN]> {
     let mut bytes: [u8; SALT_LEN] = [0; SALT_LEN];
-    let mut rng = try!(OsRng::new());
+    let mut rng = OsRng::new()?;
     rng.fill_bytes(&mut bytes);
     Ok(bytes)
 }
@@ -115,12 +115,12 @@ fn digest(key: &[u8],
     let mut digest = hmac::Hmac::new(sha2::Sha512::new(), key);
 
     let mut version_bytes_cursor: Cursor<Vec<u8>> = Cursor::new(Vec::new());
-    try!(version_bytes_cursor.write_u32::<BigEndian>(version));
+    version_bytes_cursor.write_u32::<BigEndian>(version)?;
 
     let mut scrypt_bytes_cursor: Cursor<Vec<u8>> = Cursor::new(Vec::new());
-    try!(scrypt_bytes_cursor.write_u8(scrypt_log2_n));
-    try!(scrypt_bytes_cursor.write_u32::<BigEndian>(scrypt_r));
-    try!(scrypt_bytes_cursor.write_u32::<BigEndian>(scrypt_p));
+    scrypt_bytes_cursor.write_u8(scrypt_log2_n)?;
+    scrypt_bytes_cursor.write_u32::<BigEndian>(scrypt_r)?;
+    scrypt_bytes_cursor.write_u32::<BigEndian>(scrypt_p)?;
 
     let version_bytes = version_bytes_cursor.into_inner();
     digest.input(version_bytes.deref());
@@ -192,7 +192,7 @@ pub struct PasswordStore {
 /// - encrypted blob:  variable length
 impl PasswordStore {
     pub fn new(master_password: SafeString) -> IoResult<PasswordStore> {
-        let salt = try!(generate_random_salt());
+        let salt = generate_random_salt()?;
 
         let scrypt_params =
             scrypt::ScryptParams::new(SCRYPT_PARAM_LOG2_N, SCRYPT_PARAM_R, SCRYPT_PARAM_P);
@@ -215,63 +215,67 @@ impl PasswordStore {
         let mut reader = Cursor::new(input.deref());
 
         // Version taken from network byte order (big endian).
-        let version = try!(reader.read_u32::<BigEndian>());
+        let version = reader.read_u32::<BigEndian>()?;
         if version != VERSION {
             return Err(PasswordError::WrongVersionError);
         }
 
         // Read the scrypt params.
-        let scrypt_log2_n = try!(reader.read_u8());
-        let scrypt_r = try!(reader.read_u32::<BigEndian>());
-        let scrypt_p = try!(reader.read_u32::<BigEndian>());
+        let scrypt_log2_n = reader.read_u8()?;
+        let scrypt_r = reader.read_u32::<BigEndian>()?;
+        let scrypt_p = reader.read_u32::<BigEndian>()?;
 
         // Read the old salt.
         let mut salt: [u8; SALT_LEN] = [0u8; SALT_LEN];
-        try!(reader.read(&mut salt).and_then(|num_bytes| {
-            if num_bytes == SALT_LEN {
-                Ok(())
-            } else {
-                Err(IoError::new(IoErrorKind::Other, "unexpected eof"))
-            }
-        }));
+        reader.read(&mut salt)
+            .and_then(|num_bytes| {
+                if num_bytes == SALT_LEN {
+                    Ok(())
+                } else {
+                    Err(IoError::new(IoErrorKind::Other, "unexpected eof"))
+                }
+            })?;
 
         // Read the old IV.
         let mut iv: [u8; IV_LEN] = [0u8; IV_LEN];
-        try!(reader.read(&mut iv).and_then(|num_bytes| {
-            if num_bytes == IV_LEN {
-                Ok(())
-            } else {
-                Err(IoError::new(IoErrorKind::Other, "unexpected eof"))
-            }
-        }));
+        reader.read(&mut iv)
+            .and_then(|num_bytes| {
+                if num_bytes == IV_LEN {
+                    Ok(())
+                } else {
+                    Err(IoError::new(IoErrorKind::Other, "unexpected eof"))
+                }
+            })?;
 
         // Read the HMAC signature.
         let mut signature: [u8; SIGNATURE_LEN] = [0u8; SIGNATURE_LEN];
-        try!(reader.read(&mut signature).and_then(|num_bytes| {
-            if num_bytes == SIGNATURE_LEN {
-                Ok(())
-            } else {
-                Err(IoError::new(IoErrorKind::Other, "unexpected eof"))
-            }
-        }));
+        reader.read(&mut signature)
+            .and_then(|num_bytes| {
+                if num_bytes == SIGNATURE_LEN {
+                    Ok(())
+                } else {
+                    Err(IoError::new(IoErrorKind::Other, "unexpected eof"))
+                }
+            })?;
 
         // The encrypted password data.
         let mut blob: Vec<u8> = Vec::new();
-        try!(reader.read_to_end(&mut blob));
+        reader.read_to_end(&mut blob)?;
 
         // Derive a 256 bits encryption key from the password.
         let scrypt_params = scrypt::ScryptParams::new(scrypt_log2_n, scrypt_r, scrypt_p);
         let key = generate_encryption_key(scrypt_params, master_password.deref(), salt);
 
         // Check the signature against what it should be.
-        let new_signature_mac = try!(digest(key.deref(),
-                                            version,
-                                            scrypt_log2_n,
-                                            scrypt_r,
-                                            scrypt_p,
-                                            &iv,
-                                            &salt,
-                                            blob.deref()))
+        let new_signature_mac = digest(key.deref(),
+                                       version,
+                                       scrypt_log2_n,
+                                       scrypt_r,
+                                       scrypt_p,
+                                       &iv,
+                                       &salt,
+                                       blob.deref())
+            ?
             .result();
         let old_signature_mac = MacResult::new(&signature);
         if new_signature_mac != old_signature_mac {
@@ -316,7 +320,7 @@ impl PasswordStore {
         let json_schema = SafeString::new(json_schema);
 
         // Encrypt the data with a new salt and a new IV.
-        let iv = try!(generate_random_iv());
+        let iv = generate_random_iv()?;
         let encrypted = match aes::encrypt(json_schema.deref().as_bytes(),
                                            self.key.as_ref(),
                                            iv.as_ref()) {
@@ -325,38 +329,39 @@ impl PasswordStore {
         };
 
         // Reset the file pointer.
-        try!(file.seek(SeekFrom::Start(0)).and_then(|_| file.set_len(0)));
+        file.seek(SeekFrom::Start(0)).and_then(|_| file.set_len(0))?;
 
         // Write the file version.
-        try!(file.write_u32::<BigEndian>(VERSION));
+        file.write_u32::<BigEndian>(VERSION)?;
 
         // Write the scrypt params.
-        try!(file.write_u8(self.scrypt_log2_n));
-        try!(file.write_u32::<BigEndian>(self.scrypt_r));
-        try!(file.write_u32::<BigEndian>(self.scrypt_p));
+        file.write_u8(self.scrypt_log2_n)?;
+        file.write_u32::<BigEndian>(self.scrypt_r)?;
+        file.write_u32::<BigEndian>(self.scrypt_p)?;
 
         // Write the key derivation salt.
-        try!(file.write_all(&self.salt));
+        file.write_all(&self.salt)?;
 
         // Write the encryption IV.
-        try!(file.write_all(&iv));
+        file.write_all(&iv)?;
 
         // Write the file signature.
-        let signature = try!(digest(self.key.deref(),
-                                    VERSION,
-                                    self.scrypt_log2_n,
-                                    self.scrypt_r,
-                                    self.scrypt_p,
-                                    &iv,
-                                    &self.salt,
-                                    encrypted.as_ref()))
+        let signature = digest(self.key.deref(),
+                               VERSION,
+                               self.scrypt_log2_n,
+                               self.scrypt_r,
+                               self.scrypt_p,
+                               &iv,
+                               &self.salt,
+                               encrypted.as_ref())
+            ?
             .result();
-        try!(file.write_all(signature.code()));
+        file.write_all(signature.code())?;
 
         // Write the encrypted password data.
-        try!(file.write_all(&encrypted.as_ref()));
+        file.write_all(&encrypted.as_ref())?;
 
-        try!(file.sync_all());
+        file.sync_all()?;
         Ok(())
     }
 
@@ -374,7 +379,7 @@ impl PasswordStore {
     }
 
     pub fn delete_password(&mut self, name: &str) -> Result<Password, PasswordError> {
-        let p = try!(self.get_password(name).ok_or(PasswordError::NoSuchAppError));
+        let p = self.get_password(name).ok_or(PasswordError::NoSuchAppError)?;
 
         let mut i = 0;
         while i < self.schema.passwords.len() {
@@ -462,7 +467,7 @@ impl PasswordStore {
                            app_name: &str,
                            closure: &Fn(Password) -> Password)
                            -> Result<(), PasswordError> {
-        let old_p = try!(self.delete_password(app_name.deref()));
+        let old_p = self.delete_password(app_name.deref())?;
 
         self.add_password(closure(old_p))
     }

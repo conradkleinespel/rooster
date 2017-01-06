@@ -195,11 +195,11 @@ fn execute_command_from_filename(matches: &getopts::Matches,
                                  -> Result<(), i32> {
 
     let mut input: Vec<u8> = Vec::new();
-    try!(file.read_to_end(&mut input).map_err(|_| 1));
+    file.read_to_end(&mut input).map_err(|_| 1)?;
 
     // If the password file is empty (ie new), we'll make a new, empty store.
     let mut store = if input.is_empty() {
-        try!(password::v2::PasswordStore::new(master_password.clone()).map_err(|_| 1))
+        password::v2::PasswordStore::new(master_password.clone()).map_err(|_| 1)?
     } else {
         // Try to open the file as is.
         match password::v2::PasswordStore::from_input(master_password.clone(),
@@ -228,7 +228,7 @@ fn execute_command_from_filename(matches: &getopts::Matches,
     };
 
     // Execute the command and save the new password list
-    try!((command.callback_exec)(matches, &mut store));
+    (command.callback_exec)(matches, &mut store)?;
 
     match store.sync(file) {
         Ok(()) => { Ok(()) }
@@ -246,7 +246,7 @@ fn get_password_file_path(rooster_file: Result<String, VarError>,
         Ok(filename) => Ok(filename),
         Err(VarError::NotPresent) => {
             let mut filename = match home_dir {
-                Some(home) => try!(home.as_os_str().to_os_string().into_string().map_err(|_| 1)),
+                Some(home) => home.as_os_str().to_os_string().into_string().map_err(|_| 1)?,
                 None => {
                     return Err(1);
                 }

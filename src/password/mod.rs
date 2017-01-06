@@ -50,7 +50,7 @@ fn upgrade_v1_v2(v1_passwords: &[v1::Password],
             created_at: p.created_at,
             updated_at: p.updated_at,
         };
-        try!(v2_store.add_password(v2_password));
+        v2_store.add_password(v2_password)?;
     }
 
     Ok(())
@@ -61,7 +61,7 @@ pub fn upgrade(master_password: SafeString,
                -> Result<v2::PasswordStore, PasswordError> {
     // If we can't read v1 passwords, we have a hard error, because we previously tried
     // to read the passwords as v2. Which failed. That means we can't upgrade.
-    let v1_passwords = try!(v1::get_all_passwords(master_password.deref(), input.deref()));
+    let v1_passwords = v1::get_all_passwords(master_password.deref(), input.deref())?;
 
     println_stderr!("Your Rooster file has version 1. You need to upgrade to version 2.");
     println_stderr!("");
@@ -88,8 +88,8 @@ pub fn upgrade(master_password: SafeString,
     }
 
     // Upgrade from v1 to v2 if we could read v1 passwords.
-    let mut v2_store = try!(v2::PasswordStore::new(master_password.clone()));
-    try!(upgrade_v1_v2(v1_passwords.deref(), &mut v2_store));
+    let mut v2_store = v2::PasswordStore::new(master_password.clone())?;
+    upgrade_v1_v2(v1_passwords.deref(), &mut v2_store)?;
 
     Ok(v2_store)
 }

@@ -18,7 +18,7 @@ use std::io::{Write, Result as IoResult};
 
 fn generate_password(alnum: bool, len: usize) -> IoResult<String> {
     let mut password_as_string = String::new();
-    let mut rng = try!(OsRng::new());
+    let mut rng = OsRng::new()?;
     for _ in 0..len {
         if alnum {
             match rng.gen_range(0, 3) {
@@ -49,7 +49,7 @@ fn password_is_hard(password: &str, alnum: bool) -> bool {
 
 pub fn generate_hard_password(alnum: bool, len: usize) -> IoResult<String> {
     loop {
-        let password = try!(generate_password(alnum, len));
+        let password = generate_password(alnum, len)?;
         if password_is_hard(password.as_ref(), alnum) {
             return Ok(password);
         }

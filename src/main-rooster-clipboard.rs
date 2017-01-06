@@ -17,8 +17,8 @@ extern crate clipboard;
 extern crate unix_daemonize;
 
 fn do_copy(data: String) -> Result<clipboard::ClipboardContext, ()> {
-    let mut context = try!(clipboard::ClipboardContext::new().map_err(|_| ()));
-    try!(context.set_contents(data).map_err(|_| ()));
+    let mut context = clipboard::ClipboardContext::new().map_err(|_| ())?;
+    context.set_contents(data).map_err(|_| ())?;
     Ok(context)
 }
 

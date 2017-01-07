@@ -2,20 +2,15 @@
 
 ## Installation
 
-Rooster depends on [Rust & Cargo][0] being installed on your system:
+Rooster currently works on OSX, Linux, BSD and [other platforms](https://forge.rust-lang.org/platform-support.html).
+
+To install, open a terminal and run this command:
+
 ```shell
-curl https://sh.rustup.rs -sSf | sh
+curl -sSL 'https://raw.githubusercontent.com/conradkleinespel/rooster/master/install.sh' | sh
 ```
 
-On **Ubuntu Linux**, you need to install some packages before installing Rooster:
-```shell
-sudo apt-get install pkg-config libx11-dev libxmu-dev
-```
-
-Once you have those installed, you can run the following command to install Rooster:
-```shell
-cargo install rooster
-```
+The script above has been tested on Ubuntu (14.04, 16.04, 16.10), Debian 8, CentOS 7, Fedora 25 and FreeBSD 11. If you use another operating system, you might need to install `unzip`, `pkg-config`, `libx11-dev` and `libxmu-dev` packages first.
 
 Once you have installed Rooster, you can view documentation with:
 ```shell

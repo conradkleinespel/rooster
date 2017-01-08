@@ -21,6 +21,7 @@ extern crate crypto;
 extern crate rpassword;
 extern crate rand;
 extern crate byteorder;
+extern crate quale;
 
 use std::fs::File;
 use std::env;
@@ -31,7 +32,7 @@ use std::io::Error as IoError;
 use std::io::ErrorKind as IoErrorKind;
 use std::io::Write;
 use std::io::Read;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use getopts::Options;
 use rpassword::prompt_password_stderr;
 use safe_string::SafeString;
@@ -56,65 +57,83 @@ const FAIL_READING_NEW_PASSWORD: &'static str = "FAIL_READING_NEW_PASSWORD";
 
 struct Command {
     name: &'static str,
-    callback_exec: fn(&getopts::Matches, &mut password::v2::PasswordStore) -> Result<(), i32>,
+    callback_exec: Option<fn(&getopts::Matches, &mut password::v2::PasswordStore) -> Result<(), i32>>,
     callback_help: fn(),
+    callback_without_store: Option<fn(&getopts::Matches) -> Result<(), i32>>,
 }
 
 static COMMANDS: &'static [Command] =
     &[Command {
           name: "get",
-          callback_exec: commands::get::callback_exec,
+          callback_exec: Some(commands::get::callback_exec),
           callback_help: commands::get::callback_help,
+          callback_without_store: None,
       },
       Command {
           name: "add",
-          callback_exec: commands::add::callback_exec,
+          callback_exec: Some(commands::add::callback_exec),
           callback_help: commands::add::callback_help,
+          callback_without_store: None,
       },
       Command {
           name: "delete",
-          callback_exec: commands::delete::callback_exec,
+          callback_exec: Some(commands::delete::callback_exec),
           callback_help: commands::delete::callback_help,
+          callback_without_store: None,
       },
       Command {
           name: "generate",
-          callback_exec: commands::generate::callback_exec,
+          callback_exec: Some(commands::generate::callback_exec),
           callback_help: commands::generate::callback_help,
+          callback_without_store: None,
       },
       Command {
           name: "regenerate",
-          callback_exec: commands::regenerate::callback_exec,
+          callback_exec: Some(commands::regenerate::callback_exec),
           callback_help: commands::regenerate::callback_help,
+          callback_without_store: None,
       },
       Command {
           name: "list",
-          callback_exec: commands::list::callback_exec,
+          callback_exec: Some(commands::list::callback_exec),
           callback_help: commands::list::callback_help,
+          callback_without_store: None,
       },
       Command {
           name: "export",
-          callback_exec: commands::export::callback_exec,
+          callback_exec: Some(commands::export::callback_exec),
           callback_help: commands::export::callback_help,
+          callback_without_store: None,
       },
       Command {
           name: "change-master-password",
-          callback_exec: commands::change_master_password::callback_exec,
+          callback_exec: Some(commands::change_master_password::callback_exec),
           callback_help: commands::change_master_password::callback_help,
+          callback_without_store: None,
       },
       Command {
           name: "rename",
-          callback_exec: commands::rename::callback_exec,
+          callback_exec: Some(commands::rename::callback_exec),
           callback_help: commands::rename::callback_help,
+          callback_without_store: None,
       },
       Command {
           name: "change",
-          callback_exec: commands::change::callback_exec,
+          callback_exec: Some(commands::change::callback_exec),
           callback_help: commands::change::callback_help,
+          callback_without_store: None,
       },
       Command {
           name: "search",
-          callback_exec: commands::search::callback_exec,
+          callback_exec: Some(commands::search::callback_exec),
           callback_help: commands::search::callback_help,
+          callback_without_store: None,
+      },
+      Command {
+          name: "uninstall",
+          callback_exec: None,
+          callback_help: commands::uninstall::callback_help,
+          callback_without_store: Some(commands::uninstall::callback_exec),
       }];
 
 fn command_from_name(name: &str) -> Option<&'static Command> {
@@ -228,7 +247,12 @@ fn execute_command_from_filename(matches: &getopts::Matches,
     };
 
     // Execute the command and save the new password list
-    (command.callback_exec)(matches, &mut store)?;
+    match command.callback_exec {
+        Some(cb) => {
+            (cb)(matches, &mut store)?;
+        }
+        None => {}
+    }
 
     match store.sync(file) {
         Ok(()) => { Ok(()) }
@@ -239,9 +263,10 @@ fn execute_command_from_filename(matches: &getopts::Matches,
     }
 }
 
-fn get_password_file_path(rooster_file: Result<String, VarError>,
-                          home_dir: Option<PathBuf>)
-                          -> Result<String, i32> {
+fn get_password_file_path() -> Result<String, i32> {
+    let rooster_file = env::var(ROOSTER_FILE_ENV_VAR);
+    let home_dir = env::home_dir();
+
     match rooster_file {
         Ok(filename) => Ok(filename),
         Err(VarError::NotPresent) => {
@@ -293,6 +318,7 @@ fn usage(password_file: &str) {
     println!("    search                     Search for a specific password");
     println!("    export                     Dump all passwords in unencrypted JSON");
     println!("    change-master-password     Change your master password");
+    println!("    uninstall                  Show commands to uninstall Rooster");
 }
 
 fn main() {
@@ -323,8 +349,7 @@ fn main() {
     };
 
     // Fetch the Rooster file path now, so we can display it in help messages.
-    let password_file_path = match get_password_file_path(env::var(ROOSTER_FILE_ENV_VAR),
-                                                          env::home_dir()) {
+    let password_file_path = match get_password_file_path() {
         Ok(path) => path,
         Err(_) => {
             println_err!("Woops, I could not determine where your password file is.");
@@ -354,7 +379,7 @@ fn main() {
         }
     };
 
-    let command = match command_from_name(command_name.as_ref()) {
+    let command: &Command = match command_from_name(command_name.as_ref()) {
         Some(command) => command,
         None => {
             println_err!("Woops, the command `{}` does not exist. Try the --help option for more \
@@ -385,22 +410,36 @@ fn main() {
         }
     };
 
-    let master_password = match new_master_password {
-        Some(p) => p,
-        None => {
-            match ask_master_password() {
-                Ok(p) => p,
-                Err(err) => {
-                    println_err!("Woops, I could not read your master password (reason: {}).",
-                                 err);
-                    std::process::exit(1);
+    match command.callback_without_store {
+        Some(cb) => {
+            match (cb)(&matches) {
+                Err(i) => {
+                    std::process::exit(i);
+                }
+                Ok(_) => {}
+            };
+        }
+        None => {}
+    }
+
+    if command.callback_exec.is_some() {
+        let master_password = match new_master_password {
+            Some(p) => p,
+            None => {
+                match ask_master_password() {
+                    Ok(p) => p,
+                    Err(err) => {
+                        println_err!("Woops, I could not read your master password (reason: {}).",
+                                     err);
+                        std::process::exit(1);
+                    }
                 }
             }
-        }
-    };
+        };
 
-    match execute_command_from_filename(&matches, command, &mut file, master_password) {
-        Err(i) => std::process::exit(i),
-        _ => std::process::exit(0),
+        match execute_command_from_filename(&matches, command, &mut file, master_password) {
+            Err(i) => std::process::exit(i),
+            _ => std::process::exit(0),
+        }
     }
 }

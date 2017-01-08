@@ -23,3 +23,4 @@ pub mod change_master_password;
 pub mod rename;
 pub mod change;
 pub mod search;
+pub mod uninstall;

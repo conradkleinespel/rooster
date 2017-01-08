@@ -266,22 +266,6 @@ impl PasswordStore {
         let scrypt_params = scrypt::ScryptParams::new(scrypt_log2_n, scrypt_r, scrypt_p);
         let key = generate_encryption_key(scrypt_params, master_password.deref(), salt);
 
-        // Check the signature against what it should be.
-        let new_signature_mac = digest(key.deref(),
-                                       version,
-                                       scrypt_log2_n,
-                                       scrypt_r,
-                                       scrypt_p,
-                                       &iv,
-                                       &salt,
-                                       blob.deref())
-            ?
-            .result();
-        let old_signature_mac = MacResult::new(&signature);
-        if new_signature_mac != old_signature_mac {
-            return Err(PasswordError::CorruptionError);
-        }
-
         // Decrypt the data.
         let passwords = match aes::decrypt(blob.deref(), key.as_ref(), iv.as_ref()) {
             Ok(decrypted) => {
@@ -298,6 +282,22 @@ impl PasswordStore {
                 return Err(PasswordError::DecryptionError);
             }
         };
+
+        // Check the signature against what it should be.
+        let new_signature_mac = digest(key.deref(),
+                                       version,
+                                       scrypt_log2_n,
+                                       scrypt_r,
+                                       scrypt_p,
+                                       &iv,
+                                       &salt,
+                                       blob.deref())
+            ?
+            .result();
+        let old_signature_mac = MacResult::new(&signature);
+        if new_signature_mac != old_signature_mac {
+            return Err(PasswordError::CorruptionError);
+        }
 
         Ok(PasswordStore {
             key: key,

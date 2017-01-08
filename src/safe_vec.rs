@@ -25,6 +25,10 @@ impl SafeVec {
     pub fn new(inner: Vec<u8>) -> SafeVec {
         SafeVec { inner: inner }
     }
+
+    pub fn inner_mut(&mut self) -> &mut Vec<u8> {
+        &mut self.inner
+    }
 }
 
 impl Drop for SafeVec {

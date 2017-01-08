@@ -52,13 +52,16 @@ pub fn callback_exec(matches: &getopts::Matches,
         acc
     });
 
+    let i_width = ((passwords.len() as f64).log10() + 1 as f64).floor() as usize;
+
     println_stderr!("");
     for (i, p) in passwords.iter().enumerate() {
-        println!("{:3} {:width$} {:30}",
+        println!("{:i_width$} {:app_name_width$} {:30}",
                  i + 1,
                  p.name,
                  p.username,
-                 width = longest_app_name);
+                 i_width = i_width,
+                 app_name_width = longest_app_name);
     }
     println_stderr!("");
 

@@ -365,8 +365,14 @@ impl PasswordStore {
         Ok(())
     }
 
-    pub fn get_all_passwords(&self) -> &[Password] {
-        self.schema.passwords.deref()
+    pub fn get_all_passwords(&self) -> Vec<&Password> {
+        let mut passwords: Vec<&Password> = self.schema.passwords.iter().collect();
+
+        passwords.sort_by_key(|p| {
+            return p.name.to_lowercase();
+        });
+
+        passwords
     }
 
     /// Adds a password to the file.
@@ -393,12 +399,11 @@ impl PasswordStore {
 
     pub fn search_passwords(&self, name: &str) -> Vec<&Password> {
         // Fuzzy search password app names.
-        let mut keys = self.schema
+        let keys = self.schema
             .passwords
             .iter()
             .map(|p| p.name.to_lowercase())
             .collect::<Vec<String>>();
-        keys.sort();
 
         let mut search_results = vec![];
         // Check if each app name can be matched against the search query.
@@ -433,6 +438,10 @@ impl PasswordStore {
                 passwords.push(p);
             }
         }
+
+        passwords.sort_by_key(|p| {
+            return p.name.to_lowercase();
+        });
 
         passwords
     }

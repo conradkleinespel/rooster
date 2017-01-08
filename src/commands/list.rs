@@ -14,7 +14,7 @@
 
 use super::super::getopts;
 use super::super::password;
-use std::iter::{Iterator, FromIterator, repeat};
+use std::iter::Iterator;
 use libc::isatty;
 
 pub fn callback_help() {
@@ -29,29 +29,26 @@ pub fn callback_help() {
 pub fn callback_exec(_matches: &getopts::Matches,
                      store: &mut password::v2::PasswordStore)
                      -> Result<(), i32> {
-    let all_passwords = store.get_all_passwords();
+    let passwords = store.get_all_passwords();
 
     let output_is_piped = unsafe { isatty(1) } == 0;
 
-    if all_passwords.len() == 0 {
+    if passwords.len() == 0 {
         if !output_is_piped {
             println!("No passwords on record yet. Add one with 'rooster add <app> <username>'.");
         }
     } else {
-        // We'll now print the password in a table.
-        // The table is delimited by borders.
-        let horizontal_border = String::from_iter(repeat('-').take(73));
+        let longest_app_name = passwords.iter().fold(0, |acc, p| if p.name.len() > acc {
+            p.name.len()
+        } else {
+            acc
+        });
 
-        if !output_is_piped {
-            println!("{}", horizontal_border);
-            println!("| {:2} | {:30} | {:30} |", "id", "app", "username");
-            println!("{}", horizontal_border);
-        }
-        for (i, p) in all_passwords.iter().enumerate() {
-            println!("| {:2?} | {:30} | {:30} |", i, p.name, p.username);
-        }
-        if !output_is_piped {
-            println!("{}", horizontal_border);
+        for p in passwords.iter() {
+            println!("{:app_name_width$} {:30}",
+                     p.name,
+                     p.username,
+                     app_name_width = longest_app_name);
         }
     }
 

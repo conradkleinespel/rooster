@@ -63,7 +63,8 @@ struct Command {
 }
 
 static COMMANDS: &'static [Command] =
-    &[Command {
+    &[
+      Command {
           name: "get",
           callback_exec: Some(commands::get::callback_exec),
           callback_help: commands::get::callback_help,
@@ -121,12 +122,6 @@ static COMMANDS: &'static [Command] =
           name: "change",
           callback_exec: Some(commands::change::callback_exec),
           callback_help: commands::change::callback_help,
-          callback_without_store: None,
-      },
-      Command {
-          name: "search",
-          callback_exec: Some(commands::search::callback_exec),
-          callback_help: commands::search::callback_help,
           callback_without_store: None,
       },
       Command {
@@ -383,7 +378,6 @@ fn usage(password_file: &str) {
     println!("    get                        Retrieve a password");
     println!("    rename                     Rename the app for a password");
     println!("    list                       List all apps and usernames");
-    println!("    search                     Search for a specific password");
     println!("    export                     Dump all passwords in unencrypted JSON");
     println!("    change-master-password     Change your master password");
     println!("    uninstall                  Show commands to uninstall Rooster");

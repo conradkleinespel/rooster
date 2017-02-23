@@ -31,14 +31,20 @@ pub fn callback_help() {
     println!("If multiple passwords match your search, you will be asked to choose.")
 }
 
-pub fn callback_exec(matches: &getopts::Matches,
-                     store: &mut password::v2::PasswordStore)
-                     -> Result<(), i32> {
+pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
     if matches.free.len() < 2 {
         println_err!("Woops, seems like the app name is missing here. For help, try:");
         println_err!("    rooster get -h");
         return Err(1);
     }
+
+    Ok(())
+}
+
+pub fn callback_exec(matches: &getopts::Matches,
+                     store: &mut password::v2::PasswordStore)
+                     -> Result<(), i32> {
+    check_args(matches)?;
 
     let show = matches.opt_present("show");
 

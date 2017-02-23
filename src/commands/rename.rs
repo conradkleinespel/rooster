@@ -27,14 +27,20 @@ pub fn callback_help() {
     println!("    rooster rename youtube Dailymotion");
 }
 
-pub fn callback_exec(matches: &getopts::Matches,
-                     store: &mut password::v2::PasswordStore)
-                     -> Result<(), i32> {
+pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
     if matches.free.len() < 3 {
         println_err!("Woops, seems like the app name is missing here. For help, try:");
         println_err!("    rooster rename -h");
         return Err(1);
     }
+
+    Ok(())
+}
+
+pub fn callback_exec(matches: &getopts::Matches,
+                     store: &mut password::v2::PasswordStore)
+                     -> Result<(), i32> {
+    check_args(matches)?;
 
     let old_name = matches.free[1].clone();
     let new_name = matches.free[2].clone();

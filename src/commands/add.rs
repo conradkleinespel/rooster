@@ -29,15 +29,21 @@ pub fn callback_help() {
     println!("    rooster add YouTube me@example.com");
 }
 
-pub fn callback_exec(matches: &getopts::Matches,
-                     store: &mut password::v2::PasswordStore)
-                     -> Result<(), i32> {
+pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
     if matches.free.len() < 3 {
         println_err!("Woops, seems like the app name or the username is missing here. For help, \
                       try:");
         println_err!("    rooster add -h");
         return Err(1);
     }
+
+    Ok(())
+}
+
+pub fn callback_exec(matches: &getopts::Matches,
+                     store: &mut password::v2::PasswordStore)
+                     -> Result<(), i32> {
+    check_args(matches)?;
 
     let app_name = matches.free[1].clone();
     let username = matches.free[2].clone();

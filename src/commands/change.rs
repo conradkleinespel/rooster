@@ -30,14 +30,20 @@ pub fn callback_help() {
     println!("    rooster change youtube");
 }
 
-pub fn callback_exec(matches: &getopts::Matches,
-                     store: &mut password::v2::PasswordStore)
-                     -> Result<(), i32> {
+pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
     if matches.free.len() < 2 {
         println_err!("Woops, seems like the app name is missing here. For help, try:");
         println_err!("    rooster change -h");
         return Err(1);
     }
+
+    Ok(())
+}
+
+pub fn callback_exec(matches: &getopts::Matches,
+                     store: &mut password::v2::PasswordStore)
+                     -> Result<(), i32> {
+    check_args(matches)?;
 
     let app_name = matches.free[1].clone();
 

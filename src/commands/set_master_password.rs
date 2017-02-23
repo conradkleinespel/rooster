@@ -21,11 +21,11 @@ use std::ops::Deref;
 
 pub fn callback_help() {
     println!("Usage:");
-    println!("    rooster change-master -h");
-    println!("    rooster change-master");
+    println!("    rooster set-master-password -h");
+    println!("    rooster set-master-password");
     println!("");
     println!("Example:");
-    println!("    rooster change-master");
+    println!("    rooster set-master-password");
 }
 
 pub fn callback_exec(_matches: &getopts::Matches,

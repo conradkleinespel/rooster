@@ -16,19 +16,22 @@
 static COLOR_RED: &'static str = "\x1b[31m";
 static COLOR_GREEN: &'static str = "\x1b[32m";
 // static COLOR_YELLOW: &'static str  = "\x1b[33m";
-// static COLOR_BLUE: &'static str    = "\x1b[34m";
+// static COLOR_BLUE: &'static str = "\x1b[34m";
 // static COLOR_MAGENTA: &'static str = "\x1b[35m";
-// static COLOR_CYAN: &'static str    = "\x1b[36m";
+static COLOR_CYAN: &'static str = "\x1b[36m";
 // static COLOR_WHITE: &'static str   = "\x1b[37m";
+static COLOR_RESET: &'static str = "\x1b[39m";
 
 pub enum Color {
     // Black,
     Red,
-    Green, /* Yellow,
-            * Blue,
-            * Magenta,
-            * Cyan,
-            * White, */
+    Green,
+    // Yellow,
+    // Blue,
+    // Magenta,
+    Cyan,
+    // White,
+    Reset,
 }
 
 impl Color {
@@ -38,10 +41,11 @@ impl Color {
             Color::Red => COLOR_RED,
             Color::Green => COLOR_GREEN,
             // Color::Yellow  => COLOR_YELLOW,
-            // Color::Blue    => COLOR_BLUE,
+            // Color::Blue => COLOR_BLUE,
             // Color::Magenta => COLOR_MAGENTA,
-            // Color::Cyan    => COLOR_CYAN,
+            Color::Cyan => COLOR_CYAN,
             // Color::White   => COLOR_WHITE,
+            Color::Reset => COLOR_RESET,
         }
     }
 }

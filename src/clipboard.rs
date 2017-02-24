@@ -18,12 +18,10 @@ use std::io::Error as IoError;
 use std::io::ErrorKind as IoErrorKind;
 
 pub fn copy_to_clipboard(s: &str) -> IoResult<()> {
-    Command::new("rooster-clipboard").arg(s).status().and_then(|status| {
-        if status.success() {
-            Ok(())
-        } else {
-            Err(IoError::new(IoErrorKind::Other, "rooster-clipboard crashed"))
-        }
+    Command::new("rooster-clipboard").arg(s).status().and_then(|status| if status.success() {
+        Ok(())
+    } else {
+        Err(IoError::new(IoErrorKind::Other, "rooster-clipboard crashed"))
     })
 }
 

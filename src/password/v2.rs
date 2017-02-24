@@ -22,8 +22,8 @@ use super::super::rustc_serialize::json;
 use super::super::safe_string::SafeString;
 use super::super::safe_vec::SafeVec;
 use super::PasswordError;
-use std::io::{Seek, SeekFrom, Result as IoResult, Error as IoError, ErrorKind as IoErrorKind,
-              Read, Write, Cursor};
+use std::io::{Seek, SeekFrom, Result as IoResult, Error as IoError, ErrorKind as IoErrorKind, Read,
+              Write, Cursor};
 use std::fs::File;
 use std::ops::DerefMut;
 use std::ops::Deref;
@@ -228,34 +228,28 @@ impl PasswordStore {
         // Read the old salt.
         let mut salt: [u8; SALT_LEN] = [0u8; SALT_LEN];
         reader.read(&mut salt)
-            .and_then(|num_bytes| {
-                if num_bytes == SALT_LEN {
-                    Ok(())
-                } else {
-                    Err(IoError::new(IoErrorKind::Other, "unexpected eof"))
-                }
+            .and_then(|num_bytes| if num_bytes == SALT_LEN {
+                Ok(())
+            } else {
+                Err(IoError::new(IoErrorKind::Other, "unexpected eof"))
             })?;
 
         // Read the old IV.
         let mut iv: [u8; IV_LEN] = [0u8; IV_LEN];
         reader.read(&mut iv)
-            .and_then(|num_bytes| {
-                if num_bytes == IV_LEN {
-                    Ok(())
-                } else {
-                    Err(IoError::new(IoErrorKind::Other, "unexpected eof"))
-                }
+            .and_then(|num_bytes| if num_bytes == IV_LEN {
+                Ok(())
+            } else {
+                Err(IoError::new(IoErrorKind::Other, "unexpected eof"))
             })?;
 
         // Read the HMAC signature.
         let mut signature: [u8; SIGNATURE_LEN] = [0u8; SIGNATURE_LEN];
         reader.read(&mut signature)
-            .and_then(|num_bytes| {
-                if num_bytes == SIGNATURE_LEN {
-                    Ok(())
-                } else {
-                    Err(IoError::new(IoErrorKind::Other, "unexpected eof"))
-                }
+            .and_then(|num_bytes| if num_bytes == SIGNATURE_LEN {
+                Ok(())
+            } else {
+                Err(IoError::new(IoErrorKind::Other, "unexpected eof"))
             })?;
 
         // The encrypted password data.
@@ -368,9 +362,7 @@ impl PasswordStore {
     pub fn get_all_passwords(&self) -> Vec<&Password> {
         let mut passwords: Vec<&Password> = self.schema.passwords.iter().collect();
 
-        passwords.sort_by_key(|p| {
-            return p.name.to_lowercase();
-        });
+        passwords.sort_by_key(|p| { return p.name.to_lowercase(); });
 
         passwords
     }
@@ -439,9 +431,7 @@ impl PasswordStore {
             }
         }
 
-        passwords.sort_by_key(|p| {
-            return p.name.to_lowercase();
-        });
+        passwords.sort_by_key(|p| { return p.name.to_lowercase(); });
 
         passwords
     }

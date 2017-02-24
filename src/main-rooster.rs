@@ -63,8 +63,7 @@ struct Command {
 }
 
 static COMMANDS: &'static [Command] =
-    &[
-      Command {
+    &[Command {
           name: "get",
           callback_exec: Some(commands::get::callback_exec),
           callback_help: commands::get::callback_help,

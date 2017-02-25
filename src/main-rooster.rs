@@ -477,7 +477,7 @@ fn ask_master_password() -> IoResult<SafeString> {
 
 fn usage(password_file: &str) {
     println!("Welcome to Rooster, the simple password manager for geeks :-)");
-    println!("");
+    println!();
     println!("The current password file is: {}", password_file);
     println!("You may override this path in the $ROOSTER_FILE environment variable.");
     println!("");
@@ -485,26 +485,28 @@ fn usage(password_file: &str) {
     println!("    rooster -h");
     println!("    rooster [options] <command> [<args> ...]");
     println!("    rooster <command> -h");
-    println!("");
+    println!();
     println!("Options:");
     println!("    -h, --help        Display a help message");
     println!("    -v, --version     Display the version of Rooster you are using");
     println!("    -a, --alnum       Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords");
     println!("    -l, --length      Set a custom length for the generated password, default is 32");
     println!("    -s, --show        Show the password instead of copying it to the clipboard");
-    println!("");
-    println!("Commands:");
+    println!();
+    println!("Commands for everyday use:");
     println!("    add                        Add a new password manually");
     println!("    change                     Change a password manually");
     println!("    delete                     Delete a password");
     println!("    generate                   Generate a password");
-    println!("    regenerate                 Re-generate a previously existing password");
+    println!("    regenerate                 Regenerate a previously existing password");
     println!("    get                        Retrieve a password");
     println!("    rename                     Rename the app for a password");
     println!("    list                       List all apps and usernames");
-    println!("    export                     Dump all passwords in unencrypted JSON");
-    println!("    set-master-password        Change your master password");
-    println!("    uninstall                  Show commands to uninstall Rooster");
+    println!();
+    println!("Commands for maintenance:");
+    println!("    export                     Dump all your raw password data in JSON");
+    println!("    set-master-password        Set your master password");
+    println!("    uninstall                  Show instructions to uninstall Rooster");
 }
 
 fn main() {

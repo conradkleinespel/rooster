@@ -57,7 +57,7 @@ pub fn callback_exec(matches: &getopts::Matches,
         return Ok(());
     }
 
-    if passwords.len() == 1 {
+    if passwords.len() == 1 && passwords[0].name.to_lowercase() == query.to_lowercase() {
         if show {
             println_ok!("Alright! Here is your password for {}: {}",
                         passwords[0].name,

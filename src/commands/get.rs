@@ -57,19 +57,20 @@ pub fn callback_exec(matches: &getopts::Matches,
         return Ok(());
     }
 
-    if passwords.len() == 1 && passwords[0].name.to_lowercase() == query.to_lowercase() {
+    if let Some(password) = passwords.iter()
+        .find(|p| p.name.to_lowercase() == query.to_lowercase()) {
         if show {
             println_ok!("Alright! Here is your password for {}: {}",
-                        passwords[0].name,
-                        passwords[0].password.deref());
+                        password.name,
+                        password.password.deref());
         } else {
-            if copy_to_clipboard(passwords[0].password.deref()).is_err() {
+            if copy_to_clipboard(password.password.deref()).is_err() {
                 println_ok!("Hmm, I tried to copy your new password to your clipboard, but \
                              something went wrong. You can see it with `rooster get '{}' --show`",
-                            passwords[0].name);
+                            password.name);
             } else {
                 println_ok!("Alright! You can paste your {} password anywhere with {}.",
-                            passwords[0].name,
+                            password.name,
                             paste_keys());
             }
         }

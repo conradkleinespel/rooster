@@ -1,5 +1,9 @@
 #!/bin/sh
 
+pkgname=rooster
+pkgver=2.4.1
+sha256=69a6893c9a98dab650e6234d559922b09a84e7aa03aa25da3a8220ff31812509
+
 curl https://sh.rustup.rs -sSf | sh -s -- -y
 if [ "$?" != "0" ]; then
     echo 'aborting: could not install rust' 1>&2
@@ -59,21 +63,27 @@ elif [ "$yumstatus" = "0" ]; then
     fi
 fi
 
-rm -rf /tmp/rooster-master /tmp/rooster-master.zip
+rm -rf /tmp/$pkgname-$pkgver /tmp/$pkgname-$pkgver.tar.gz
 
-curl -sSL https://github.com/conradkleinespel/rooster/archive/master.zip -o /tmp/rooster-master.zip
+curl -sSL https://crates.io/api/v1/crates/$pkgname/$pkgver/download -o /tmp/$pkgname-$pkgver.tar.gz
 if [ "$?" != "0" ]; then
     echo 'aborting: could not download rooster' 1>&2
     exit 1
 fi
 
-unzip /tmp/rooster-master.zip -d /tmp
+actual_sha256="`sha256sum /tmp/$pkgname-$pkgver.tar.gz | cut -d' ' -f1`"
+if [ "$actual_sha256" != "$sha256" ]; then
+    echo 'aborting: could not verify file signature' 1>&2
+    exit 1
+fi
+
+tar -C /tmp -zxvf /tmp/$pkgname-$pkgver.tar.gz
 if [ "$?" != "0" ]; then
     echo 'aborting: could not unzip rooster' 1>&2
     exit 1
 fi
 
-cd /tmp/rooster-master
+cd /tmp/$pkgname-$pkgver
 cargo build --release && cargo build
 buildstatus="$?"
 cd -
@@ -84,14 +94,14 @@ fi
 
 # there is currently a bug in the clipboard library that prevents it from working
 # when built in "release" mode, so we need to build it in "debug" mode
-sudo cp /tmp/rooster-master/target/debug/rooster-clipboard /usr/bin/rooster-clipboard
+sudo cp /tmp/$pkgname-$pkgver/target/debug/rooster-clipboard /usr/bin/rooster-clipboard
 if [ "$?" != "0" ]; then
     echo 'aborting: could not copy rooster-clipboard' 1>&2
     exit 1
 fi
 
 # but, we build rooster in "release" mode for better performance
-sudo cp /tmp/rooster-master/target/release/rooster /usr/bin/rooster
+sudo cp /tmp/$pkgname-$pkgver/target/release/rooster /usr/bin/rooster
 if [ "$?" != "0" ]; then
     echo 'aborting: could not copy rooster' 1>&2
     exit 1

@@ -2,7 +2,7 @@
 
 ## Installation
 
-Rooster currently works on OSX, Linux, BSD and [other platforms](https://forge.rust-lang.org/platform-support.html).
+Rooster currently works on OSX, Linux and BSD.
 
 To install, open a terminal and run this command:
 
@@ -10,7 +10,7 @@ To install, open a terminal and run this command:
 curl -sSL 'https://raw.githubusercontent.com/conradkleinespel/rooster/master/install.sh' | sh
 ```
 
-The script above has been tested on Ubuntu (14.04, 16.04, 16.10), Debian 8, CentOS 7, Fedora 25 and FreeBSD 11. If you use another operating system, you might need to install `unzip`, `pkg-config`, `libx11-dev` and `libxmu-dev` packages first.
+If the install script fails, make sure you have these programs/packages installed: `sha256sum`, `tar`, `pkg-config`, `libx11-dev` and `libxmu-dev`. Then try running the install script again.
 
 Once you have installed Rooster, you can view documentation with:
 ```shell

@@ -1,8 +1,8 @@
 #!/bin/sh
 
 pkgname=rooster
-pkgver=2.4.1
-sha256=69a6893c9a98dab650e6234d559922b09a84e7aa03aa25da3a8220ff31812509
+pkgver=2.5.0
+sha256=
 
 # Arch Linux gets its own package on the AUR
 cat /etc/*-release | grep -i 'Arch Linux' > /dev/null
@@ -87,7 +87,7 @@ fi
 
 tar -C /tmp -zxvf /tmp/$pkgname-$pkgver.tar.gz
 if [ "$?" != "0" ]; then
-    echo 'aborting: could not unzip rooster' 1>&2
+    echo 'aborting: could not untar rooster' 1>&2
     exit 1
 fi
 

@@ -36,7 +36,7 @@ fn main() {
         .unwrap();
 
     let data = get_data_from_args();
-    let context = do_copy(data.clone()).unwrap();
+    let mut context = do_copy(data.clone()).unwrap();
 
     // Keep the process alive as long as the data is still in the clipboard, which means no other
     // copy has been made.

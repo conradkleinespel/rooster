@@ -2,7 +2,7 @@
 
 pkgname=rooster
 pkgver=2.5.0
-sha256=
+sha256=f0814d09ab995f2c2dc556784310cd268cb4722ad18f9c201a50c9e795b4963d
 
 # Arch Linux gets its own package on the AUR
 cat /etc/*-release | grep -i 'Arch Linux' > /dev/null

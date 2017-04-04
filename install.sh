@@ -4,6 +4,14 @@ pkgname=rooster
 pkgver=2.4.1
 sha256=69a6893c9a98dab650e6234d559922b09a84e7aa03aa25da3a8220ff31812509
 
+# Arch Linux gets its own package on the AUR
+cat /etc/*-release | grep -i 'Arch Linux' > /dev/null
+if [ "$?" = "0" ]; then
+    echo 'Looks like you are using Arch Linux. You can find Rooster on the AUR:'
+    echo 'https://aur.archlinux.org/packages/rooster'
+    exit
+fi
+
 curl https://sh.rustup.rs -sSf | sh -s -- -y
 if [ "$?" != "0" ]; then
     echo 'aborting: could not install rust' 1>&2

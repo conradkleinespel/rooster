@@ -28,3 +28,11 @@ Here's a list of existing Rooster contributors:
 - [@maxjacobson](https://github.com/maxjacobson)
 - [@qmx](https://github.com/qmx)
 - Awesome Rustaceans from the [Rust Paris meetup](http://www.meetup.com/Rust-Paris/)
+
+## Donations
+
+Rooster is and will remain free for everyone. If you feel like making a donation, I appreciate it though. Here are a few ways you can donate to support Rooster development:
+- with Bitcoin: `13SPYbEZP9kvmtsKt6C9cYj4N6Ep7my6gL`
+- with Litecoin: `LN6K6fn9Mq94vbiLNzW1GZ1TvWkVihyn8T`
+
+If you cannot afford to donate, that's OK too. Just enjoy Rooster! :-)

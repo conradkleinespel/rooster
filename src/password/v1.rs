@@ -104,7 +104,7 @@ pub fn get_all_passwords(master_password: &str,
         match decrypted_maybe {
             Ok(decrypted) => {
                 let encoded = SafeString::new(String::from_utf8_lossy(decrypted.deref())
-                    .into_owned());
+                                                  .into_owned());
 
                 match json::decode::<Schema>(encoded.deref()) {
                     Ok(schema) => schema.passwords,

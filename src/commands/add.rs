@@ -54,7 +54,7 @@ pub fn callback_exec(matches: &getopts::Matches,
     }
 
     match prompt_password_stderr(format!("What password do you want for \"{}\"? ", app_name)
-        .as_str()) {
+                                     .as_str()) {
         Ok(password_as_string) => {
             let password_as_string_clipboard = SafeString::new(password_as_string.clone());
             let password = password::v2::Password::new(app_name.clone(),

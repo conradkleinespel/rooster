@@ -62,73 +62,78 @@ struct Command {
     callback_without_store: Option<fn(&getopts::Matches) -> Result<(), i32>>,
 }
 
-static COMMANDS: &'static [Command] =
-    &[Command {
-          name: "get",
-          callback_exec: Some(commands::get::callback_exec),
-          callback_help: commands::get::callback_help,
-          callback_without_store: Some(commands::get::check_args),
-      },
-      Command {
-          name: "add",
-          callback_exec: Some(commands::add::callback_exec),
-          callback_help: commands::add::callback_help,
-          callback_without_store: Some(commands::add::check_args),
-      },
-      Command {
-          name: "delete",
-          callback_exec: Some(commands::delete::callback_exec),
-          callback_help: commands::delete::callback_help,
-          callback_without_store: Some(commands::delete::check_args),
-      },
-      Command {
-          name: "generate",
-          callback_exec: Some(commands::generate::callback_exec),
-          callback_help: commands::generate::callback_help,
-          callback_without_store: Some(commands::generate::check_args),
-      },
-      Command {
-          name: "regenerate",
-          callback_exec: Some(commands::regenerate::callback_exec),
-          callback_help: commands::regenerate::callback_help,
-          callback_without_store: Some(commands::regenerate::check_args),
-      },
-      Command {
-          name: "list",
-          callback_exec: Some(commands::list::callback_exec),
-          callback_help: commands::list::callback_help,
-          callback_without_store: None,
-      },
-      Command {
-          name: "export",
-          callback_exec: Some(commands::export::callback_exec),
-          callback_help: commands::export::callback_help,
-          callback_without_store: None,
-      },
-      Command {
-          name: "set-master-password",
-          callback_exec: Some(commands::set_master_password::callback_exec),
-          callback_help: commands::set_master_password::callback_help,
-          callback_without_store: None,
-      },
-      Command {
-          name: "rename",
-          callback_exec: Some(commands::rename::callback_exec),
-          callback_help: commands::rename::callback_help,
-          callback_without_store: Some(commands::rename::check_args),
-      },
-      Command {
-          name: "change",
-          callback_exec: Some(commands::change::callback_exec),
-          callback_help: commands::change::callback_help,
-          callback_without_store: Some(commands::change::check_args),
-      },
-      Command {
-          name: "uninstall",
-          callback_exec: None,
-          callback_help: commands::uninstall::callback_help,
-          callback_without_store: Some(commands::uninstall::callback_exec),
-      }];
+static COMMANDS: &'static [Command] = &[Command {
+     name: "get",
+     callback_exec: Some(commands::get::callback_exec),
+     callback_help: commands::get::callback_help,
+     callback_without_store: Some(commands::get::check_args),
+ },
+ Command {
+     name: "add",
+     callback_exec: Some(commands::add::callback_exec),
+     callback_help: commands::add::callback_help,
+     callback_without_store: Some(commands::add::check_args),
+ },
+ Command {
+     name: "delete",
+     callback_exec: Some(commands::delete::callback_exec),
+     callback_help: commands::delete::callback_help,
+     callback_without_store: Some(commands::delete::check_args),
+ },
+ Command {
+     name: "generate",
+     callback_exec: Some(commands::generate::callback_exec),
+     callback_help: commands::generate::callback_help,
+     callback_without_store: Some(commands::generate::check_args),
+ },
+ Command {
+     name: "regenerate",
+     callback_exec: Some(commands::regenerate::callback_exec),
+     callback_help: commands::regenerate::callback_help,
+     callback_without_store: Some(commands::regenerate::check_args),
+ },
+ Command {
+     name: "list",
+     callback_exec: Some(commands::list::callback_exec),
+     callback_help: commands::list::callback_help,
+     callback_without_store: None,
+ },
+ Command {
+     name: "export",
+     callback_exec: Some(commands::export::callback_exec),
+     callback_help: commands::export::callback_help,
+     callback_without_store: None,
+ },
+ Command {
+     name: "set-master-password",
+     callback_exec: Some(commands::set_master_password::callback_exec),
+     callback_help: commands::set_master_password::callback_help,
+     callback_without_store: None,
+ },
+ Command {
+     name: "rename",
+     callback_exec: Some(commands::rename::callback_exec),
+     callback_help: commands::rename::callback_help,
+     callback_without_store: Some(commands::rename::check_args),
+ },
+ Command {
+     name: "transfer",
+     callback_exec: Some(commands::transfer::callback_exec),
+     callback_help: commands::transfer::callback_help,
+     callback_without_store: Some(commands::transfer::check_args),
+ },
+ Command {
+     name: "change",
+     callback_exec: Some(commands::change::callback_exec),
+     callback_help: commands::change::callback_help,
+     callback_without_store: Some(commands::change::check_args),
+ },
+ Command {
+     name: "uninstall",
+     callback_exec: None,
+     callback_help: commands::uninstall::callback_help,
+     callback_without_store: Some(commands::uninstall::callback_exec),
+ }];
 
 fn command_from_name(name: &str) -> Option<&'static Command> {
     for c in COMMANDS.iter() {
@@ -220,7 +225,8 @@ fn get_password_file(filename: &str,
                                                  file every time.");
 
                                 println_stderr!("");
-                                return get_password_file(file_in_dropbox.to_string_lossy()
+                                return get_password_file(file_in_dropbox
+                                                             .to_string_lossy()
                                                              .as_ref(),
                                                          true);
                             }
@@ -263,10 +269,12 @@ fn get_password_file(filename: &str,
 
                             let master_password = prompt_password_stderr("What would you like it \
                                                                           to be? ");
-                            let master_password = master_password.map(SafeString::new)
+                            let master_password = master_password
+                                .map(SafeString::new)
                                 .map_err(|_| {
-                                    IoError::new(IoErrorKind::Other, FAIL_READING_NEW_PASSWORD)
-                                })?;
+                                             IoError::new(IoErrorKind::Other,
+                                                          FAIL_READING_NEW_PASSWORD)
+                                         })?;
 
                             let mut filename = filename.to_owned();
 
@@ -458,7 +466,12 @@ fn get_password_file_path() -> Result<String, i32> {
         Ok(filename) => Ok(filename),
         Err(VarError::NotPresent) => {
             let mut filename = match home_dir {
-                Some(home) => home.as_os_str().to_os_string().into_string().map_err(|_| 1)?,
+                Some(home) => {
+                    home.as_os_str()
+                        .to_os_string()
+                        .into_string()
+                        .map_err(|_| 1)?
+                }
                 None => {
                     return Err(1);
                 }
@@ -501,9 +514,8 @@ fn usage(password_file: &str) {
     println!("    regenerate                 Regenerate a previously existing password");
     println!("    get                        Retrieve a password");
     println!("    rename                     Rename the app for a password");
+    println!("    transfer                   Change the username for a password");
     println!("    list                       List all apps and usernames");
-    println!();
-    println!("Commands for maintenance:");
     println!("    export                     Dump all your raw password data in JSON");
     println!("    set-master-password        Set your master password");
     println!("    uninstall                  Show instructions to uninstall Rooster");

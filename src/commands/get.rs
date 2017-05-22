@@ -57,8 +57,9 @@ pub fn callback_exec(matches: &getopts::Matches,
         return Ok(());
     }
 
-    if let Some(password) = passwords.iter()
-        .find(|p| p.name.to_lowercase() == query.to_lowercase()) {
+    if let Some(password) = passwords
+           .iter()
+           .find(|p| p.name.to_lowercase() == query.to_lowercase()) {
         if show {
             println_ok!("Alright! Here is your password for {}: {}",
                         password.name,
@@ -78,11 +79,13 @@ pub fn callback_exec(matches: &getopts::Matches,
         return Ok(());
     }
 
-    let longest_app_name = passwords.iter().fold(0, |acc, p| if p.name.len() > acc {
-        p.name.len()
-    } else {
-        acc
-    });
+    let longest_app_name = passwords
+        .iter()
+        .fold(0, |acc, p| if p.name.len() > acc {
+            p.name.len()
+        } else {
+            acc
+        });
 
     let i_width = ((passwords.len() as f64).log10() + 1 as f64).floor() as usize;
 

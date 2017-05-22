@@ -88,8 +88,8 @@ impl PasswordSpec {
             }
         }
         Some(PasswordSpec {
-            alnum: alnum,
-            len: password_len,
-        })
+                 alnum: alnum,
+                 len: password_len,
+             })
     }
 }

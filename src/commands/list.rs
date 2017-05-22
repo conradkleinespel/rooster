@@ -38,11 +38,13 @@ pub fn callback_exec(_matches: &getopts::Matches,
             println!("No passwords on record yet. Add one with 'rooster add <app> <username>'.");
         }
     } else {
-        let longest_app_name = passwords.iter().fold(0, |acc, p| if p.name.len() > acc {
-            p.name.len()
-        } else {
-            acc
-        });
+        let longest_app_name = passwords
+            .iter()
+            .fold(0, |acc, p| if p.name.len() > acc {
+                p.name.len()
+            } else {
+                acc
+            });
 
         for p in passwords.iter() {
             println!("{:app_name_width$} {:30}",

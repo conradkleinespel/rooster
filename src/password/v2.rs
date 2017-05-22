@@ -22,8 +22,8 @@ use super::super::rustc_serialize::json;
 use super::super::safe_string::SafeString;
 use super::super::safe_vec::SafeVec;
 use super::PasswordError;
-use std::io::{Seek, SeekFrom, Result as IoResult, Error as IoError, ErrorKind as IoErrorKind, Read,
-              Write, Cursor};
+use std::io::{Seek, SeekFrom, Result as IoResult, Error as IoError, ErrorKind as IoErrorKind,
+              Read, Write, Cursor};
 use std::fs::File;
 use std::ops::DerefMut;
 use std::ops::Deref;
@@ -200,13 +200,13 @@ impl PasswordStore {
         let key = generate_encryption_key(scrypt_params, master_password.deref(), salt);
 
         Ok(PasswordStore {
-            key: key,
-            scrypt_log2_n: SCRYPT_PARAM_LOG2_N,
-            scrypt_r: SCRYPT_PARAM_R,
-            scrypt_p: SCRYPT_PARAM_P,
-            salt: salt,
-            schema: Schema::new(),
-        })
+               key: key,
+               scrypt_log2_n: SCRYPT_PARAM_LOG2_N,
+               scrypt_r: SCRYPT_PARAM_R,
+               scrypt_p: SCRYPT_PARAM_P,
+               salt: salt,
+               schema: Schema::new(),
+           })
     }
 
     pub fn from_input(master_password: SafeString,
@@ -227,30 +227,33 @@ impl PasswordStore {
 
         // Read the old salt.
         let mut salt: [u8; SALT_LEN] = [0u8; SALT_LEN];
-        reader.read(&mut salt)
+        reader
+            .read(&mut salt)
             .and_then(|num_bytes| if num_bytes == SALT_LEN {
-                Ok(())
-            } else {
-                Err(IoError::new(IoErrorKind::Other, "unexpected eof"))
-            })?;
+                          Ok(())
+                      } else {
+                          Err(IoError::new(IoErrorKind::Other, "unexpected eof"))
+                      })?;
 
         // Read the old IV.
         let mut iv: [u8; IV_LEN] = [0u8; IV_LEN];
-        reader.read(&mut iv)
+        reader
+            .read(&mut iv)
             .and_then(|num_bytes| if num_bytes == IV_LEN {
-                Ok(())
-            } else {
-                Err(IoError::new(IoErrorKind::Other, "unexpected eof"))
-            })?;
+                          Ok(())
+                      } else {
+                          Err(IoError::new(IoErrorKind::Other, "unexpected eof"))
+                      })?;
 
         // Read the HMAC signature.
         let mut signature: [u8; SIGNATURE_LEN] = [0u8; SIGNATURE_LEN];
-        reader.read(&mut signature)
+        reader
+            .read(&mut signature)
             .and_then(|num_bytes| if num_bytes == SIGNATURE_LEN {
-                Ok(())
-            } else {
-                Err(IoError::new(IoErrorKind::Other, "unexpected eof"))
-            })?;
+                          Ok(())
+                      } else {
+                          Err(IoError::new(IoErrorKind::Other, "unexpected eof"))
+                      })?;
 
         // The encrypted password data.
         let mut blob: Vec<u8> = Vec::new();
@@ -264,7 +267,7 @@ impl PasswordStore {
         let passwords = match aes::decrypt(blob.deref(), key.as_ref(), iv.as_ref()) {
             Ok(decrypted) => {
                 let encoded = SafeString::new(String::from_utf8_lossy(decrypted.as_ref())
-                    .into_owned());
+                                                  .into_owned());
                 match json::decode::<Schema>(encoded.deref()) {
                     Ok(json) => json.passwords,
                     Err(_) => {
@@ -285,22 +288,21 @@ impl PasswordStore {
                                        scrypt_p,
                                        &iv,
                                        &salt,
-                                       blob.deref())
-            ?
-            .result();
+                                       blob.deref())?
+                .result();
         let old_signature_mac = MacResult::new(&signature);
         if new_signature_mac != old_signature_mac {
             return Err(PasswordError::CorruptionError);
         }
 
         Ok(PasswordStore {
-            key: key,
-            scrypt_log2_n: scrypt_log2_n,
-            scrypt_r: scrypt_r,
-            scrypt_p: scrypt_p,
-            salt: salt,
-            schema: Schema { passwords: passwords },
-        })
+               key: key,
+               scrypt_log2_n: scrypt_log2_n,
+               scrypt_r: scrypt_r,
+               scrypt_p: scrypt_p,
+               salt: salt,
+               schema: Schema { passwords: passwords },
+           })
     }
 
     pub fn sync(&self, file: &mut File) -> Result<(), PasswordError> {
@@ -347,9 +349,8 @@ impl PasswordStore {
                                self.scrypt_p,
                                &iv,
                                &self.salt,
-                               encrypted.as_ref())
-            ?
-            .result();
+                               encrypted.as_ref())?
+                .result();
         file.write_all(signature.code())?;
 
         // Write the encrypted password data.
@@ -377,7 +378,8 @@ impl PasswordStore {
     }
 
     pub fn delete_password(&mut self, name: &str) -> Result<Password, PasswordError> {
-        let p = self.get_password(name).ok_or(PasswordError::NoSuchAppError)?;
+        let p = self.get_password(name)
+            .ok_or(PasswordError::NoSuchAppError)?;
 
         let mut i = 0;
         while i < self.schema.passwords.len() {

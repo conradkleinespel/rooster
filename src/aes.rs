@@ -53,7 +53,8 @@ pub fn encrypt(data: &[u8],
     // us that it stopped processing data due to not having any more data in the
     // input buffer.
     loop {
-        let result = encryptor.encrypt(&mut read_buffer, &mut write_buffer, true)?;
+        let result = encryptor
+            .encrypt(&mut read_buffer, &mut write_buffer, true)?;
 
         // "write_buffer.take_read_buffer().take_remaining()" means:
         // from the writable buffer, create a new readable buffer which
@@ -92,7 +93,8 @@ pub fn decrypt(encrypted_data: &[u8],
     let mut write_buffer = buffer::RefWriteBuffer::new(&mut buffer);
 
     loop {
-        let result = decryptor.decrypt(&mut read_buffer, &mut write_buffer, true)?;
+        let result = decryptor
+            .decrypt(&mut read_buffer, &mut write_buffer, true)?;
         for b in write_buffer.take_read_buffer().take_remaining() {
             final_result.push(*b);
         }

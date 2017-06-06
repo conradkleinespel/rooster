@@ -7,7 +7,7 @@ There are a lot of password managers out there. Rooster has some unique goals:
 - it works completely offline with optional support for online sync (currently Dropbox)
 - it stores simple appname/username/password tuples, nothing more, nothing less
 
-In addition, it uses state-of-the-art cryptography algorithms (scrypt for key derivation, aes256-cbc for encryption, hmac-sha256 for signature) and it works all kinds of UNIX operating systems (Linux, OSX, BSD, etc). 
+In addition, it uses state-of-the-art cryptography algorithms (scrypt for key derivation, aes256-cbc for encryption, hmac-sha256 for signature) and it works all kinds of UNIX operating systems (Linux, OSX, BSD, etc).
 
 ## Installation
 
@@ -16,7 +16,7 @@ Rooster currently works on OSX, Linux and BSD.
 To install, open a terminal and run this command:
 
 ```shell
-curl -sSL 'https://raw.githubusercontent.com/conradkleinespel/rooster/master/install.sh' | sh
+curl -sSL 'https://raw.githubusercontent.com/conradkdotcom/rooster/master/install.sh' | sh
 ```
 
 If the install script fails, make sure you have these programs/packages installed: `sha256sum`, `tar`, `pkg-config`, `libx11-dev` and `libxmu-dev`. Then try running the install script again.

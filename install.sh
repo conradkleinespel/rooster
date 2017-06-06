@@ -92,7 +92,7 @@ if [ "$?" != "0" ]; then
 fi
 
 cd /tmp/$pkgname-$pkgver
-cargo build --release && cargo build
+cargo build --release
 buildstatus="$?"
 cd -
 if [ "$buildstatus" != "0" ]; then
@@ -100,15 +100,12 @@ if [ "$buildstatus" != "0" ]; then
     exit 1
 fi
 
-# there is currently a bug in the clipboard library that prevents it from working
-# when built in "release" mode, so we need to build it in "debug" mode
-sudo cp /tmp/$pkgname-$pkgver/target/debug/rooster-clipboard /usr/bin/rooster-clipboard
+# copy binaries to /usr/bin
+sudo cp /tmp/$pkgname-$pkgver/target/release/rooster-clipboard /usr/bin/rooster-clipboard
 if [ "$?" != "0" ]; then
     echo 'aborting: could not copy rooster-clipboard' 1>&2
     exit 1
 fi
-
-# but, we build rooster in "release" mode for better performance
 sudo cp /tmp/$pkgname-$pkgver/target/release/rooster /usr/bin/rooster
 if [ "$?" != "0" ]; then
     echo 'aborting: could not copy rooster' 1>&2

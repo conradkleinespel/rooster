@@ -16,6 +16,8 @@ extern crate clipboard;
 #[cfg(target_os="linux")]
 extern crate unix_daemonize;
 
+use clipboard::ClipboardProvider;
+
 fn do_copy(data: String) -> Result<clipboard::ClipboardContext, ()> {
     let mut context = clipboard::ClipboardContext::new().map_err(|_| ())?;
     context.set_contents(data).map_err(|_| ())?;
@@ -33,7 +35,7 @@ fn main() {
     unix_daemonize::daemonize_redirect(Some("/dev/null"),
                                        Some("/dev/null"),
                                        unix_daemonize::ChdirMode::ChdirRoot)
-        .unwrap();
+            .unwrap();
 
     let data = get_data_from_args();
     let mut context = do_copy(data.clone()).unwrap();

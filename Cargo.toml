@@ -16,7 +16,7 @@ libc = "0.2"
 rpassword = "0.4"
 getopts = "0.2"
 byteorder = "1.0"
-clipboard = "0.2"
+clipboard = "0.3"
 quale = "1.0"
 unix-daemonize = "0.1" # only needed for linux
 

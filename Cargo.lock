@@ -1,6 +1,6 @@
 [root]
 name = "rooster"
-version = "2.5.0"
+version = "2.6.0"
 dependencies = [
  "byteorder 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "clipboard 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",

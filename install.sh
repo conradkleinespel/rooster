@@ -3,13 +3,20 @@
 pkgname=rooster
 pkgver=2.6.0
 sha256=ad453e7f937b8482c94283ce26d4982386aba956b8f914f9e7b55c760378ef1f
+MacOS=false
 
-# Arch Linux gets its own package on the AUR
-cat /etc/*-release | grep -i 'Arch Linux' > /dev/null
-if [ "$?" = "0" ]; then
-    echo 'Looks like you are using Arch Linux. You can find Rooster on the AUR:'
-    echo 'https://aur.archlinux.org/packages/rooster'
-    exit
+# uname for check if MacOS
+if [ "$(uname)" = "Darwin" ];then
+    echo "Looks like you are using an Macintosh."
+    $MacOS = true
+else
+    # Arch Linux gets its own package on the AUR
+    cat /etc/*-release | grep -i 'Arch Linux' > /dev/null
+    if [ "$?" = "0" ]; then
+        echo 'Looks like you are using Arch Linux. You can find Rooster on the AUR:'
+        echo 'https://aur.archlinux.org/packages/rooster'
+        exit
+    fi
 fi
 
 curl https://sh.rustup.rs -sSf | sh -s -- -y
@@ -71,6 +78,7 @@ elif [ "$yumstatus" = "0" ]; then
     fi
 fi
 
+
 rm -rf /tmp/$pkgname-$pkgver /tmp/$pkgname-$pkgver.tar.gz
 
 curl -sSL https://crates.io/api/v1/crates/$pkgname/$pkgver/download -o /tmp/$pkgname-$pkgver.tar.gz
@@ -79,7 +87,12 @@ if [ "$?" != "0" ]; then
     exit 1
 fi
 
-actual_sha256="`sha256sum /tmp/$pkgname-$pkgver.tar.gz | cut -d' ' -f1`"
+if [ MacOS ]; then
+    # cmd shasum256 doesn't work on MacOS replace by shasum -a 256
+    actual_sha256="`shasum -a 256 /tmp/$pkgname-$pkgver.tar.gz | cut -d' ' -f1`"
+else
+    actual_sha256="`sha256sum /tmp/$pkgname-$pkgver.tar.gz | cut -d' ' -f1`"
+fi
 if [ "$actual_sha256" != "$sha256" ]; then
     echo 'aborting: could not verify file signature' 1>&2
     exit 1
@@ -101,12 +114,23 @@ if [ "$buildstatus" != "0" ]; then
 fi
 
 # copy binaries to /usr/bin
-sudo cp /tmp/$pkgname-$pkgver/target/release/rooster-clipboard /usr/bin/rooster-clipboard
+
+if [ MacOS ]; then
+    # File must be copy in /usr/local
+    sudo cp /tmp/$pkgname-$pkgver/target/release/rooster-clipboard /usr/local/bin/rooster-clipboard
+else
+    sudo cp /tmp/$pkgname-$pkgver/target/release/rooster-clipboard /usr/bin/rooster-clipboard
+fi
 if [ "$?" != "0" ]; then
     echo 'aborting: could not copy rooster-clipboard' 1>&2
     exit 1
 fi
-sudo cp /tmp/$pkgname-$pkgver/target/release/rooster /usr/bin/rooster
+
+if [ MacOS ]; then
+    sudo cp /tmp/$pkgname-$pkgver/target/release/rooster /usr/local/bin/rooster
+else
+    sudo cp /tmp/$pkgname-$pkgver/target/release/rooster /usr/bin/rooster
+fi
 if [ "$?" != "0" ]; then
     echo 'aborting: could not copy rooster' 1>&2
     exit 1

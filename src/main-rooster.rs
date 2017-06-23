@@ -606,24 +606,25 @@ fn main() {
         None => {}
     }
 
-    let (new_master_password, mut file) = match get_password_file(password_file_path.deref(),
-                                                                  false) {
-        Ok(file) => file,
-        Err(err) => {
-            if format!("{}", err) == DONT_CREATE_PASSWORD_FILE {
-                println_err!("I can't go on without a password file, sorry");
-            } else if format!("{}", err) == FAIL_READING_NEW_PASSWORD {
-                println_err!("I couldn't read your Master Password, sorry");
-            } else {
-                println_err!("I can't find your password file at {} (reason: {})",
-                             password_file_path,
-                             err);
-            }
-            std::process::exit(1);
-        }
-    };
 
     if command.callback_exec.is_some() {
+        let (new_master_password, mut file) = match get_password_file(password_file_path.deref(),
+                                                                      false) {
+            Ok(file) => file,
+            Err(err) => {
+                if format!("{}", err) == DONT_CREATE_PASSWORD_FILE {
+                    println_err!("I can't go on without a password file, sorry");
+                } else if format!("{}", err) == FAIL_READING_NEW_PASSWORD {
+                    println_err!("I couldn't read your Master Password, sorry");
+                } else {
+                    println_err!("I can't find your password file at {} (reason: {})",
+                                 password_file_path,
+                                 err);
+                }
+                std::process::exit(1);
+            }
+        };
+
         let mut store = match get_password_store(&mut file, new_master_password) {
             Err(i) => std::process::exit(i),
             Ok(store) => store,

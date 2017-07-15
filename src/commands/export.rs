@@ -15,7 +15,7 @@
 use super::super::getopts;
 use super::super::password;
 use super::super::safe_string::SafeString;
-use super::super::rustc_serialize::json;
+use super::super::serde_json;
 use std::ops::Deref;
 use std::io::Write;
 
@@ -33,7 +33,7 @@ pub fn callback_exec(_matches: &getopts::Matches,
                      -> Result<(), i32> {
     let passwords_ref = store.get_all_passwords();
 
-    let passwords_json = match json::encode(&passwords_ref) {
+    let passwords_json = match serde_json::to_string(&passwords_ref) {
         Ok(passwords_json) => passwords_json,
         Err(json_err) => {
             println_stderr!("Woops, I could not encode the passwords into JSON (reason: {:?}).",

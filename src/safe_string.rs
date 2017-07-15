@@ -14,12 +14,8 @@
 
 use std::ops::Drop;
 use std::ops::Deref;
-use super::rustc_serialize::Encodable;
-use super::rustc_serialize::Decodable;
-use super::rustc_serialize::Encoder;
-use super::rustc_serialize::Decoder;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SafeString {
     inner: String,
 }
@@ -47,14 +43,3 @@ impl Deref for SafeString {
     }
 }
 
-impl Encodable for SafeString {
-    fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
-        String::encode(&self.inner, s)
-    }
-}
-
-impl Decodable for SafeString {
-    fn decode<D: Decoder>(d: &mut D) -> Result<SafeString, D::Error> {
-        String::decode(d).map(SafeString::new)
-    }
-}

@@ -16,12 +16,16 @@
 
 extern crate libc;
 extern crate getopts;
-extern crate rustc_serialize;
 extern crate crypto;
 extern crate rpassword;
 extern crate rand;
 extern crate byteorder;
 extern crate quale;
+extern crate serde;
+extern crate serde_json;
+
+#[macro_use]
+extern crate serde_derive;
 
 use std::fs::File;
 use std::env;

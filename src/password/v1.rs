@@ -19,7 +19,9 @@ use super::super::aes;
 use super::PasswordError;
 use super::super::safe_string::SafeString;
 use super::super::safe_vec::SafeVec;
-use rustc_serialize::json;
+use super::super::serde_json;
+
+use serde_json::Error;
 use std::ops::DerefMut;
 use std::ops::Deref;
 
@@ -54,12 +56,12 @@ const IV_LEN: usize = 16;
 const KEY_LEN: usize = 32;
 
 /// The format of the encrypted JSON content in the password file v1.
-#[derive(RustcDecodable, RustcEncodable)]
+#[derive(Serialize, Deserialize)]
 pub struct Schema {
     passwords: Vec<Password>,
 }
 
-#[derive(Clone, Debug, RustcDecodable, RustcEncodable)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Password {
     pub name: String,
     pub domain: Option<String>,
@@ -106,7 +108,9 @@ pub fn get_all_passwords(master_password: &str,
                 let encoded = SafeString::new(String::from_utf8_lossy(decrypted.deref())
                                                   .into_owned());
 
-                match json::decode::<Schema>(encoded.deref()) {
+                let s : Result<Schema, Error> =  serde_json::from_str(encoded.deref());
+
+                match s {
                     Ok(schema) => schema.passwords,
                     Err(_) => {
                         return Err(PasswordError::InvalidJsonError);

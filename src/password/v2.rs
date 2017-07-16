@@ -18,10 +18,12 @@ use super::super::crypto::mac::{Mac, MacResult};
 use super::super::aes;
 use super::super::rand::{Rng, OsRng};
 use super::super::byteorder::{ReadBytesExt, WriteBytesExt, BigEndian};
-use super::super::rustc_serialize::json;
+use super::super::serde_json;
 use super::super::safe_string::SafeString;
 use super::super::safe_vec::SafeVec;
+
 use super::PasswordError;
+use serde_json::Error;
 use std::io::{Seek, SeekFrom, Result as IoResult, Error as IoError, ErrorKind as IoErrorKind,
               Read, Write, Cursor};
 use std::fs::File;
@@ -137,7 +139,7 @@ fn digest(key: &[u8],
 
 
 /// The format of the encrypted JSON content in the password file v1.
-#[derive(RustcDecodable, RustcEncodable, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Schema {
     passwords: Vec<Password>,
 }
@@ -148,7 +150,7 @@ impl Schema {
     }
 }
 
-#[derive(Clone, Debug, RustcDecodable, RustcEncodable)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Password {
     pub name: String,
     pub username: String,
@@ -268,7 +270,8 @@ impl PasswordStore {
             Ok(decrypted) => {
                 let encoded = SafeString::new(String::from_utf8_lossy(decrypted.as_ref())
                                                   .into_owned());
-                match json::decode::<Schema>(encoded.deref()) {
+                let s : Result<Schema, Error> = serde_json::from_str(encoded.deref());
+                match s {
                     Ok(json) => json.passwords,
                     Err(_) => {
                         return Err(PasswordError::InvalidJsonError);
@@ -307,7 +310,7 @@ impl PasswordStore {
 
     pub fn sync(&self, file: &mut File) -> Result<(), PasswordError> {
         // This should never fail. The structs are all encodable.
-        let json_schema = match json::encode(&self.schema) {
+        let json_schema = match serde_json::to_string(&self.schema) {
             Ok(json_schema) => json_schema,
             Err(_) => {
                 return Err(PasswordError::InvalidJsonError);

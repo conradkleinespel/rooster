@@ -33,6 +33,7 @@ We welcome contribution from everyone. Feel free to open an issue or a pull requ
 Here's a list of existing Rooster contributors:
 
 - [@conradkleinespel](https://github.com/conradkleinespel)
+- [@Eternity-Yarr](https://github.com/Eternity-Yarr)
 - [@jaezun](https://github.com/jaezun)
 - [@maxjacobson](https://github.com/maxjacobson)
 - [@qmx](https://github.com/qmx)

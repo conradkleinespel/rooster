@@ -30,6 +30,8 @@ rooster --help
 
 We welcome contribution from everyone. Feel free to open an issue or a pull request at any time.
 
+Check out the [unassigned issues](https://github.com/conradkdotcom/rooster/issues?q=is%3Aissue+is%3Aopen+label%3Aunassigned) to get started. If you have any questions, just let us know and we'll jump in to help.
+
 Here's a list of existing Rooster contributors:
 
 - [@conradkleinespel](https://github.com/conradkleinespel)
@@ -38,6 +40,8 @@ Here's a list of existing Rooster contributors:
 - [@maxjacobson](https://github.com/maxjacobson)
 - [@qmx](https://github.com/qmx)
 - Awesome Rustaceans from the [Rust Paris meetup](http://www.meetup.com/Rust-Paris/)
+
+Thank you very much for your help!  :smiley:  :heart:
 
 ## Donations
 

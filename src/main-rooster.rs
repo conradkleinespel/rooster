@@ -53,6 +53,7 @@ mod safe_string;
 mod safe_vec;
 mod generate;
 mod clipboard;
+mod list;
 
 const ROOSTER_FILE_ENV_VAR: &'static str = "ROOSTER_FILE";
 const ROOSTER_FILE_DEFAULT: &'static str = ".passwords.rooster";

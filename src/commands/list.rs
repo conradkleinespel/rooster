@@ -14,8 +14,8 @@
 
 use super::super::getopts;
 use super::super::password;
-use std::iter::Iterator;
-use libc::isatty;
+use super::super::list;
+use std::io::Write;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -31,27 +31,11 @@ pub fn callback_exec(_matches: &getopts::Matches,
                      -> Result<(), i32> {
     let passwords = store.get_all_passwords();
 
-    let output_is_piped = unsafe { isatty(1) } == 0;
-
     if passwords.len() == 0 {
-        if !output_is_piped {
-            println!("No passwords on record yet. Add one with 'rooster add <app> <username>'.");
-        }
+        println!("No passwords on record yet. Add one with 'rooster add <app> <username>'.");
     } else {
-        let longest_app_name = passwords
-            .iter()
-            .fold(0, |acc, p| if p.name.len() > acc {
-                p.name.len()
-            } else {
-                acc
-            });
-
-        for p in passwords.iter() {
-            println!("{:app_name_width$} {:30}",
-                     p.name,
-                     p.username,
-                     app_name_width = longest_app_name);
-        }
+        println_stderr!("");
+        list::print_list_of_passwords(&passwords, list::WITHOUT_NUMBERS, list::OutputStream::Stdout);
     }
 
     Ok(())

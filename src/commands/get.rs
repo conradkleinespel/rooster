@@ -48,56 +48,32 @@ pub fn callback_exec(
     check_args(matches)?;
 
     let show = matches.opt_present("show");
-
     let query = matches.free[1].clone();
 
     let passwords = store.search_passwords(query.as_str());
-
     if passwords.len() == 0 {
         println_stderr!("I can't find any passwords for \"{}\"", query);
         return Ok(());
     }
 
-    if let Some(password) = passwords.iter().find(|p| {
-        p.name.to_lowercase() == query.to_lowercase()
-    })
+    if let Some(ref password) =
+        passwords.iter().find(|p| {
+            p.name.to_lowercase() == query.to_lowercase()
+        })
     {
-        if show {
-            println_ok!(
-                "Alright! Here is your password for {}: {}",
-                password.name,
-                password.password.deref()
-            );
-        } else {
-            if copy_to_clipboard(&password.password).is_err() {
-                println_ok!(
-                    "Hmm, I tried to copy your new password to your clipboard, but \
-                             something went wrong. You can see it with `rooster get '{}' --show`",
-                    password.name
-                );
-            } else {
-                println_ok!(
-                    "Alright! You can paste your {} password anywhere with {}.",
-                    password.name,
-                    paste_keys()
-                );
-            }
-        }
-
+        confirm_password_retrieved(show, password);
         return Ok(());
     }
 
-    let prompt = if show {
-        format!(
-            "Which password would you like to see (1 to {})? ",
-            passwords.len()
-        )
-    } else {
-        format!(
-            "Which password would you like me to copy to your clipboard (1 to {})? ",
-            passwords.len()
-        )
-    };
+    let prompt = format!(
+        "Which password would you like {} (1 to {}) ? ",
+        if show {
+            "to see"
+        } else {
+            "to copy to your clipboard"
+        },
+        passwords.len()
+    );
     println_stderr!("");
     let index = list::choose_password_in_list(&passwords, list::WITH_NUMBERS, prompt.as_str());
 
@@ -105,6 +81,12 @@ pub fn callback_exec(
     let password = store
         .get_password(passwords[index - 1].name.as_str())
         .unwrap();
+    confirm_password_retrieved(show, &password);
+
+    Ok(())
+}
+
+fn confirm_password_retrieved(show: bool, password: &password::v2::Password) {
     if show {
         println_ok!(
             "Alright! Here is your password for {}: {}",
@@ -126,6 +108,4 @@ pub fn callback_exec(
             );
         }
     }
-
-    Ok(())
 }

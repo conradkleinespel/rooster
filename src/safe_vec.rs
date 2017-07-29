@@ -18,7 +18,7 @@ use std::ops::DerefMut;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SafeVec {
-    inner: Vec<u8>,
+    pub inner: Vec<u8>,
 }
 
 impl SafeVec {

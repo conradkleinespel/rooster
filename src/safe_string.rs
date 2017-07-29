@@ -20,7 +20,7 @@ use serde::de::{Deserialize, Deserializer, Visitor, Error};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SafeString {
-    inner: String,
+    pub inner: String,
 }
 
 struct StringVisitor;

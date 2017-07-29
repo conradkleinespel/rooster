@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use super::super::getopts;
-use super::super::password;
-use super::super::safe_string::SafeString;
-use super::super::generate::{PasswordSpec, generate_hard_password};
-use super::super::clipboard::{copy_to_clipboard, paste_keys};
+use getopts;
+use password;
+use generate::{PasswordSpec, generate_hard_password};
+use clip::{copy_to_clipboard, paste_keys};
 use std::io::Write;
 use std::ops::Deref;
 
@@ -72,10 +71,8 @@ pub fn callback_exec(matches: &getopts::Matches,
     };
 
     // Read the master password and try to save the new password.
-    let password_as_string_clipboard = SafeString::new(password_as_string.clone());
-    let password = password::v2::Password::new(app_name.clone(),
-                                               username,
-                                               SafeString::new(password_as_string));
+    let password_as_string_clipboard = password_as_string.clone();
+    let password = password::v2::Password::new(app_name.clone(), username, password_as_string);
 
     match store.add_password(password) {
         Ok(_) => {
@@ -85,7 +82,7 @@ pub fn callback_exec(matches: &getopts::Matches,
                 return Ok(());
             }
 
-            if copy_to_clipboard(password_as_string_clipboard.deref()).is_err() {
+            if copy_to_clipboard(&password_as_string_clipboard).is_err() {
                 println_ok!("Hmm, I tried to copy your new password to your clipboard, but \
                              something went wrong. Don't worry, it's saved, and you can see it \
                              with `rooster get {} --show`",

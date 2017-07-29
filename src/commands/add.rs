@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use super::super::getopts;
-use super::super::password;
-use super::super::rpassword::prompt_password_stderr;
-use super::super::safe_string::SafeString;
-use super::super::clipboard::{copy_to_clipboard, paste_keys};
+use getopts;
+use password;
+use rpassword::prompt_password_stderr;
+use safe_string::SafeString;
+use clip::{copy_to_clipboard, paste_keys};
 use std::io::Write;
 use std::ops::Deref;
 
@@ -68,7 +68,7 @@ pub fn callback_exec(matches: &getopts::Matches,
                         return Ok(());
                     }
 
-                    if copy_to_clipboard(password_as_string_clipboard.deref()).is_err() {
+                    if copy_to_clipboard(&password_as_string_clipboard).is_err() {
                         println_ok!("Hmm, I tried to copy your new password to your clipboard, \
                                      but something went wrong. Don't worry, it's saved, and you \
                                      can see it with `rooster get {} --show`",

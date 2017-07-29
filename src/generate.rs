@@ -15,8 +15,9 @@
 use super::getopts;
 use super::rand::{Rng, OsRng};
 use std::io::{Write, Result as IoResult};
+use safe_string::SafeString;
 
-fn generate_password(alnum: bool, len: usize) -> IoResult<String> {
+fn generate_password(alnum: bool, len: usize) -> IoResult<SafeString> {
     let mut password_as_string = String::new();
     let mut rng = OsRng::new()?;
     for _ in 0..len {
@@ -34,7 +35,7 @@ fn generate_password(alnum: bool, len: usize) -> IoResult<String> {
             password_as_string.push(rng.gen_range(33, 127) as u8 as char);
         }
     }
-    Ok(password_as_string)
+    Ok(SafeString::new(password_as_string))
 }
 
 /// Returns true if the password contains at least one digit, one uppercase letter and one
@@ -47,7 +48,7 @@ fn password_is_hard(password: &str, alnum: bool) -> bool {
     (alnum || password.find(is_punctuation).is_some())
 }
 
-pub fn generate_hard_password(alnum: bool, len: usize) -> IoResult<String> {
+pub fn generate_hard_password(alnum: bool, len: usize) -> IoResult<SafeString> {
     loop {
         let password = generate_password(alnum, len)?;
         if password_is_hard(password.as_ref(), alnum) {

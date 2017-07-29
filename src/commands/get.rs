@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use super::super::getopts;
-use super::super::password;
-use super::super::clipboard::{copy_to_clipboard, paste_keys};
-use super::super::list;
+use getopts;
+use password;
+use clip::{copy_to_clipboard, paste_keys};
+use list;
 use std::io::Write;
 use std::ops::Deref;
 
@@ -69,7 +69,7 @@ pub fn callback_exec(
                 password.password.deref()
             );
         } else {
-            if copy_to_clipboard(password.password.deref()).is_err() {
+            if copy_to_clipboard(&password.password).is_err() {
                 println_ok!(
                     "Hmm, I tried to copy your new password to your clipboard, but \
                              something went wrong. You can see it with `rooster get '{}' --show`",
@@ -112,7 +112,7 @@ pub fn callback_exec(
             password.password.deref()
         );
     } else {
-        if copy_to_clipboard(password.password.deref()).is_err() {
+        if copy_to_clipboard(&password.password).is_err() {
             println_ok!(
                 "Hmm, I tried to copy your new password to your clipboard, but \
                          something went wrong. You can see it with `rooster get '{}' --show`",

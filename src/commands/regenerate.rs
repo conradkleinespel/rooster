@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use super::super::getopts;
-use super::super::safe_string::SafeString;
-use super::super::ffi;
-use super::super::password;
-use super::super::generate::{PasswordSpec, generate_hard_password};
-use super::super::clipboard::{copy_to_clipboard, paste_keys};
+use getopts;
+use ffi;
+use password;
+use generate::{PasswordSpec, generate_hard_password};
+use clip::{copy_to_clipboard, paste_keys};
 use std::io::Write;
 use std::ops::Deref;
 
@@ -70,7 +69,7 @@ pub fn callback_exec(matches: &getopts::Matches,
         password::v2::Password {
             name: old_password.name.clone(),
             username: old_password.username.clone(),
-            password: SafeString::new(password_as_string.clone()),
+            password: password_as_string.clone(),
             created_at: old_password.created_at,
             updated_at: ffi::time(),
         }
@@ -84,7 +83,7 @@ pub fn callback_exec(matches: &getopts::Matches,
                 return Ok(());
             }
 
-            if copy_to_clipboard(password_as_string.deref()).is_err() {
+            if copy_to_clipboard(&password_as_string).is_err() {
                 println_ok!("Hmm, I tried to copy your new password to your clipboard, but \
                              something went wrong. Don't worry, it's saved, and you can see it \
                              with `rooster get {} --show`",

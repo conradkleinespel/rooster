@@ -15,17 +15,18 @@ serde_json = "1.0"
 rust-crypto = "0.2"
 rand = "0.3"
 libc = "0.2"
-rpassword = "0.4"
 getopts = "0.2"
 byteorder = "1.0"
 clipboard = "0.3"
 quale = "1.0"
-unix-daemonize = "0.1" # only needed for linux
+shell-escape = "0.1"
+
+[dependencies.rpassword]
+path = "../rpassword"
+
+[dependencies.rprompt]
+path = "../rprompt"
 
 [[bin]]
 name = "rooster"
 path = "src/main-rooster.rs"
-
-[[bin]]
-name = "rooster-clipboard"
-path = "src/main-rooster-clipboard.rs"

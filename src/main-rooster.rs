@@ -23,6 +23,8 @@ extern crate byteorder;
 extern crate quale;
 extern crate serde;
 extern crate serde_json;
+extern crate clipboard;
+extern crate shell_escape;
 
 #[macro_use]
 extern crate serde_derive;
@@ -52,7 +54,7 @@ mod color;
 mod safe_string;
 mod safe_vec;
 mod generate;
-mod clipboard;
+mod clip;
 mod list;
 
 const ROOSTER_FILE_ENV_VAR: &'static str = "ROOSTER_FILE";

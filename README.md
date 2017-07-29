@@ -19,7 +19,7 @@ To install, open a terminal and run this command:
 curl -sSL 'https://raw.githubusercontent.com/conradkdotcom/rooster/master/install.sh' | sh
 ```
 
-If the install script fails, make sure you have these programs/packages installed: `sha256sum`, `tar`, `pkg-config`, `libx11-dev` and `libxmu-dev`. Then try running the install script again.
+If the install script fails, make sure you have these programs/packages installed: `sha256sum`, `tar`, `pkg-config`, `libx11-dev`, `libxmu-dev`, `xsel` and `xclip`. Then try running the install script again.
 
 Once you have installed Rooster, you can view documentation with:
 ```shell

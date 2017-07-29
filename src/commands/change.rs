@@ -25,10 +25,10 @@ pub fn callback_help() {
     println!("Usage:");
     println!("    rooster change -h");
     println!("    rooster change <query>");
-    println!("");
+    println!();
     println!("Options:");
     println!("    -s, --show        Show the password instead of copying it to the clipboard");
-    println!("");
+    println!();
     println!("Examples:");
     println!("    rooster change youtube");
     println!("    rooster change ytb     # fuzzy-searching works too");

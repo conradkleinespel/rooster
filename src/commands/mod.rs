@@ -25,3 +25,4 @@ pub mod rename;
 pub mod transfer;
 pub mod change;
 pub mod uninstall;
+pub mod init;

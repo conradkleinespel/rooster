@@ -22,7 +22,7 @@ pub fn callback_help() {
     println!("Usage:");
     println!("    rooster transfer -h");
     println!("    rooster transfer <app> <new_username>");
-    println!("");
+    println!();
     println!("Examples:");
     println!("    rooster transfer dailymotion new@example.com");
     println!("    rooster transfer dm new@example.com          # fuzzy-searching works too");

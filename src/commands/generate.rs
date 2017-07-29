@@ -23,12 +23,12 @@ pub fn callback_help() {
     println!("Usage:");
     println!("    rooster generate -h");
     println!("    rooster generate <app_name> <username>");
-    println!("");
+    println!();
     println!("Options:");
     println!("    -a, --alnum       Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords");
     println!("    -l, --length      Set a custom length for the generated password, default is 32");
     println!("    -s, --show        Show the password instead of copying it to the clipboard");
-    println!("");
+    println!();
     println!("Example:");
     println!("    rooster generate YouTube me@example.com");
 }

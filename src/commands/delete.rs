@@ -21,7 +21,7 @@ pub fn callback_help() {
     println!("Usage:");
     println!("    rooster delete -h");
     println!("    rooster delete <query>");
-    println!("");
+    println!();
     println!("Examples:");
     println!("    rooster delete youtube");
     println!("    rooster delete ytb     # fuzzy-searching works too");

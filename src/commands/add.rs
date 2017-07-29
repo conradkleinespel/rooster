@@ -24,10 +24,10 @@ pub fn callback_help() {
     println!("Usage:");
     println!("    rooster add -h");
     println!("    rooster add <app_name> <username>");
-    println!("");
+    println!();
     println!("Options:");
     println!("    -s, --show        Show the password instead of copying it to the clipboard");
-    println!("");
+    println!();
     println!("Example:");
     println!("    rooster add YouTube me@example.com");
 }

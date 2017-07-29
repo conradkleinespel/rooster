@@ -229,7 +229,11 @@ impl PasswordStore {
         // Version taken from network byte order (big endian).
         let version = reader.read_u32::<BigEndian>()?;
         if version != VERSION {
-            return Err(PasswordError::WrongVersionError);
+            if version > VERSION {
+                return Err(PasswordError::OutdatedRoosterBinaryError);
+            } else if version < VERSION {
+                return Err(PasswordError::NeedUpgradeErrorFromV1);
+            }
         }
 
         // Read the scrypt params.

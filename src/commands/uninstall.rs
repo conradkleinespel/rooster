@@ -15,30 +15,34 @@
 use getopts;
 use get_password_file_path;
 use quale::which;
+use std::ops::Deref;
 
 pub fn callback_help() {
     println!("Usage:");
     println!("    rooster uninstall -h");
     println!("    rooster uninstall");
-    println!("");
+    println!();
     println!("Example:");
     println!("    rooster uninstall");
 }
 
 pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
     println!("To uninstall Rooster from your system, run the following commands:");
-    println!();
     println!(
         "    sudo rm {}",
         which("rooster").unwrap().to_string_lossy()
     );
 
     match get_password_file_path().ok() {
-        Some(file) => {
+        Some((filename, from_env)) => {
             println!();
-            println!("If you want to remove your password file as well, it is located at:");
-            println!();
-            println!("    {}", file);
+            println!("If you want to remove your password file as well, you can — just make sure you don't lock yourself out of your online accounts. It is located at:");
+            println!("    {}", filename.to_string_lossy().deref());
+            if from_env {
+                println!();
+                println!("Seems like you've set the ROOSTER_FILE environment variable in your shell \
+                configuration. You may want to remove it to clean things up.");
+            }
         }
         None => {}
     }

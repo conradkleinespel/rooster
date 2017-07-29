@@ -23,7 +23,7 @@ pub fn callback_help() {
     println!("Usage:");
     println!("    rooster set-master-password -h");
     println!("    rooster set-master-password");
-    println!("");
+    println!();
     println!("Example:");
     println!("    rooster set-master-password");
 }

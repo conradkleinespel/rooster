@@ -22,7 +22,7 @@ pub fn callback_help() {
     println!("Usage:");
     println!("    rooster rename -h");
     println!("    rooster rename <query> <new_app_name>");
-    println!("");
+    println!();
     println!("Examples:");
     println!("    rooster rename youtube Dailymotion");
     println!("    rooster rename ytb Dailymotion     # fuzzy-searching works too");

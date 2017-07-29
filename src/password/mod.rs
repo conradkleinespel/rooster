@@ -15,7 +15,7 @@
 pub mod v1;
 pub mod v2;
 
-use std::io::{Error as IoError, stdin, Write};
+use std::io::{Error as IoError};
 use std::ops::Deref;
 use std::convert::From;
 use safe_string::SafeString;
@@ -28,9 +28,12 @@ pub enum PasswordError {
     NoSuchAppError,
     AppExistsError,
     Io(IoError),
-    WrongVersionError,
+    OutdatedRoosterBinaryError,
     InvalidJsonError,
     CorruptionError,
+    CorruptionLikelyError,
+    NeedUpgradeErrorFromV1,
+    NoUpgradeError,
 }
 
 impl From<IoError> for PasswordError {
@@ -64,30 +67,6 @@ pub fn upgrade(
     // If we can't read v1 passwords, we have a hard error, because we previously tried
     // to read the passwords as v2. Which failed. That means we can't upgrade.
     let v1_passwords = v1::get_all_passwords(master_password.deref(), input.deref())?;
-
-    println_stderr!("Your Rooster file has version 1. You need to upgrade to version 2.");
-    println_stderr!("");
-    println_stderr!("WARNING: If in doubt, it could mean you've been hacked. Only");
-    println_stderr!("proceed if you recently upgraded your Rooster installation.");
-    println_stderr!("");
-    println_stderr!("Upgrade to version 2? [y/n]");
-    loop {
-        let mut line = String::new();
-        match stdin().read_line(&mut line) {
-            Ok(_) => {
-                if line.starts_with('y') {
-                    break;
-                } else if line.starts_with('n') {
-                    return Err(PasswordError::WrongVersionError);
-                } else {
-                    println_stderr!("I did not get that. Upgrade from v1 to v2? [y/n]");
-                }
-            }
-            Err(io_err) => {
-                return Err(PasswordError::Io(io_err));
-            }
-        }
-    }
 
     // Upgrade from v1 to v2 if we could read v1 passwords.
     let mut v2_store = v2::PasswordStore::new(master_password.clone())?;

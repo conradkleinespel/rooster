@@ -22,10 +22,10 @@ pub fn callback_help() {
     println!("Usage:");
     println!("    rooster get -h");
     println!("    rooster get <query>");
-    println!("");
+    println!();
     println!("Options:");
     println!("    -s, --show        Show the password instead of copying it to the clipboard");
-    println!("");
+    println!();
     println!("Examples:");
     println!("    rooster get youtube");
     println!("    rooster get ytb     # fuzzy-searching works too");

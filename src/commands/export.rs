@@ -23,7 +23,7 @@ pub fn callback_help() {
     println!("Usage:");
     println!("    rooster export -h");
     println!("    rooster export");
-    println!("");
+    println!();
     println!("Example:");
     println!("    rooster export");
 }

@@ -21,7 +21,7 @@ pub fn callback_help() {
     println!("Usage:");
     println!("    rooster list -h");
     println!("    rooster list");
-    println!("");
+    println!();
     println!("Example:");
     println!("    rooster list");
 }
@@ -33,7 +33,7 @@ pub fn callback_exec(
     let passwords = store.get_all_passwords();
 
     if passwords.len() == 0 {
-        println!("No passwords on record yet. Add one with 'rooster add <app> <username>'.");
+        println!("No passwords on record yet. Add one with `rooster add <app> <username>`.");
     } else {
         println_stderr!("");
         list::print_list_of_passwords(

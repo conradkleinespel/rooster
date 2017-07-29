@@ -24,12 +24,12 @@ pub fn callback_help() {
     println!("Usage:");
     println!("    rooster regenerate -h");
     println!("    rooster regenerate <query>");
-    println!("");
+    println!();
     println!("Options:");
     println!("    -a, --alnum       Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords");
     println!("    -l, --length      Set a custom length for the generated password, default is 32");
     println!("    -s, --show        Show the password instead of copying it to the clipboard");
-    println!("");
+    println!();
     println!("Examples:");
     println!("    rooster regenerate youtube");
     println!("    rooster regenerate ytb     # fuzzy-searching works too");

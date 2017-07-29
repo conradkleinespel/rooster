@@ -6,9 +6,9 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use super::crypto::{symmetriccipher, buffer, aes, blockmodes};
-use super::crypto::buffer::{ReadBuffer, WriteBuffer, BufferResult};
-use super::safe_vec::SafeVec;
+use crypto::{symmetriccipher, buffer, aes, blockmodes};
+use crypto::buffer::{ReadBuffer, WriteBuffer, BufferResult};
+use safe_vec::SafeVec;
 
 // Encrypt a buffer with the given key and iv using
 // AES-256/CBC/Pkcs encryption.

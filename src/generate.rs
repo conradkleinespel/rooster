@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use super::getopts;
-use super::rand::{Rng, OsRng};
+use getopts;
+use rand::{Rng, OsRng};
 use std::io::{Write, Result as IoResult};
 use safe_string::SafeString;
 

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use super::super::getopts;
-use super::super::get_password_file_path;
+use getopts;
+use get_password_file_path;
 use quale::which;
 
 pub fn callback_help() {

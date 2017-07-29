@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use super::password::v2::Password;
+use password::v2::Password;
 use std::io::Write;
 use std::io::stdin;
 

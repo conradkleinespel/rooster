@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use super::super::getopts;
-use super::super::password;
-use super::super::rpassword::prompt_password_stderr;
-use super::super::safe_string::SafeString;
+use getopts;
+use password;
+use rpassword::prompt_password_stderr;
+use safe_string::SafeString;
 use std::io::Write;
 use std::ops::Deref;
 

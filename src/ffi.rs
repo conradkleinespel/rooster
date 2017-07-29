@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use std::ptr;
-use super::libc;
+use libc;
 
 #[allow(non_camel_case_types)]
 pub type time_t = libc::c_uint;

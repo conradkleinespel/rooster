@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use super::super::getopts;
-use super::super::password;
-use super::super::safe_string::SafeString;
-use super::super::serde_json;
+use getopts;
+use password;
+use safe_string::SafeString;
+use serde_json;
 use std::ops::Deref;
 use std::io::Write;
 

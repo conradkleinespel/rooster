@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use super::super::ffi;
-use super::super::crypto;
-use super::super::crypto::digest::Digest;
-use super::super::aes;
+use ffi;
+use crypto;
+use crypto::digest::Digest;
+use aes;
+use safe_string::SafeString;
+use safe_vec::SafeVec;
+use serde_json;
 use super::PasswordError;
-use super::super::safe_string::SafeString;
-use super::super::safe_vec::SafeVec;
-use super::super::serde_json;
 
 use serde_json::Error;
 use std::ops::DerefMut;

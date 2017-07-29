@@ -18,8 +18,8 @@ pub mod v2;
 use std::io::{Error as IoError, stdin, Write};
 use std::ops::Deref;
 use std::convert::From;
-use super::safe_string::SafeString;
-use super::safe_vec::SafeVec;
+use safe_string::SafeString;
+use safe_vec::SafeVec;
 
 #[derive(Debug)]
 pub enum PasswordError {

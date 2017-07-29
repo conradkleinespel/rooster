@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use super::super::getopts;
-use super::super::password;
-use super::super::list;
+use getopts;
+use password;
+use list;
 use std::io::Write;
 
 pub fn callback_help() {

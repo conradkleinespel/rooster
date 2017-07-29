@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use super::super::ffi;
-use super::super::crypto::{scrypt, hmac, sha2};
-use super::super::crypto::mac::{Mac, MacResult};
-use super::super::aes;
-use super::super::rand::{Rng, OsRng};
-use super::super::byteorder::{ReadBytesExt, WriteBytesExt, BigEndian};
-use super::super::serde_json;
-use super::super::safe_string::SafeString;
-use super::super::safe_vec::SafeVec;
+use ffi;
+use crypto::{scrypt, hmac, sha2};
+use crypto::mac::{Mac, MacResult};
+use aes;
+use rand::{Rng, OsRng};
+use byteorder::{ReadBytesExt, WriteBytesExt, BigEndian};
+use serde_json;
+use safe_string::SafeString;
+use safe_vec::SafeVec;
 
 use super::PasswordError;
 use serde_json::Error;

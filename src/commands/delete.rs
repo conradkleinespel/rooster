@@ -19,7 +19,7 @@ use std::io::Write;
 pub fn callback_help() {
     println!("Usage:");
     println!("    rooster delete -h");
-    println!("    rooster delete <app_name> ...");
+    println!("    rooster delete <app_name>");
     println!("");
     println!("Example:");
     println!("    rooster delete youtube");
@@ -42,17 +42,17 @@ pub fn callback_exec(matches: &getopts::Matches,
 
     let mut has_error = false;
 
-    for app_name in &matches.free[1..] {
-        match store.delete_password(app_name) {
-            Ok(_) => {
-                println_ok!("Done! I've deleted the password for \"{}\".", app_name);
-            }
-            Err(err) => {
-                println_err!("Woops! I couldn't find a password for \"{}\" (error: {:?}).",
-                             app_name,
-                             err);
-                has_error = true;
-            }
+    let app_name = &matches.free[1];
+
+    match store.delete_password(app_name) {
+        Ok(_) => {
+            println_ok!("Done! I've deleted the password for \"{}\".", app_name);
+        }
+        Err(err) => {
+            println_err!("Woops! I couldn't find a password for \"{}\" (error: {:?}).",
+                         app_name,
+                         err);
+            has_error = true;
         }
     }
 

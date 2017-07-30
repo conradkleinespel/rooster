@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use password::v2::Password;
+use password::v2::{Password, PasswordStore};
 use std::io::Write;
 use std::io::stdin;
 
@@ -72,18 +72,19 @@ fn request_password_index_from_stdin(passwords: &Vec<&Password>, prompt: &str) -
     let mut line = String::new();
     loop {
         println_stderr!("{}", prompt);
+        println_stderr!("Type in number from 1 to {}", passwords.len());
 
         line.clear();
         match stdin().read_line(&mut line) {
             Ok(_) => {
-                match line.trim().parse() {
+                match line.trim().parse::<usize>() {
                     Ok(index) => {
                         if index == 0 || index > passwords.len() {
                             println_err!("I need a number between 1 and {}. Let's try again:", passwords.len());
                             continue;
                         }
 
-                        return index;
+                        return index - 1;
                     }
                     Err(err) => {
                         println_err!("This isn't a valid number (reason: {}). Let's try again (1 to {}): ", err, passwords.len());
@@ -106,4 +107,26 @@ pub fn choose_password_in_list(
     print_list_of_passwords(passwords, with_numbers, OutputStream::Stderr);
     println_stderr!("");
     request_password_index_from_stdin(passwords, prompt)
+}
+
+pub fn search_and_choose_password<'a>(
+    store: &'a PasswordStore,
+    query: &str,
+    with_numbers: bool,
+    prompt: &str,
+) -> Option<&'a Password> {
+    let passwords = store.search_passwords(query);
+    if passwords.len() == 0 {
+        println_stderr!("I can't find any passwords for \"{}\"", query);
+        return None;
+    }
+
+    if let Some(&password) = passwords.iter().find(|p| {
+        p.name.to_lowercase() == query.to_lowercase()
+    }) {
+        return Some(&password)
+    }
+
+    let index = choose_password_in_list(&passwords, with_numbers, prompt);
+    Some(passwords[index])
 }

@@ -48,39 +48,22 @@ pub fn callback_exec(
     check_args(matches)?;
 
     let show = matches.opt_present("show");
-    let query = matches.free[1].clone();
 
-    let passwords = store.search_passwords(query.as_str());
-    if passwords.len() == 0 {
-        println_stderr!("I can't find any passwords for \"{}\"", query);
-        return Ok(());
-    }
-
-    if let Some(ref password) =
-        passwords.iter().find(|p| {
-            p.name.to_lowercase() == query.to_lowercase()
-        })
-    {
-        confirm_password_retrieved(show, password);
-        return Ok(());
-    }
+    let query = &matches.free[1];
 
     let prompt = format!(
-        "Which password would you like {} (1 to {}) ? ",
+        "Which password would you like {}? ",
         if show {
             "to see"
         } else {
             "to copy to your clipboard"
         },
-        passwords.len()
     );
     println_stderr!("");
-    let index = list::choose_password_in_list(&passwords, list::WITH_NUMBERS, prompt.as_str());
+    let password = list::search_and_choose_password(
+        store, query, list::WITH_NUMBERS, &prompt,
+    ).ok_or(1)?;
 
-    // This whould never fail, since we've just checked that this password exists
-    let password = store
-        .get_password(passwords[index - 1].name.as_str())
-        .unwrap();
     confirm_password_retrieved(show, &password);
 
     Ok(())
@@ -98,7 +81,7 @@ fn confirm_password_retrieved(show: bool, password: &password::v2::Password) {
             println_ok!(
                 "Hmm, I tried to copy your new password to your clipboard, but \
                          something went wrong. You can see it with `rooster get '{}' --show`",
-                password.name
+                password.name,
             );
         } else {
             println_ok!(

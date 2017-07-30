@@ -127,6 +127,10 @@ pub fn search_and_choose_password<'a>(
         return Some(&password)
     }
 
+    if passwords.len() == 1{
+        return Some(passwords[0]);
+    }
+
     let index = choose_password_in_list(&passwords, with_numbers, prompt);
     Some(passwords[index])
 }

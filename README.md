@@ -39,6 +39,7 @@ Here's a list of existing Rooster contributors:
 - [@jaezun](https://github.com/jaezun)
 - [@maxjacobson](https://github.com/maxjacobson)
 - [@qmx](https://github.com/qmx)
+- [@yamnikov-oleg](https://github.com/yamnikov-oleg)
 - Awesome Rustaceans from the [Rust Paris meetup](http://www.meetup.com/Rust-Paris/)
 
 Thank you very much for your help!  :smiley:  :heart:

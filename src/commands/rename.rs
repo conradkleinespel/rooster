@@ -15,13 +15,13 @@
 use getopts;
 use password;
 use ffi;
+use list;
 use std::io::Write;
-use std::ops::Deref;
 
 pub fn callback_help() {
     println!("Usage:");
     println!("    rooster rename -h");
-    println!("    rooster rename <old_app_name> <new_app_name>");
+    println!("    rooster rename <query> <new_app_name>");
     println!("");
     println!("Example:");
     println!("    rooster rename youtube Dailymotion");
@@ -42,10 +42,17 @@ pub fn callback_exec(matches: &getopts::Matches,
                      -> Result<(), i32> {
     check_args(matches)?;
 
-    let old_name = matches.free[1].clone();
-    let new_name = matches.free[2].clone();
+    let query = &matches.free[1];
+    let new_name = &matches.free[2];
 
-    let change_result = store.change_password(old_name.deref(),
+    println_stderr!("");
+    let password = list::search_and_choose_password(
+        store, query, list::WITH_NUMBERS,
+        "Which password would you like to rename?",
+    ).ok_or(1)?.clone();
+    println_stderr!("");
+
+    let change_result = store.change_password(&password.name,
                                               &|old_password: password::v2::Password| {
         password::v2::Password {
             name: new_name.clone(),
@@ -58,7 +65,7 @@ pub fn callback_exec(matches: &getopts::Matches,
 
     match change_result {
         Ok(_) => {
-            println_ok!("Done! I've renamed {} to {}", old_name, new_name);
+            println_ok!("Done! I've renamed {} to {}", password.name, new_name);
             Ok(())
         }
         Err(err) => {

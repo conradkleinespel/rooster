@@ -14,6 +14,7 @@
 
 use getopts;
 use ffi;
+use list;
 use password;
 use generate::{PasswordSpec, generate_hard_password};
 use clip::{copy_to_clipboard, paste_keys};
@@ -23,7 +24,7 @@ use std::ops::Deref;
 pub fn callback_help() {
     println!("Usage:");
     println!("    rooster regenerate -h");
-    println!("    rooster regenerate <app_name>");
+    println!("    rooster regenerate <query>");
     println!("");
     println!("Example:");
     println!("    rooster regenerate youtube");
@@ -44,7 +45,13 @@ pub fn callback_exec(matches: &getopts::Matches,
                      -> Result<(), i32> {
     check_args(matches)?;
 
-    let app_name = matches.free[1].clone();
+    let query = &matches.free[1];
+
+    println_stderr!("");
+    let password = list::search_and_choose_password(
+        store, query, list::WITH_NUMBERS,
+        "Which password would you like to regenerate?",
+    ).ok_or(1)?.clone();
 
     let password_spec = PasswordSpec::from_matches(matches);
 
@@ -64,7 +71,7 @@ pub fn callback_exec(matches: &getopts::Matches,
         }
     };
 
-    let change_result = store.change_password(app_name.deref(),
+    let change_result = store.change_password(&password.name,
                                               &|old_password: password::v2::Password| {
         password::v2::Password {
             name: old_password.name.clone(),
@@ -87,11 +94,11 @@ pub fn callback_exec(matches: &getopts::Matches,
                 println_ok!("Hmm, I tried to copy your new password to your clipboard, but \
                              something went wrong. Don't worry, it's saved, and you can see it \
                              with `rooster get {} --show`",
-                            app_name);
+                            query);
             } else {
                 println_ok!("Done! I've saved your new password for \"{}\". You can paste it \
                              anywhere with {}.",
-                            app_name,
+                            password.name,
                             paste_keys());
             }
 

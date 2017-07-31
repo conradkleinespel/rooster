@@ -27,8 +27,9 @@ pub fn callback_help() {
     println!("    rooster change -h");
     println!("    rooster change <query>");
     println!("");
-    println!("Example:");
+    println!("Examples:");
     println!("    rooster change youtube");
+    println!("    rooster change ytb");
 }
 
 pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {

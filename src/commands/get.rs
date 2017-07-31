@@ -24,11 +24,9 @@ pub fn callback_help() {
     println!("    rooster get -h");
     println!("    rooster get <query>");
     println!("");
-    println!("Example if you want to get your Google password:");
-    println!("    rooster get google");
-    println!("    rooster get ggl # fuzzy matching works too");
-    println!("");
-    println!("If multiple passwords match your search, you will be asked to choose.")
+    println!("Examples:");
+    println!("    rooster get youtube");
+    println!("    rooster get ytb");
 }
 
 pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {

@@ -22,8 +22,9 @@ pub fn callback_help() {
     println!("    rooster delete -h");
     println!("    rooster delete <query>");
     println!("");
-    println!("Example:");
+    println!("Examples:");
     println!("    rooster delete youtube");
+    println!("    rooster delete ytb");
 }
 
 pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {

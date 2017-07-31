@@ -23,8 +23,9 @@ pub fn callback_help() {
     println!("    rooster rename -h");
     println!("    rooster rename <query> <new_app_name>");
     println!("");
-    println!("Example:");
+    println!("Examples:");
     println!("    rooster rename youtube Dailymotion");
+    println!("    rooster rename ytb Dailymotion");
 }
 
 pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {

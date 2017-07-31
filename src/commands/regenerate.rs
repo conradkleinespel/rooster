@@ -26,8 +26,9 @@ pub fn callback_help() {
     println!("    rooster regenerate -h");
     println!("    rooster regenerate <query>");
     println!("");
-    println!("Example:");
+    println!("Examples:");
     println!("    rooster regenerate youtube");
+    println!("    rooster regenerate ytb");
 }
 
 pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {

@@ -23,8 +23,9 @@ pub fn callback_help() {
     println!("    rooster transfer -h");
     println!("    rooster transfer <app> <new_username>");
     println!("");
-    println!("Example:");
+    println!("Examples:");
     println!("    rooster transfer dailymotion new@example.com");
+    println!("    rooster transfer dm new@example.com");
 }
 
 pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {

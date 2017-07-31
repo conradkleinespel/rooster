@@ -3,8 +3,8 @@ name = "rooster"
 version = "2.6.1"
 authors = ["Conrad Kleinespel <conradk@conradk.com>"]
 license = "Apache-2.0"
-repository = "https://github.com/conradkleinespel/rooster"
-homepage = "https://github.com/conradkleinespel/rooster"
+repository = "https://github.com/conradkdotcom/rooster"
+homepage = "https://github.com/conradkdotcom/rooster"
 keywords = ["password", "security"]
 description = "A simple password manager for geeks"
 
@@ -20,12 +20,8 @@ byteorder = "1.0"
 clipboard = "0.3"
 quale = "1.0"
 shell-escape = "0.1"
-
-[dependencies.rpassword]
-path = "../rpassword"
-
-[dependencies.rprompt]
-path = "../rprompt"
+rprompt = "1.0"
+rpassword = "1.0"
 
 [[bin]]
 name = "rooster"

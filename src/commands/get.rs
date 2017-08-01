@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use clip;
 use getopts;
 use password;
-use clip::{copy_to_clipboard, paste_keys};
 use list;
 use std::io::Write;
-use std::ops::Deref;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -62,31 +61,7 @@ pub fn callback_exec(
         store, query, list::WITH_NUMBERS, &prompt,
     ).ok_or(1)?;
 
-    confirm_password_retrieved(show, &password);
+    clip::confirm_password_retrieved(show, &password);
 
     Ok(())
-}
-
-fn confirm_password_retrieved(show: bool, password: &password::v2::Password) {
-    if show {
-        println_ok!(
-            "Alright! Here is your password for {}: {}",
-            password.name,
-            password.password.deref()
-        );
-    } else {
-        if copy_to_clipboard(&password.password).is_err() {
-            println_ok!(
-                "Hmm, I tried to copy your new password to your clipboard, but \
-                         something went wrong. You can see it with `rooster get '{}' --show`",
-                password.name,
-            );
-        } else {
-            println_ok!(
-                "Alright! You can paste your {} password anywhere with {}.",
-                password.name,
-                paste_keys()
-            );
-        }
-    }
 }

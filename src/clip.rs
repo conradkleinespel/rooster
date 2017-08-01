@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use password;
 use safe_string::SafeString;
+use std::io::Write;
 use std::ops::Deref;
 
 // On Windows and Mac, we'll use the native solutions provided by the OS libraries
@@ -87,4 +89,28 @@ pub fn paste_keys() -> String {
 #[cfg(not(target_os = "macos"))]
 pub fn paste_keys() -> String {
     "Ctrl+V".to_string()
+}
+
+pub fn confirm_password_retrieved(show: bool, password: &password::v2::Password) {
+    if show {
+        println_ok!(
+            "Alright! Here is your password for {}: {}",
+            password.name,
+            password.password.deref()
+        );
+    } else {
+        if copy_to_clipboard(&password.password).is_err() {
+            println_ok!(
+                "Hmm, I tried to copy your new password to your clipboard, but \
+                         something went wrong. You can see it with `rooster get '{}' --show`",
+                password.name,
+            );
+        } else {
+            println_ok!(
+                "Alright! You can paste your {} password anywhere with {}.",
+                password.name,
+                paste_keys()
+            );
+        }
+    }
 }

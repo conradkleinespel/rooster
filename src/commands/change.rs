@@ -16,11 +16,10 @@ use getopts;
 use password;
 use rpassword::prompt_password_stderr;
 use safe_string::SafeString;
-use clip::{copy_to_clipboard, paste_keys};
+use clip;
 use ffi;
 use list;
 use std::io::Write;
-use std::ops::Deref;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -80,21 +79,7 @@ pub fn callback_exec(matches: &getopts::Matches,
         1
     })?;
 
-    if matches.opt_present("show") {
-        println_ok!("Alright! Here is your new password: {}",
-                    password_as_string.deref());
-    } else if copy_to_clipboard(&password_as_string).is_ok() {
-        println_ok!("Done! I've saved your new password for \"{}\". You can \
-                     paste it anywhere with {}.",
-                    password.name,
-                    paste_keys());
-    } else {
-        println_ok!("Hmm, I tried to copy your changed password to your \
-                     clipboard, but something went wrong. Don't worry, it's \
-                     saved, and you can see it with `rooster get {} --show`",
-                    query);
-        return Err(1);
-    }
-
+    let show = matches.opt_present("show");
+    clip::confirm_password_retrieved(show, &password);
     Ok(())
 }

@@ -17,9 +17,8 @@ use ffi;
 use list;
 use password;
 use generate::{PasswordSpec, generate_hard_password};
-use clip::{copy_to_clipboard, paste_keys};
+use clip;
 use std::io::Write;
-use std::ops::Deref;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -85,24 +84,8 @@ pub fn callback_exec(matches: &getopts::Matches,
 
     match change_result {
         Ok(_) => {
-            if matches.opt_present("show") {
-                println_ok!("Alright! Here is your new password: {}",
-                            password_as_string.deref());
-                return Ok(());
-            }
-
-            if copy_to_clipboard(&password_as_string).is_err() {
-                println_ok!("Hmm, I tried to copy your new password to your clipboard, but \
-                             something went wrong. Don't worry, it's saved, and you can see it \
-                             with `rooster get {} --show`",
-                            query);
-            } else {
-                println_ok!("Done! I've saved your new password for \"{}\". You can paste it \
-                             anywhere with {}.",
-                            password.name,
-                            paste_keys());
-            }
-
+            let show = matches.opt_present("show");
+            clip::confirm_password_retrieved(show, &password);
             Ok(())
         }
         Err(err) => {

@@ -16,18 +16,19 @@ use getopts;
 use password;
 use rpassword::prompt_password_stderr;
 use safe_string::SafeString;
-use clip::{copy_to_clipboard, paste_keys};
+use clip;
 use ffi;
+use list;
 use std::io::Write;
-use std::ops::Deref;
 
 pub fn callback_help() {
     println!("Usage:");
     println!("    rooster change -h");
-    println!("    rooster change <app_name>");
+    println!("    rooster change <query>");
     println!("");
-    println!("Example:");
+    println!("Examples:");
     println!("    rooster change youtube");
+    println!("    rooster change ytb");
 }
 
 pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
@@ -45,56 +46,40 @@ pub fn callback_exec(matches: &getopts::Matches,
                      -> Result<(), i32> {
     check_args(matches)?;
 
-    let app_name = matches.free[1].clone();
+    let query = &matches.free[1];
 
-    match prompt_password_stderr(format!("What password do you want for \"{}\"? ", app_name)
-                                     .as_str()) {
-        Ok(password_as_string) => {
-            let password_as_string = SafeString::new(password_as_string.clone());
+    println_stderr!("");
+    let password = list::search_and_choose_password(
+        store, query, list::WITH_NUMBERS,
+        "Which password would like to update?",
+    ).ok_or(1)?.clone();
 
-            let change_result = store.change_password(app_name.deref(),
-                                                      &|old_password: password::v2::Password| {
-                password::v2::Password {
-                    name: old_password.name.clone(),
-                    username: old_password.username.clone(),
-                    password: password_as_string.clone(),
-                    created_at: old_password.created_at,
-                    updated_at: ffi::time(),
-                }
-            });
+    println_stderr!("");
+    let password_as_string = prompt_password_stderr(
+        format!("What password do you want for \"{}\"? ", password.name).as_str(),
+    ).map_err(|err| {
+        println_err!("\nI couldn't read the app's password (reason: {:?}).", err);
+        1
+    })?;
 
-            match change_result {
-                Ok(_) => {
-                    if matches.opt_present("show") {
-                        println_ok!("Alright! Here is your new password: {}",
-                                    password_as_string.deref());
-                        return Ok(());
-                    }
+    let password_as_string = SafeString::new(password_as_string);
 
-                    if copy_to_clipboard(&password_as_string).is_err() {
-                        println_ok!("Hmm, I tried to copy your changed password to your \
-                                     clipboard, but something went wrong. Don't worry, it's \
-                                     saved, and you can see it with `rooster get {} --show`",
-                                    app_name);
-                    } else {
-                        println_ok!("Done! I've saved your new password for \"{}\". You can \
-                                     paste it anywhere with {}.",
-                                    app_name,
-                                    paste_keys());
-                    }
-
-                    Ok(())
-                }
-                Err(err) => {
-                    println_err!("Woops, I couldn't save the new password (reason: {:?}).",
-                                 err);
-                    Err(1)
-                }
-            }
+    store.change_password(
+        &password.name,
+        &|old_password: password::v2::Password| {
+        password::v2::Password {
+            name: old_password.name,
+            username: old_password.username,
+            password: password_as_string.clone(),
+            created_at: old_password.created_at,
+            updated_at: ffi::time(),
         }
-        Err(err) => {
-            println_err!("\nI couldn't read the app's password (reason: {:?}).", err);
-            Err(1)
-        }
-    }
+    }).map_err(|err| {
+        println_err!("Woops, I couldn't save the new password (reason: {:?}).", err);
+        1
+    })?;
+
+    let show = matches.opt_present("show");
+    clip::confirm_password_retrieved(show, &password);
+    Ok(())
 }

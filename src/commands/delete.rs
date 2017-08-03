@@ -13,16 +13,18 @@
 // limitations under the License.
 
 use getopts;
+use list;
 use password;
 use std::io::Write;
 
 pub fn callback_help() {
     println!("Usage:");
     println!("    rooster delete -h");
-    println!("    rooster delete <app_name> ...");
+    println!("    rooster delete <query>");
     println!("");
-    println!("Example:");
+    println!("Examples:");
     println!("    rooster delete youtube");
+    println!("    rooster delete ytb");
 }
 
 pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
@@ -40,21 +42,18 @@ pub fn callback_exec(matches: &getopts::Matches,
                      -> Result<(), i32> {
     check_args(matches)?;
 
-    let mut has_error = false;
+    let query = &matches.free[1];
 
-    for app_name in &matches.free[1..] {
-        match store.delete_password(app_name) {
-            Ok(_) => {
-                println_ok!("Done! I've deleted the password for \"{}\".", app_name);
-            }
-            Err(err) => {
-                println_err!("Woops! I couldn't find a password for \"{}\" (error: {:?}).",
-                             app_name,
-                             err);
-                has_error = true;
-            }
-        }
-    }
+    println_stderr!("");
+    let password = list::search_and_choose_password(
+        store, query, list::WITH_NUMBERS,
+        "Which password would you like me to delete?",
+    ).ok_or(1)?.clone();
 
-    if has_error { Err(1) } else { Ok(()) }
+    // This should always unwrap successfully, since the password is guaranteed to exist.
+    store.delete_password(&password.name).unwrap();
+
+    println_ok!("Done! I've deleted the password for \"{}\".", password.name);
+
+    Ok(())
 }

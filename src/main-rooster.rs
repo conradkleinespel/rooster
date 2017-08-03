@@ -526,6 +526,13 @@ fn usage(password_file: &str) {
     println!("    export                     Dump all your raw password data in JSON");
     println!("    set-master-password        Set your master password");
     println!("    uninstall                  Show instructions to uninstall Rooster");
+    println!("");
+    println!("Some commands (change, delete, regenerate, get, rename, transfer)");
+    println!("support fuzzy search of passwords:");
+    println!("    rooster get google");
+    println!("    rooster get ggl");
+    println!("");
+    println!("If multiple passwords match your search, you will be asked to choose.")
 }
 
 fn main() {

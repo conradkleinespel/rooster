@@ -68,11 +68,18 @@ pub fn print_list_of_passwords(passwords: &Vec<&Password>, with_numbers: bool, o
 }
 
 fn request_password_index_from_stdin(passwords: &Vec<&Password>, prompt: &str) -> usize {
+    assert!(!passwords.is_empty());
+
     // Read the index from the command line and convert to a number
     let mut line = String::new();
     loop {
-        println_stderr!("{}", prompt);
-        println_stderr!("Type in number from 1 to {}", passwords.len());
+
+        if passwords.len() > 1 {
+            println_stderr!("{}", prompt);
+            println_stderr!("Type in number from 1 to {}", passwords.len());
+        } else if passwords.len() == 1 {
+            println_stderr!("If this is the password you mean, type number 1.");
+        }
 
         line.clear();
         match stdin().read_line(&mut line) {
@@ -125,10 +132,6 @@ pub fn search_and_choose_password<'a>(
         p.name.to_lowercase() == query.to_lowercase()
     }) {
         return Some(&password)
-    }
-
-    if passwords.len() == 1{
-        return Some(passwords[0]);
     }
 
     let index = choose_password_in_list(&passwords, with_numbers, prompt);

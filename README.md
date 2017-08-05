@@ -11,17 +11,32 @@ In addition, it uses state-of-the-art cryptography algorithms (scrypt for key de
 
 ## Installation
 
-Rooster currently works on OSX, Linux and BSD.
+On **Arch Linux**, you install [Rooster from AUR](https://aur.archlinux.org/packages/rooster).
 
-To install, open a terminal and run this command:
+On **Fedora/CentOS/Ubuntu**:
 
 ```shell
 curl -sSL 'https://raw.githubusercontent.com/conradkdotcom/rooster/master/install.sh' | sh
 ```
 
-If the install script fails, make sure you have these programs/packages installed: `sha256sum`, `tar`, `pkg-config`, `libx11-dev`, `libxmu-dev`, `xsel` and `xclip`. Then try running the install script again.
+For **OSX, BSD and other Linux distributions**:
 
-Once you have installed Rooster, you can view documentation with:
+- make sure you have `pkg-config` installed
+- if you are on Linux/BSD, you will also need
+    - `libxmu-dev`
+    - `libx11-dev`
+    - `xsel` or `xclip`
+- install Rust and Cargo with:
+    ```bash
+    curl https://sh.rustup.rs -sSf | sh -s -- -y
+    ```
+- install Rooster with:
+    ```bash
+    cargo install --root /usr rooster
+    ```
+
+Once you have installed Rooster (see instructions below), you can view documentation with:
+
 ```shell
 rooster --help
 ```

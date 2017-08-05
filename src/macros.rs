@@ -15,21 +15,45 @@ macro_rules! println_stderr(
 #[macro_export]
 macro_rules! println_err(
     ($($args:tt)*) => (
-        println_stderr!("{}", format!("{}{}{}", ::color::Color::Red.to_color_code(), format!($($args)*), ::color::Color::Reset.to_color_code()))
+        println_stderr!(
+            "{}",
+            format!(
+                "{}{}{}",
+                ::color::Color::Red.to_color_code(),
+                format!($($args)*),
+                ::color::Color::Reset.to_color_code()
+            )
+        )
     )
 );
 
 #[macro_export]
 macro_rules! println_ok(
     ($($args:tt)*) => (
-        println_stderr!("{}", format!("{}{}{}", ::color::Color::Green.to_color_code(), format!($($args)*), ::color::Color::Reset.to_color_code()))
+        println_stderr!(
+            "{}",
+            format!(
+                "{}{}{}",
+                ::color::Color::Green.to_color_code(),
+                format!($($args)*),
+                ::color::Color::Reset.to_color_code()
+            )
+        )
     )
 );
 
 #[macro_export]
 macro_rules! println_title(
     ($($args:tt)*) => (
-        println_stderr!("{}", format!("{}{}{}", ::color::Color::Cyan.to_color_code(), format!($($args)*), ::color::Color::Reset.to_color_code()))
+        println_stderr!(
+            "{}",
+            format!(
+                "{}{}{}",
+                ::color::Color::Cyan.to_color_code(),
+                format!($($args)*),
+                ::color::Color::Reset.to_color_code()
+            )
+        )
     )
 );
 

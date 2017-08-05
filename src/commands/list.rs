@@ -26,16 +26,21 @@ pub fn callback_help() {
     println!("    rooster list");
 }
 
-pub fn callback_exec(_matches: &getopts::Matches,
-                     store: &mut password::v2::PasswordStore)
-                     -> Result<(), i32> {
+pub fn callback_exec(
+    _matches: &getopts::Matches,
+    store: &mut password::v2::PasswordStore,
+) -> Result<(), i32> {
     let passwords = store.get_all_passwords();
 
     if passwords.len() == 0 {
         println!("No passwords on record yet. Add one with 'rooster add <app> <username>'.");
     } else {
         println_stderr!("");
-        list::print_list_of_passwords(&passwords, list::WITHOUT_NUMBERS, list::OutputStream::Stdout);
+        list::print_list_of_passwords(
+            &passwords,
+            list::WITHOUT_NUMBERS,
+            list::OutputStream::Stdout,
+        );
     }
 
     Ok(())

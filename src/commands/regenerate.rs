@@ -40,18 +40,22 @@ pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
     Ok(())
 }
 
-pub fn callback_exec(matches: &getopts::Matches,
-                     store: &mut password::v2::PasswordStore)
-                     -> Result<(), i32> {
+pub fn callback_exec(
+    matches: &getopts::Matches,
+    store: &mut password::v2::PasswordStore,
+) -> Result<(), i32> {
     check_args(matches)?;
 
     let query = &matches.free[1];
 
     println_stderr!("");
     let password = list::search_and_choose_password(
-        store, query, list::WITH_NUMBERS,
+        store,
+        query,
+        list::WITH_NUMBERS,
         "Which password would you like to regenerate?",
-    ).ok_or(1)?.clone();
+    ).ok_or(1)?
+        .clone();
 
     let password_spec = PasswordSpec::from_matches(matches);
 
@@ -63,24 +67,26 @@ pub fn callback_exec(matches: &getopts::Matches,
             match generate_hard_password(spec.alnum, spec.len) {
                 Ok(password_as_string) => password_as_string,
                 Err(io_err) => {
-                    println_stderr!("Woops, I could not generate the password (reason: {:?}).",
-                                    io_err);
+                    println_stderr!(
+                        "Woops, I could not generate the password (reason: {:?}).",
+                        io_err
+                    );
                     return Err(1);
                 }
             }
         }
     };
 
-    let change_result = store.change_password(&password.name,
-                                              &|old_password: password::v2::Password| {
-        password::v2::Password {
-            name: old_password.name.clone(),
-            username: old_password.username.clone(),
-            password: password_as_string.clone(),
-            created_at: old_password.created_at,
-            updated_at: ffi::time(),
-        }
-    });
+    let change_result =
+        store.change_password(&password.name, &|old_password: password::v2::Password| {
+            password::v2::Password {
+                name: old_password.name.clone(),
+                username: old_password.username.clone(),
+                password: password_as_string.clone(),
+                created_at: old_password.created_at,
+                updated_at: ffi::time(),
+            }
+        });
 
     match change_result {
         Ok(_) => {
@@ -89,8 +95,10 @@ pub fn callback_exec(matches: &getopts::Matches,
             Ok(())
         }
         Err(err) => {
-            println_err!("Woops, I couldn't save the new password (reason: {:?}).",
-                         err);
+            println_err!(
+                "Woops, I couldn't save the new password (reason: {:?}).",
+                err
+            );
             Err(1)
         }
     }

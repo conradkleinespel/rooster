@@ -12,10 +12,11 @@ use safe_vec::SafeVec;
 
 // Encrypt a buffer with the given key and iv using
 // AES-256/CBC/Pkcs encryption.
-pub fn encrypt(data: &[u8],
-               key: &[u8],
-               iv: &[u8])
-               -> Result<Vec<u8>, symmetriccipher::SymmetricCipherError> {
+pub fn encrypt(
+    data: &[u8],
+    key: &[u8],
+    iv: &[u8],
+) -> Result<Vec<u8>, symmetriccipher::SymmetricCipherError> {
 
     // Create an encryptor instance of the best performing
     // type available for the platform.
@@ -53,8 +54,7 @@ pub fn encrypt(data: &[u8],
     // us that it stopped processing data due to not having any more data in the
     // input buffer.
     loop {
-        let result = encryptor
-            .encrypt(&mut read_buffer, &mut write_buffer, true)?;
+        let result = encryptor.encrypt(&mut read_buffer, &mut write_buffer, true)?;
 
         // "write_buffer.take_read_buffer().take_remaining()" means:
         // from the writable buffer, create a new readable buffer which
@@ -80,10 +80,11 @@ pub fn encrypt(data: &[u8],
 // comments in that function. In non-example code, if desired, it is possible to
 // share much of the implementation using closures to hide the operation
 // being performed. However, such code would make this example less clear.
-pub fn decrypt(encrypted_data: &[u8],
-               key: &[u8],
-               iv: &[u8])
-               -> Result<SafeVec, symmetriccipher::SymmetricCipherError> {
+pub fn decrypt(
+    encrypted_data: &[u8],
+    key: &[u8],
+    iv: &[u8],
+) -> Result<SafeVec, symmetriccipher::SymmetricCipherError> {
     let mut decryptor =
         aes::cbc_decryptor(aes::KeySize::KeySize256, key, iv, blockmodes::PkcsPadding);
 
@@ -93,8 +94,7 @@ pub fn decrypt(encrypted_data: &[u8],
     let mut write_buffer = buffer::RefWriteBuffer::new(&mut buffer);
 
     loop {
-        let result = decryptor
-            .decrypt(&mut read_buffer, &mut write_buffer, true)?;
+        let result = decryptor.decrypt(&mut read_buffer, &mut write_buffer, true)?;
         for b in write_buffer.take_read_buffer().take_remaining() {
             final_result.push(*b);
         }

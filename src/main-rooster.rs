@@ -64,83 +64,86 @@ const FAIL_READING_NEW_PASSWORD: &'static str = "FAIL_READING_NEW_PASSWORD";
 
 struct Command {
     name: &'static str,
-    callback_exec: Option<fn(&getopts::Matches, &mut password::v2::PasswordStore) -> Result<(), i32>>,
+    callback_exec:
+        Option<fn(&getopts::Matches, &mut password::v2::PasswordStore) -> Result<(), i32>>,
     callback_help: fn(),
     callback_without_store: Option<fn(&getopts::Matches) -> Result<(), i32>>,
 }
 
-static COMMANDS: &'static [Command] = &[Command {
-     name: "get",
-     callback_exec: Some(commands::get::callback_exec),
-     callback_help: commands::get::callback_help,
-     callback_without_store: Some(commands::get::check_args),
- },
- Command {
-     name: "add",
-     callback_exec: Some(commands::add::callback_exec),
-     callback_help: commands::add::callback_help,
-     callback_without_store: Some(commands::add::check_args),
- },
- Command {
-     name: "delete",
-     callback_exec: Some(commands::delete::callback_exec),
-     callback_help: commands::delete::callback_help,
-     callback_without_store: Some(commands::delete::check_args),
- },
- Command {
-     name: "generate",
-     callback_exec: Some(commands::generate::callback_exec),
-     callback_help: commands::generate::callback_help,
-     callback_without_store: Some(commands::generate::check_args),
- },
- Command {
-     name: "regenerate",
-     callback_exec: Some(commands::regenerate::callback_exec),
-     callback_help: commands::regenerate::callback_help,
-     callback_without_store: Some(commands::regenerate::check_args),
- },
- Command {
-     name: "list",
-     callback_exec: Some(commands::list::callback_exec),
-     callback_help: commands::list::callback_help,
-     callback_without_store: None,
- },
- Command {
-     name: "export",
-     callback_exec: Some(commands::export::callback_exec),
-     callback_help: commands::export::callback_help,
-     callback_without_store: None,
- },
- Command {
-     name: "set-master-password",
-     callback_exec: Some(commands::set_master_password::callback_exec),
-     callback_help: commands::set_master_password::callback_help,
-     callback_without_store: None,
- },
- Command {
-     name: "rename",
-     callback_exec: Some(commands::rename::callback_exec),
-     callback_help: commands::rename::callback_help,
-     callback_without_store: Some(commands::rename::check_args),
- },
- Command {
-     name: "transfer",
-     callback_exec: Some(commands::transfer::callback_exec),
-     callback_help: commands::transfer::callback_help,
-     callback_without_store: Some(commands::transfer::check_args),
- },
- Command {
-     name: "change",
-     callback_exec: Some(commands::change::callback_exec),
-     callback_help: commands::change::callback_help,
-     callback_without_store: Some(commands::change::check_args),
- },
- Command {
-     name: "uninstall",
-     callback_exec: None,
-     callback_help: commands::uninstall::callback_help,
-     callback_without_store: Some(commands::uninstall::callback_exec),
- }];
+static COMMANDS: &'static [Command] = &[
+    Command {
+        name: "get",
+        callback_exec: Some(commands::get::callback_exec),
+        callback_help: commands::get::callback_help,
+        callback_without_store: Some(commands::get::check_args),
+    },
+    Command {
+        name: "add",
+        callback_exec: Some(commands::add::callback_exec),
+        callback_help: commands::add::callback_help,
+        callback_without_store: Some(commands::add::check_args),
+    },
+    Command {
+        name: "delete",
+        callback_exec: Some(commands::delete::callback_exec),
+        callback_help: commands::delete::callback_help,
+        callback_without_store: Some(commands::delete::check_args),
+    },
+    Command {
+        name: "generate",
+        callback_exec: Some(commands::generate::callback_exec),
+        callback_help: commands::generate::callback_help,
+        callback_without_store: Some(commands::generate::check_args),
+    },
+    Command {
+        name: "regenerate",
+        callback_exec: Some(commands::regenerate::callback_exec),
+        callback_help: commands::regenerate::callback_help,
+        callback_without_store: Some(commands::regenerate::check_args),
+    },
+    Command {
+        name: "list",
+        callback_exec: Some(commands::list::callback_exec),
+        callback_help: commands::list::callback_help,
+        callback_without_store: None,
+    },
+    Command {
+        name: "export",
+        callback_exec: Some(commands::export::callback_exec),
+        callback_help: commands::export::callback_help,
+        callback_without_store: None,
+    },
+    Command {
+        name: "set-master-password",
+        callback_exec: Some(commands::set_master_password::callback_exec),
+        callback_help: commands::set_master_password::callback_help,
+        callback_without_store: None,
+    },
+    Command {
+        name: "rename",
+        callback_exec: Some(commands::rename::callback_exec),
+        callback_help: commands::rename::callback_help,
+        callback_without_store: Some(commands::rename::check_args),
+    },
+    Command {
+        name: "transfer",
+        callback_exec: Some(commands::transfer::callback_exec),
+        callback_help: commands::transfer::callback_help,
+        callback_without_store: Some(commands::transfer::check_args),
+    },
+    Command {
+        name: "change",
+        callback_exec: Some(commands::change::callback_exec),
+        callback_help: commands::change::callback_help,
+        callback_without_store: Some(commands::change::check_args),
+    },
+    Command {
+        name: "uninstall",
+        callback_exec: None,
+        callback_help: commands::uninstall::callback_help,
+        callback_without_store: Some(commands::uninstall::callback_exec),
+    },
+];
 
 fn command_from_name(name: &str) -> Option<&'static Command> {
     for c in COMMANDS.iter() {
@@ -184,9 +187,10 @@ fn get_dropbox_folder() -> Option<PathBuf> {
     }
 }
 
-fn get_password_file(filename: &str,
-                     show_running_rooster_msg: bool)
-                     -> IoResult<(Option<SafeString>, File)> {
+fn get_password_file(
+    filename: &str,
+    show_running_rooster_msg: bool,
+) -> IoResult<(Option<SafeString>, File)> {
     match open_password_file(filename, false) {
         Ok(file) => {
             if show_running_rooster_msg {
@@ -209,11 +213,15 @@ fn get_password_file(filename: &str,
                         if file_in_dropbox.exists() {
                             println_title!("|---------------- Dropbox ---------------|");
                             println_stderr!("");
-                            println_stderr!("Seems like you have a Rooster file in your Dropbox \
-                                             folder.");
+                            println_stderr!(
+                                "Seems like you have a Rooster file in your Dropbox \
+                                             folder."
+                            );
                             println_stderr!("");
-                            println_stderr!("It is located at: ~/Dropbox/{}.",
-                                            ROOSTER_FILE_DEFAULT);
+                            println_stderr!(
+                                "It is located at: ~/Dropbox/{}.",
+                                ROOSTER_FILE_DEFAULT
+                            );
 
                             println_stderr!("");
                             print_stderr!("Is that your correct password file (y/n)? ");
@@ -223,27 +231,35 @@ fn get_password_file(filename: &str,
                                 println_stderr!("");
                                 println_title!("|------------- Configuration ------------|");
                                 println_stderr!("");
-                                println_stderr!("You might want to add this to your shell config \
-                                                 (.bashrc, .zshrc, etc):");
-                                println_stderr!("    export ROOSTER_FILE={}",
-                                                file_in_dropbox.to_string_lossy());
+                                println_stderr!(
+                                    "You might want to add this to your shell config \
+                                                 (.bashrc, .zshrc, etc):"
+                                );
+                                println_stderr!(
+                                    "    export ROOSTER_FILE={}",
+                                    file_in_dropbox.to_string_lossy()
+                                );
                                 println_stderr!("");
-                                println_stderr!("This way, I won't ask you if this is the right \
-                                                 file every time.");
+                                println_stderr!(
+                                    "This way, I won't ask you if this is the right \
+                                                 file every time."
+                                );
 
                                 println_stderr!("");
-                                return get_password_file(file_in_dropbox
-                                                             .to_string_lossy()
-                                                             .as_ref(),
-                                                         true);
+                                return get_password_file(
+                                    file_in_dropbox.to_string_lossy().as_ref(),
+                                    true,
+                                );
                             }
 
                             show_default_no_file_msg = false;
                             println_stderr!("");
                             println_title!("|----------- New password file ----------|");
                             println_stderr!("");
-                            print_stderr!("OK. Would you like to create a new \
-                                             password file now (y/n)? ");
+                            print_stderr!(
+                                "OK. Would you like to create a new \
+                                             password file now (y/n)? "
+                            );
                         }
                     }
 
@@ -251,8 +267,10 @@ fn get_password_file(filename: &str,
                         if show_default_no_file_msg {
                             println_title!("|----------- New password file ----------|");
                             println_stderr!("");
-                            println_stderr!("I can't find your password file. This is expected \
-                                             if you are using Rooster for the first time.");
+                            println_stderr!(
+                                "I can't find your password file. This is expected \
+                                             if you are using Rooster for the first time."
+                            );
                             println_stderr!("");
                             print_stderr!("Would you like to create a password file now (y/n)? ");
                         }
@@ -261,27 +279,33 @@ fn get_password_file(filename: &str,
                         std::io::stdin().read_line(&mut line)?;
                         if line.starts_with('y') {
                             println_stderr!("");
-                            println_stderr!("Alright, will do! But first, there is some stuff we \
-                                             have to take care of.");
+                            println_stderr!(
+                                "Alright, will do! But first, there is some stuff we \
+                                             have to take care of."
+                            );
                             println_stderr!("");
                             println_title!("|---------- Set Master Password ---------|");
                             println_stderr!("");
-                            println_stderr!("In order to keep your passwords safe & \
+                            println_stderr!(
+                                "In order to keep your passwords safe & \
                                              secure, we encrypt them using a Master \
-                                             Password.");
+                                             Password."
+                            );
                             println_stderr!("");
-                            println_stderr!("The stronger it is, the better your passwords are \
-                                             protected.");
+                            println_stderr!(
+                                "The stronger it is, the better your passwords are \
+                                             protected."
+                            );
                             println_stderr!("");
 
-                            let master_password = prompt_password_stderr("What would you like it \
-                                                                          to be? ");
-                            let master_password = master_password
-                                .map(SafeString::new)
-                                .map_err(|_| {
-                                             IoError::new(IoErrorKind::Other,
-                                                          FAIL_READING_NEW_PASSWORD)
-                                         })?;
+                            let master_password = prompt_password_stderr(
+                                "What would you like it \
+                                                                          to be? ",
+                            );
+                            let master_password =
+                                master_password.map(SafeString::new).map_err(|_| {
+                                    IoError::new(IoErrorKind::Other, FAIL_READING_NEW_PASSWORD)
+                                })?;
 
                             let mut filename = filename.to_owned();
 
@@ -294,27 +318,35 @@ fn get_password_file(filename: &str,
                                 println_stderr!("Seems like you're using Dropbox.");
 
                                 println_stderr!("");
-                                print_stderr!("Would you like to add your password file to \
-                                               Dropbox (y/n)? ");
+                                print_stderr!(
+                                    "Would you like to add your password file to \
+                                               Dropbox (y/n)? "
+                                );
                                 let mut line = String::new();
                                 std::io::stdin().read_line(&mut line)?;
                                 if line.starts_with('y') {
-                                    filename = format!("{}/{}",
-                                                       folder.to_string_lossy(),
-                                                       ROOSTER_FILE_DEFAULT);
+                                    filename = format!(
+                                        "{}/{}",
+                                        folder.to_string_lossy(),
+                                        ROOSTER_FILE_DEFAULT
+                                    );
 
                                     println_stderr!("");
                                     println_title!("|------------- Configuration ------------|");
                                     println_stderr!("");
-                                    println_stderr!("You'll need to add this to your shell \
-                                                     config (.bashrc, .zshrc, etc):");
+                                    println_stderr!(
+                                        "You'll need to add this to your shell \
+                                                     config (.bashrc, .zshrc, etc):"
+                                    );
                                     println_stderr!("    export ROOSTER_FILE={}", filename);
 
                                     if let Some(previous) = env::var(ROOSTER_FILE_ENV_VAR).ok() {
                                         println_stderr!("");
-                                        println_stderr!("You'll also need to delete your \
+                                        println_stderr!(
+                                            "You'll also need to delete your \
                                                          previous Rooster file configuration. It \
-                                                         probably looks something like this:");
+                                                         probably looks something like this:"
+                                        );
                                         println_stderr!("    export ROOSTER_FILE={}", previous);
                                     }
                                 }
@@ -330,8 +362,10 @@ fn get_password_file(filename: &str,
                         } else if line.starts_with('n') {
                             return Err(IoError::new(IoErrorKind::Other, DONT_CREATE_PASSWORD_FILE));
                         } else {
-                            println_stderr!("I didn't get that. Should I create a password file \
-                                             now (y/n)? ");
+                            println_stderr!(
+                                "I didn't get that. Should I create a password file \
+                                             now (y/n)? "
+                            );
                         }
                     }
                 }
@@ -341,9 +375,10 @@ fn get_password_file(filename: &str,
     }
 }
 
-fn get_password_store(file: &mut File,
-                      new_master_password: Option<SafeString>)
-                      -> Result<password::v2::PasswordStore, i32> {
+fn get_password_store(
+    file: &mut File,
+    new_master_password: Option<SafeString>,
+) -> Result<password::v2::PasswordStore, i32> {
     // If there was no password file, return early with an empty store
     match new_master_password {
         Some(p) => return password::v2::PasswordStore::new(p.clone()).map_err(|_| 1),
@@ -361,8 +396,10 @@ fn get_password_store(file: &mut File,
         let master_password = match ask_master_password() {
             Ok(p) => p,
             Err(err) => {
-                println_err!("Woops, I could not read your master password (reason: {}).",
-                             err);
+                println_err!(
+                    "Woops, I could not read your master password (reason: {}).",
+                    err
+                );
                 std::process::exit(1);
             }
         };
@@ -395,30 +432,40 @@ fn get_password_store(file: &mut File,
                                 // Try again.
                                 if number_allowed_fails > 0 {
                                     number_allowed_fails = number_allowed_fails - 1;
-                                    println_err!("Woops, that's not the right password. Let's \
-                                                  try again.");
+                                    println_err!(
+                                        "Woops, that's not the right password. Let's \
+                                                  try again."
+                                    );
                                     continue;
                                 }
                                 match err {
                                     password::PasswordError::WrongVersionError => {
-                                        println_err!("I could not open the Rooster file because \
-                                                      your version of Rooster is outdated.");
-                                        println_err!("Try upgrading Rooster to the latest \
-                                                      version.");
+                                        println_err!(
+                                            "I could not open the Rooster file because \
+                                                      your version of Rooster is outdated."
+                                        );
+                                        println_err!(
+                                            "Try upgrading Rooster to the latest \
+                                                      version."
+                                        );
 
                                         return Err(1);
                                     }
                                     password::PasswordError::Io(err) => {
-                                        println_err!("I couldn't open your Rooster file (reason: \
+                                        println_err!(
+                                            "I couldn't open your Rooster file (reason: \
                                                       {:?})",
-                                                     err);
+                                            err
+                                        );
 
                                         return Err(1);
                                     }
                                     _ => {
-                                        println_err!("Decryption of your Rooster file keeps \
+                                        println_err!(
+                                            "Decryption of your Rooster file keeps \
                                                       failing. This is a sign that your Rooster \
-                                                      file is probably corrupted.");
+                                                      file is probably corrupted."
+                                        );
 
                                         return Err(1);
                                     }
@@ -432,8 +479,10 @@ fn get_password_store(file: &mut File,
                         return Err(1);
                     }
                     _ => {
-                        println_err!("Decryption of your Rooster file keeps failing. This is a \
-                                      sign that your Rooster file is probably corrupted.");
+                        println_err!(
+                            "Decryption of your Rooster file keeps failing. This is a \
+                                      sign that your Rooster file is probably corrupted."
+                        );
 
                         return Err(1);
                     }
@@ -443,11 +492,12 @@ fn get_password_store(file: &mut File,
     }
 }
 
-fn execute_command_from_filename(matches: &getopts::Matches,
-                                 command: &Command,
-                                 file: &mut File,
-                                 store: &mut password::v2::PasswordStore)
-                                 -> Result<(), i32> {
+fn execute_command_from_filename(
+    matches: &getopts::Matches,
+    command: &Command,
+    file: &mut File,
+    store: &mut password::v2::PasswordStore,
+) -> Result<(), i32> {
     // Execute the command and save the new password list
     match command.callback_exec {
         Some(cb) => {
@@ -473,12 +523,7 @@ fn get_password_file_path() -> Result<String, i32> {
         Ok(filename) => Ok(filename),
         Err(VarError::NotPresent) => {
             let mut filename = match home_dir {
-                Some(home) => {
-                    home.as_os_str()
-                        .to_os_string()
-                        .into_string()
-                        .map_err(|_| 1)?
-                }
+                Some(home) => home.as_os_str().to_os_string().into_string().map_err(|_| 1)?,
                 None => {
                     return Err(1);
                 }
@@ -540,19 +585,27 @@ fn main() {
 
     let mut opts = Options::new();
     opts.optflag("h", "help", "Display a help message");
-    opts.optflag("v",
-                 "version",
-                 "Display the version of Rooster you are using");
-    opts.optflag("a",
-                 "alnum",
-                 "Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords");
-    opts.optopt("l",
-                "length",
-                "Set a custom length for the generated password",
-                "32");
-    opts.optflag("s",
-                 "show",
-                 "Show the password instead of copying it to the clipboard");
+    opts.optflag(
+        "v",
+        "version",
+        "Display the version of Rooster you are using",
+    );
+    opts.optflag(
+        "a",
+        "alnum",
+        "Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords",
+    );
+    opts.optopt(
+        "l",
+        "length",
+        "Set a custom length for the generated password",
+        "32",
+    );
+    opts.optflag(
+        "s",
+        "show",
+        "Show the password instead of copying it to the clipboard",
+    );
 
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
@@ -596,9 +649,11 @@ fn main() {
     let command: &Command = match command_from_name(command_name.as_ref()) {
         Some(command) => command,
         None => {
-            println_err!("Woops, the command `{}` does not exist. Try the --help option for more \
+            println_err!(
+                "Woops, the command `{}` does not exist. Try the --help option for more \
                           info.",
-                         command_name);
+                command_name
+            );
             std::process::exit(1);
         }
     };
@@ -622,22 +677,24 @@ fn main() {
 
 
     if command.callback_exec.is_some() {
-        let (new_master_password, mut file) = match get_password_file(password_file_path.deref(),
-                                                                      false) {
-            Ok(file) => file,
-            Err(err) => {
-                if format!("{}", err) == DONT_CREATE_PASSWORD_FILE {
-                    println_err!("I can't go on without a password file, sorry");
-                } else if format!("{}", err) == FAIL_READING_NEW_PASSWORD {
-                    println_err!("I couldn't read your Master Password, sorry");
-                } else {
-                    println_err!("I can't find your password file at {} (reason: {})",
-                                 password_file_path,
-                                 err);
+        let (new_master_password, mut file) =
+            match get_password_file(password_file_path.deref(), false) {
+                Ok(file) => file,
+                Err(err) => {
+                    if format!("{}", err) == DONT_CREATE_PASSWORD_FILE {
+                        println_err!("I can't go on without a password file, sorry");
+                    } else if format!("{}", err) == FAIL_READING_NEW_PASSWORD {
+                        println_err!("I couldn't read your Master Password, sorry");
+                    } else {
+                        println_err!(
+                            "I can't find your password file at {} (reason: {})",
+                            password_file_path,
+                            err
+                        );
+                    }
+                    std::process::exit(1);
                 }
-                std::process::exit(1);
-            }
-        };
+            };
 
         let mut store = match get_password_store(&mut file, new_master_password) {
             Err(i) => std::process::exit(i),

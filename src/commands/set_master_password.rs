@@ -28,20 +28,25 @@ pub fn callback_help() {
     println!("    rooster set-master-password");
 }
 
-pub fn callback_exec(_matches: &getopts::Matches,
-                     store: &mut password::v2::PasswordStore)
-                     -> Result<(), i32> {
+pub fn callback_exec(
+    _matches: &getopts::Matches,
+    store: &mut password::v2::PasswordStore,
+) -> Result<(), i32> {
     match prompt_password_stderr("Type your new master password: ") {
         Ok(master_password) => {
             let master_password = SafeString::new(master_password);
 
-            let master_password_confirmation = match prompt_password_stderr("Type your new \
+            let master_password_confirmation = match prompt_password_stderr(
+                "Type your new \
                                                                              master password \
-                                                                             once more: ") {
+                                                                             once more: ",
+            ) {
                 Ok(master_password_confirmation) => SafeString::new(master_password_confirmation),
                 Err(err) => {
-                    println_err!("I could not read your new master password (reason: {:?}).",
-                                 err);
+                    println_err!(
+                        "I could not read your new master password (reason: {:?}).",
+                        err
+                    );
                     return Err(1);
                 }
             };
@@ -54,8 +59,10 @@ pub fn callback_exec(_matches: &getopts::Matches,
             store.change_master_password(master_password.deref());
         }
         Err(err) => {
-            println_err!("I could not read your new master password (reason: {:?}).",
-                         err);
+            println_err!(
+                "I could not read your new master password (reason: {:?}).",
+                err
+            );
             return Err(1);
         }
     }

@@ -1,3 +1,8 @@
+# compiled files
 /target
+
+# intellij idea files
 /.idea
-/TODOS.md
+
+# cargo-fmt backup files
+*.rs.bk

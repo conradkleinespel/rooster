@@ -27,7 +27,11 @@ pub enum OutputStream {
     Stderr,
 }
 
-pub fn print_list_of_passwords(passwords: &Vec<&Password>, with_numbers: bool, output_stream: OutputStream) {
+pub fn print_list_of_passwords(
+    passwords: &Vec<&Password>,
+    with_numbers: bool,
+    output_stream: OutputStream,
+) {
     // Find the app name column length
     let longest_app_name = passwords.iter().fold(0, |acc, p| if p.name.len() > acc {
         p.name.len()
@@ -62,7 +66,7 @@ pub fn print_list_of_passwords(passwords: &Vec<&Password>, with_numbers: bool, o
 
         match output_stream {
             OutputStream::Stdout => println!("{}", s),
-            OutputStream::Stderr => println_stderr!("{}", s)
+            OutputStream::Stderr => println_stderr!("{}", s),
         }
     }
 }
@@ -87,20 +91,31 @@ fn request_password_index_from_stdin(passwords: &Vec<&Password>, prompt: &str) -
                 match line.trim().parse::<usize>() {
                     Ok(index) => {
                         if index == 0 || index > passwords.len() {
-                            println_err!("I need a number between 1 and {}. Let's try again:", passwords.len());
+                            println_err!(
+                                "I need a number between 1 and {}. Let's try again:",
+                                passwords.len()
+                            );
                             continue;
                         }
 
                         return index - 1;
                     }
                     Err(err) => {
-                        println_err!("This isn't a valid number (reason: {}). Let's try again (1 to {}): ", err, passwords.len());
+                        println_err!(
+                            "This isn't a valid number (reason: {}). Let's try again (1 to {}): ",
+                            err,
+                            passwords.len()
+                        );
                         continue;
                     }
                 };
             }
             Err(err) => {
-                println_err!("I couldn't read that (reason: {}). Let's try again (1 to {}): ", err, passwords.len());
+                println_err!(
+                    "I couldn't read that (reason: {}). Let's try again (1 to {}): ",
+                    err,
+                    passwords.len()
+                );
             }
         }
     }
@@ -130,8 +145,9 @@ pub fn search_and_choose_password<'a>(
 
     if let Some(&password) = passwords.iter().find(|p| {
         p.name.to_lowercase() == query.to_lowercase()
-    }) {
-        return Some(&password)
+    })
+    {
+        return Some(&password);
     }
 
     let index = choose_password_in_list(&passwords, with_numbers, prompt);

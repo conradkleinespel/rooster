@@ -39,9 +39,10 @@ impl From<IoError> for PasswordError {
     }
 }
 
-fn upgrade_v1_v2(v1_passwords: &[v1::Password],
-                 v2_store: &mut v2::PasswordStore)
-                 -> Result<(), PasswordError> {
+fn upgrade_v1_v2(
+    v1_passwords: &[v1::Password],
+    v2_store: &mut v2::PasswordStore,
+) -> Result<(), PasswordError> {
     for p in v1_passwords.iter() {
         let v2_password = v2::Password {
             name: p.name.clone(),
@@ -56,9 +57,10 @@ fn upgrade_v1_v2(v1_passwords: &[v1::Password],
     Ok(())
 }
 
-pub fn upgrade(master_password: SafeString,
-               input: SafeVec)
-               -> Result<v2::PasswordStore, PasswordError> {
+pub fn upgrade(
+    master_password: SafeString,
+    input: SafeVec,
+) -> Result<v2::PasswordStore, PasswordError> {
     // If we can't read v1 passwords, we have a hard error, because we previously tried
     // to read the passwords as v2. Which failed. That means we can't upgrade.
     let v1_passwords = v1::get_all_passwords(master_password.deref(), input.deref())?;

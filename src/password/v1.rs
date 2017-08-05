@@ -85,9 +85,10 @@ fn generate_encryption_key(master_password: &str) -> SafeVec {
     key
 }
 
-pub fn get_all_passwords(master_password: &str,
-                         encrypted: &[u8])
-                         -> Result<Vec<Password>, PasswordError> {
+pub fn get_all_passwords(
+    master_password: &str,
+    encrypted: &[u8],
+) -> Result<Vec<Password>, PasswordError> {
     // If there were already some password, we'll decrypt them. Otherwise, we'll
     // start off with an empty list of passwords.
     let passwords: Vec<Password> = if encrypted.len() > 0 {
@@ -105,10 +106,10 @@ pub fn get_all_passwords(master_password: &str,
 
         match decrypted_maybe {
             Ok(decrypted) => {
-                let encoded = SafeString::new(String::from_utf8_lossy(decrypted.deref())
-                                                  .into_owned());
+                let encoded =
+                    SafeString::new(String::from_utf8_lossy(decrypted.deref()).into_owned());
 
-                let s : Result<Schema, Error> =  serde_json::from_str(encoded.deref());
+                let s: Result<Schema, Error> = serde_json::from_str(encoded.deref());
 
                 match s {
                     Ok(schema) => schema.passwords,

@@ -44,8 +44,8 @@ fn password_is_hard(password: &str, alnum: bool) -> bool {
     let is_punctuation = |c| -> bool { "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~".find(c).is_some() };
 
     password.find(char::is_numeric).is_some() && password.find(char::is_lowercase).is_some() &&
-    password.find(char::is_uppercase).is_some() &&
-    (alnum || password.find(is_punctuation).is_some())
+        password.find(char::is_uppercase).is_some() &&
+        (alnum || password.find(is_punctuation).is_some())
 }
 
 pub fn generate_hard_password(alnum: bool, len: usize) -> IoResult<SafeString> {
@@ -82,15 +82,17 @@ impl PasswordSpec {
                     parsed_len
                 }
                 Err(_) => {
-                    println_err!("Woops! The length option must be a valid number, for instance \
-                                  8 or 16.");
+                    println_err!(
+                        "Woops! The length option must be a valid number, for instance \
+                                  8 or 16."
+                    );
                     return None;
                 }
             }
         }
         Some(PasswordSpec {
-                 alnum: alnum,
-                 len: password_len,
-             })
+            alnum: alnum,
+            len: password_len,
+        })
     }
 }

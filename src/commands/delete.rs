@@ -37,18 +37,22 @@ pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
     Ok(())
 }
 
-pub fn callback_exec(matches: &getopts::Matches,
-                     store: &mut password::v2::PasswordStore)
-                     -> Result<(), i32> {
+pub fn callback_exec(
+    matches: &getopts::Matches,
+    store: &mut password::v2::PasswordStore,
+) -> Result<(), i32> {
     check_args(matches)?;
 
     let query = &matches.free[1];
 
     println_stderr!("");
     let password = list::search_and_choose_password(
-        store, query, list::WITH_NUMBERS,
+        store,
+        query,
+        list::WITH_NUMBERS,
         "Which password would you like me to delete?",
-    ).ok_or(1)?.clone();
+    ).ok_or(1)?
+        .clone();
 
     // This should always unwrap successfully, since the password is guaranteed to exist.
     store.delete_password(&password.name).unwrap();

@@ -28,16 +28,19 @@ pub fn callback_help() {
     println!("    rooster export");
 }
 
-pub fn callback_exec(_matches: &getopts::Matches,
-                     store: &mut password::v2::PasswordStore)
-                     -> Result<(), i32> {
+pub fn callback_exec(
+    _matches: &getopts::Matches,
+    store: &mut password::v2::PasswordStore,
+) -> Result<(), i32> {
     let passwords_ref = store.get_all_passwords();
 
     let passwords_json = match serde_json::to_string(&passwords_ref) {
         Ok(passwords_json) => passwords_json,
         Err(json_err) => {
-            println_stderr!("Woops, I could not encode the passwords into JSON (reason: {:?}).",
-                            json_err);
+            println_stderr!(
+                "Woops, I could not encode the passwords into JSON (reason: {:?}).",
+                json_err
+            );
             return Err(1);
         }
     };

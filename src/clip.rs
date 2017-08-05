@@ -41,7 +41,7 @@ pub fn copy_to_clipboard(s: &SafeString) -> Result<(), ()> {
     match which("xsel") {
         Some(xsel) => {
             let shell = format!(
-                "printf '%s' {} | {} -ib",
+                "printf '%s' {} | {} -ib 2> /dev/null",
                 password.deref(),
                 xsel.to_string_lossy()
             );
@@ -60,7 +60,7 @@ pub fn copy_to_clipboard(s: &SafeString) -> Result<(), ()> {
             match which("xclip") {
                 Some(xclip) => {
                     let shell = format!(
-                        "printf '%s' {} | {} -selection clipboard",
+                        "printf '%s' {} | {} -selection clipboard 2> /dev/null",
                         password.deref(),
                         xclip.to_string_lossy()
                     );

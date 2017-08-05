@@ -44,6 +44,44 @@ Once you have installed Rooster (see instructions below), you can view documenta
 rooster --help
 ```
 
+## Running inside Docker
+
+You can run Rooster inside Docker. This can be an easier way to install Rooster since Docker
+takes care of installing the correct dependencies. And it adds some security: the container
+runs as an unprivileged user, all capabilities are dropped and network access is dropped.
+
+Here is an example of how you could make that work.
+
+```bash
+# build rooster
+docker build -t conradkdotcom/rooster .
+
+# run rooster
+docker run --rm -t -i --init \
+    --net none --cap-drop ALL \
+    -v /home/`whoami`:/data \
+    conradkdotcom/rooster \
+    generate -s Google example@gmail.com
+```
+
+If your Rooster file is an non standard location, you can set a custom one. For instance, if
+it is as `/var/rooster/passwords.rooster`, than this would work:
+
+```bash
+# make sure the directory that contains passwords.rooster exists
+# and that we have access to it
+mkdir /tmp/rooster
+
+# run rooster
+docker run --rm -t -i --init \
+    --net none --cap-drop ALL \
+    -v /tmp/rooster:/data \
+    -e ROOSTER_FILE=passwords.rooster \
+    conradkdotcom/rooster \
+    generate -s Google example@gmail.com
+```
+
+
 ## Contributors
 
 We welcome contribution from everyone. Feel free to open an issue or a pull request at any time.

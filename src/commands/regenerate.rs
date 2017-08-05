@@ -89,7 +89,7 @@ pub fn callback_exec(
         });
 
     match change_result {
-        Ok(_) => {
+        Ok(password) => {
             let show = matches.opt_present("show");
             clip::confirm_password_retrieved(show, &password);
             Ok(())

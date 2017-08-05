@@ -69,7 +69,7 @@ pub fn callback_exec(
 
     let password_as_string = SafeString::new(password_as_string);
 
-    store
+    let password = store
         .change_password(&password.name, &|old_password: password::v2::Password| {
             password::v2::Password {
                 name: old_password.name,

@@ -483,10 +483,11 @@ impl PasswordStore {
         &mut self,
         app_name: &str,
         closure: &Fn(Password) -> Password,
-    ) -> Result<(), PasswordError> {
+    ) -> Result<Password, PasswordError> {
         let old_p = self.delete_password(app_name.deref())?;
-
-        self.add_password(closure(old_p))
+        let new_p = closure(old_p);
+        self.add_password(new_p.clone())?;
+        Ok(new_p)
     }
 
     pub fn change_master_password(&mut self, master_password: &str) {

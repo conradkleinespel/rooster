@@ -13,19 +13,15 @@ In addition, it uses state-of-the-art cryptography algorithms (scrypt for key de
 
 On **Arch Linux**, you install [Rooster from AUR](https://aur.archlinux.org/packages/rooster).
 
-On **Fedora/CentOS/Ubuntu**:
+On **Fedora/CentOS/Ubuntu/OSX**:
 
 ```shell
 curl -sSL 'https://raw.githubusercontent.com/conradkdotcom/rooster/master/install.sh' | sh
 ```
 
-For **OSX, BSD and other Linux distributions**:
+For **BSD and other Linux distributions**:
 
-- make sure you have `pkg-config` installed
-- if you are on Linux/BSD, you will also need
-    - `libxmu-dev`
-    - `libx11-dev`
-    - `xsel` or `xclip`
+- make sure you have `pkg-config`, `python3`, `libxmu-dev`, `libx11-dev` and one of `xsel`/`xclip`
 - install Rust and Cargo with:
     ```bash
     curl https://sh.rustup.rs -sSf | sh -s -- -y

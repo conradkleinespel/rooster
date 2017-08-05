@@ -18,6 +18,7 @@ pub mod delete;
 pub mod generate;
 pub mod list;
 pub mod regenerate;
+pub mod import;
 pub mod export;
 pub mod set_master_password;
 pub mod rename;

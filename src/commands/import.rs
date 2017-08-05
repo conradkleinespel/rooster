@@ -1,0 +1,77 @@
+// Copyright 2014-2017 The Rooster Developers
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+use getopts;
+use serde_json;
+use password::v2::{Password, PasswordStore};
+use std::fs::File;
+use std::io::Write;
+
+pub fn callback_help() {
+    println!("Usage:");
+    println!("    rooster import -h");
+    println!("    rooster import <file_path>");
+    println!();
+    println!("Example:");
+    println!("    rooster import dump.json");
+}
+
+pub fn callback_exec(_matches: &getopts::Matches, store: &mut PasswordStore) -> Result<(), i32> {
+    let imported_pwds: Vec<Password> = {
+        let path_str = &_matches.free[1];
+        let dump_file = File::open(path_str).map_err(|err|{
+            println_stderr!("Uh oh, could not open the file (reason: {:?})", err);
+            1
+        })?;
+        serde_json::from_reader(&dump_file).map_err(|json_err| {
+            println_stderr!(
+                "Woops, I could not decode the passwords from JSON (reason: {:?}).",
+                json_err,
+            );
+            1
+        })?
+    };
+
+    let mut added = 0;
+    for password in imported_pwds {
+        if let Some(_) = store.get_password(&password.name) {
+            println_stderr!(
+                "Oh, password for {} is already present! Skipping it.",
+                password.name,
+            );
+            continue;
+        }
+
+        if let Err(err) = store.add_password(password.clone()) {
+            println_stderr!(
+                "Woops, couldn't add password for {} (reason: {:?})",
+                password.name,
+                err,
+            );
+            continue;
+        }
+
+        added += 1;
+    }
+
+    if added == 0 {
+        println_stderr!("Apparently, I could not find any new password :(");
+    } else if added == 1 {
+        println_ok!("Imported {} brand new password into the store!", added);
+    } else {
+        println_ok!("Imported {} brand new passwords into the store!", added);
+    }
+
+    Ok(())
+}

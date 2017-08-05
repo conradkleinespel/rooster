@@ -32,13 +32,13 @@ if [ "$?" = "0" ]; then
         version="`lsb_release -rs`"
         if [ "$?" = "0" ]; then
             if [ "$version" = "16.04" -o "$version" = "16.10" ]; then
-                sudo apt update -y && sudo apt install -y unzip pkg-config libx11-dev libxmu-dev
+                sudo apt update -y && sudo apt install -y unzip pkg-config libx11-dev libxmu-dev python3
                 if [ "$?" != "0" ]; then
                     echo 'aborting: could not install rooster dependencies' 1>&2
                     exit 1
                 fi
             elif [ "$version" = "14.04" ]; then
-                sudo apt-get update -y && sudo apt-get install -y unzip pkg-config libx11-dev libxmu-dev
+                sudo apt-get update -y && sudo apt-get install -y unzip pkg-config libx11-dev libxmu-dev python3
                 if [ "$?" != "0" ]; then
                     echo 'aborting: could not install rooster dependencies' 1>&2
                     exit 1
@@ -46,7 +46,7 @@ if [ "$?" = "0" ]; then
             fi
         fi
     elif [ "$distro" = "Debian" ]; then
-        sudo apt-get install -y gcc unzip pkg-config libx11-dev libxmu-dev
+        sudo apt-get install -y gcc unzip pkg-config libx11-dev libxmu-dev python3
         if [ "$?" != "0" ]; then
             echo 'aborting: could not install rooster dependencies' 1>&2
             exit 1
@@ -60,13 +60,13 @@ dnfstatus="$?"
 yum -h > /dev/null
 yumstatus="$?"
 if [ "$dnfstatus" = "0" ]; then
-    sudo dnf install -y gcc unzip pkgconfig libX11-devel libXmu-devel
+    sudo dnf install -y gcc unzip pkgconfig libX11-devel libXmu-devel python3
     if [ "$?" != "0" ]; then
         echo 'aborting: could not install rooster dependencies' 1>&2
         exit 1
     fi
 elif [ "$yumstatus" = "0" ]; then
-    sudo yum install -y gcc unzip pkgconfig libX11-devel libXmu-devel
+    sudo yum install -y gcc unzip pkgconfig libX11-devel libXmu-devel python3
     if [ "$?" != "0" ]; then
         echo 'aborting: could not install rooster dependencies' 1>&2
         exit 1

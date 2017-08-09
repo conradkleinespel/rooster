@@ -25,6 +25,7 @@ extern crate serde;
 extern crate serde_json;
 extern crate clipboard;
 extern crate shell_escape;
+extern crate zxcvbn;
 
 #[macro_use]
 extern crate serde_derive;
@@ -124,6 +125,12 @@ static COMMANDS: &'static [Command] = &[
         callback_exec: Some(commands::rename::callback_exec),
         callback_help: commands::rename::callback_help,
         callback_without_store: Some(commands::rename::check_args),
+    },
+    Command {
+        name: "strength",
+        callback_exec: Some(commands::strength::callback_exec),
+        callback_help: commands::strength::callback_help,
+        callback_without_store: Some(commands::strength::check_args),
     },
     Command {
         name: "transfer",
@@ -566,6 +573,7 @@ fn usage(password_file: &str) {
     println!("    regenerate                 Regenerate a previously existing password");
     println!("    get                        Retrieve a password");
     println!("    rename                     Rename the app for a password");
+    println!("    strength                   Test the strength of a given password");
     println!("    transfer                   Change the username for a password");
     println!("    list                       List all apps and usernames");
     println!("    export                     Dump all your raw password data in JSON");

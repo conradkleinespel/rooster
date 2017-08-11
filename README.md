@@ -3,11 +3,18 @@
 ## Why another password manager
 
 There are a lot of password managers out there. Rooster has some unique goals:
-- it is simple to maintain for developers and open source so that it never becomes unmaintained
-- it works completely offline with optional support for online sync (currently Dropbox)
-- it stores simple appname/username/password tuples, nothing more, nothing less
 
-In addition, it uses state-of-the-art cryptography algorithms (scrypt for key derivation, aes256-cbc for encryption, hmac-sha256 for signature) and it works all kinds of UNIX operating systems (Linux, OSX, BSD, etc).
+- it is easy to maintain so that it never becomes unmaintained
+- it works completely offline with optional support for online sync
+- it stores simple username/password tuples, nothing more, nothing less
+
+Rooster protects your passwords with state-of-the-art cryptography algorithms:
+
+- scrypt for key derivation
+- aes256-cbc for encryption
+- hmac-sha256 for authentication
+
+To top it off, it works Linux, BSD and OSX.
 
 ## Installation
 

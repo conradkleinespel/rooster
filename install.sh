@@ -10,7 +10,7 @@ cat /etc/*-release | grep -i 'Arch Linux' > /dev/null
 if [ "$?" = "0" ]; then
     echo 'Looks like you are using Arch Linux. You can find Rooster on the AUR:'
     echo 'https://aur.archlinux.org/packages/rooster'
-#    exit
+    exit
 fi
 
 # install Rust/Cargo so we can compile the sources

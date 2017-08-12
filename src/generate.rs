@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use getopts;
 use rand::{Rng, OsRng};
 use std::io::{Write, Result as IoResult};
 use safe_string::SafeString;
@@ -48,51 +47,71 @@ fn password_is_hard(password: &str, alnum: bool) -> bool {
         (alnum || password.find(is_punctuation).is_some())
 }
 
-pub fn generate_hard_password(alnum: bool, len: usize) -> IoResult<SafeString> {
-    loop {
-        let password = generate_password(alnum, len)?;
-        if password_is_hard(password.as_ref(), alnum) {
-            return Ok(password);
-        }
-    }
-}
-
 pub struct PasswordSpec {
     pub alnum: bool,
     pub len: usize,
 }
 
 impl PasswordSpec {
-    pub fn from_matches(matches: &getopts::Matches) -> Option<PasswordSpec> {
-        let alnum = matches.opt_present("alnum");
-        let mut password_len = 32;
-        if let Some(len) = matches.opt_str("length") {
-            password_len = match len.parse::<usize>() {
-                Ok(parsed_len) => {
-                    // We want passwords to contain at least one uppercase letter, one lowercase
-                    // letter and one digit. So we need at least 4 characters for each password.
-                    // This checks makes sure we don't run into an infinite loop trying to generate
-                    // a password of length <4 with 4 different kinds of characters (uppercase,
-                    // lowercase, numeric, punctuation).
-                    if parsed_len < 4 {
-                        println_err!("Woops! The length of the password must be at least 4. This");
-                        println_err!("allows us to make sure your password is secure.");
-                        return None;
-                    }
-                    parsed_len
-                }
-                Err(_) => {
-                    println_err!(
-                        "Woops! The length option must be a valid number, for instance \
-                                  8 or 16."
-                    );
-                    return None;
-                }
+    pub fn new(alnum: bool, password_len: Option<usize>) -> PasswordSpec {
+        PasswordSpec {
+            alnum: alnum,
+            len: password_len.unwrap_or(32),
+        }
+    }
+
+    pub fn generate_hard_password(&self) -> IoResult<SafeString> {
+        loop {
+            let password = generate_password(self.alnum, self.len)?;
+            if password_is_hard(password.as_ref(), self.alnum) {
+                return Ok(password);
             }
         }
-        Some(PasswordSpec {
-            alnum: alnum,
-            len: password_len,
-        })
+    }
+}
+
+pub fn check_password_len(opt: Option<usize>) -> Option<usize> {
+    match opt {
+        Some(len) => {
+            // We want passwords to contain at least one uppercase letter, one lowercase
+            // letter and one digit. So we need at least 4 characters for each password.
+            // This checks makes sure we don't run into an infinite loop trying to generate
+            // a password of length < 4 with 4 different kinds of characters (uppercase,
+            // lowercase, numeric, punctuation).
+            if len < 4 {
+                println_err!("Woops! The length of the password must be at least 4. This");
+                println_err!("allows us to make sure your password is secure.");
+                None
+            } else {
+                Some(len)
+            }
+        }
+        None => {
+            println_err!("Woops! The length option must be a valid number, for instance 8 or 16.");
+            None
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::PasswordSpec;
+
+    #[test]
+    fn default_password_size_is_32() {
+        assert_eq!(
+            PasswordSpec::new(false, None)
+                .generate_hard_password()
+                .unwrap()
+                .len(),
+            32
+        );
+        assert_eq!(
+            PasswordSpec::new(false, Some(16))
+                .generate_hard_password()
+                .unwrap()
+                .len(),
+            16
+        );
     }
 }

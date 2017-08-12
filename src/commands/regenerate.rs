@@ -16,7 +16,7 @@ use getopts;
 use ffi;
 use list;
 use password;
-use generate::{PasswordSpec, generate_hard_password};
+use generate::{PasswordSpec, check_password_len};
 use clip;
 use std::io::Write;
 
@@ -57,23 +57,21 @@ pub fn callback_exec(
     ).ok_or(1)?
         .clone();
 
-    let password_spec = PasswordSpec::from_matches(matches);
+    let pwspec = PasswordSpec::new(
+        matches.opt_present("alnum"),
+        matches.opt_str("length").and_then(|len| {
+            check_password_len(len.parse::<usize>().ok())
+        }),
+    );
 
-    let password_as_string = match password_spec {
-        None => {
+    let password_as_string = match pwspec.generate_hard_password() {
+        Ok(password_as_string) => password_as_string,
+        Err(io_err) => {
+            println_stderr!(
+                "Woops, I could not generate the password (reason: {:?}).",
+                io_err
+            );
             return Err(1);
-        }
-        Some(spec) => {
-            match generate_hard_password(spec.alnum, spec.len) {
-                Ok(password_as_string) => password_as_string,
-                Err(io_err) => {
-                    println_stderr!(
-                        "Woops, I could not generate the password (reason: {:?}).",
-                        io_err
-                    );
-                    return Err(1);
-                }
-            }
         }
     };
 

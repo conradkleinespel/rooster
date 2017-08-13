@@ -27,11 +27,7 @@ pub enum OutputStream {
     Stderr,
 }
 
-pub fn print_list_of_passwords(
-    passwords: &Vec<&Password>,
-    with_numbers: bool,
-    output_stream: OutputStream,
-) {
+fn get_list_of_passwords(passwords: &Vec<&Password>, with_numbers: bool) -> Vec<String> {
     // Find the app name column length
     let longest_app_name = passwords.iter().fold(0, |acc, p| if p.name.len() > acc {
         p.name.len()
@@ -39,31 +35,59 @@ pub fn print_list_of_passwords(
         acc
     });
 
+    // Find the username column length
+    let longest_username = passwords.iter().fold(
+        0,
+        |acc, p| if p.username.len() > acc {
+            p.username.len()
+        } else {
+            acc
+        },
+    );
+
     // Find the number column length
     let i_width = ((passwords.len() as f64).log10() + 1 as f64).floor() as usize;
+
+    let mut list = Vec::new();
 
     for (i, p) in passwords.iter().enumerate() {
         let s = match with_numbers {
             WITH_NUMBERS => {
                 format!(
-                    "{:i_width$} {:app_name_width$} {:30}",
+                    "{:i_width$} {:app_name_width$} {:username_width$}",
                     i + 1,
                     p.name,
                     p.username,
                     i_width = i_width,
-                    app_name_width = longest_app_name
+                    app_name_width = longest_app_name,
+                    username_width = longest_username,
                 )
             }
             WITHOUT_NUMBERS => {
                 format!(
-                    "{:app_name_width$} {:30}",
+                    "{:app_name_width$} {:username_width$}",
                     p.name,
                     p.username,
-                    app_name_width = longest_app_name
+                    app_name_width = longest_app_name,
+                    username_width = longest_username,
                 )
             }
         };
 
+        list.push(s);
+    }
+
+    list
+}
+
+pub fn print_list_of_passwords(
+    passwords: &Vec<&Password>,
+    with_numbers: bool,
+    output_stream: OutputStream,
+) {
+    let list = get_list_of_passwords(passwords, with_numbers);
+
+    for s in list {
         match output_stream {
             OutputStream::Stdout => println!("{}", s),
             OutputStream::Stderr => println_stderr!("{}", s),
@@ -152,4 +176,86 @@ pub fn search_and_choose_password<'a>(
 
     let index = choose_password_in_list(&passwords, with_numbers, prompt);
     Some(passwords[index])
+}
+
+#[cfg(test)]
+mod test {
+    use super::get_list_of_passwords;
+    use list::{WITH_NUMBERS, WITHOUT_NUMBERS};
+    use password::v2::Password;
+    use safe_string::SafeString;
+
+    // Creates a list of at least two passwords, and more if specified
+    fn get_passwords(mut additional: i32) -> Vec<Password> {
+        let google = Password::new(
+            format!("google"),
+            format!("short un"),
+            SafeString::new(format!("xxxx")),
+        );
+
+        let mut list = vec![
+            Password::new(
+                format!("youtube.com"),
+                format!("that long username"),
+                SafeString::new(format!("xxxx"))
+            ),
+            google.clone(),
+        ];
+
+        while additional > 0 {
+            list.push(google.clone());
+            additional -= 1;
+        }
+
+        list
+    }
+
+    #[test]
+    fn password_list_has_right_format_with_numbers() {
+        // With 2 passwords (number width 1)
+        let passwords = get_passwords(0);
+        let list = get_list_of_passwords(&passwords.iter().collect(), WITH_NUMBERS);
+
+        assert_eq!(
+            list,
+            &[
+                "1 youtube.com that long username",
+                "2 google      short un          ",
+            ]
+        );
+
+        // Now with 10 passwords (number width 2)
+        let passwords = get_passwords(8);
+        let list = get_list_of_passwords(&passwords.iter().collect(), WITH_NUMBERS);
+
+        assert_eq!(
+            list,
+            &[
+                " 1 youtube.com that long username",
+                " 2 google      short un          ",
+                " 3 google      short un          ",
+                " 4 google      short un          ",
+                " 5 google      short un          ",
+                " 6 google      short un          ",
+                " 7 google      short un          ",
+                " 8 google      short un          ",
+                " 9 google      short un          ",
+                "10 google      short un          ",
+            ]
+        );
+    }
+
+    #[test]
+    fn password_list_has_right_format_without_numbers() {
+        let passwords = get_passwords(0);
+        let list = get_list_of_passwords(&passwords.iter().collect(), WITHOUT_NUMBERS);
+
+        assert_eq!(
+            list,
+            &[
+                "youtube.com that long username",
+                "google      short un          ",
+            ]
+        );
+    }
 }

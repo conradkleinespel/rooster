@@ -95,7 +95,7 @@ pub fn check_password_len(opt: Option<usize>) -> Option<usize> {
 
 #[cfg(test)]
 mod test {
-    use super::PasswordSpec;
+    use generate::PasswordSpec;
 
     #[test]
     fn default_password_size_is_32() {

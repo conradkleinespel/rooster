@@ -25,7 +25,6 @@ pub struct SafeString {
 
 struct StringVisitor;
 
-
 impl<'de> Visitor<'de> for StringVisitor {
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         formatter.write_str("a string")
@@ -84,9 +83,9 @@ impl<'de> Deserialize<'de> for SafeString {
 
 #[cfg(test)]
 mod test {
-    use super::super::serde_json;
-    use super::SafeString;
-    use super::super::serde_json::Error;
+    use safe_string::SafeString;
+    use serde_json;
+    use serde_json::Error;
 
     #[test]
     fn safe_string_serialization() {
@@ -97,10 +96,12 @@ mod test {
             Err(_) => panic!("Serialization failed, somehow"),
         }
     }
+
     #[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
     pub struct TestStruct {
         password: SafeString,
     }
+
     #[test]
     fn safe_string_within_struct_serialization() {
         let ts = TestStruct { password: SafeString { inner: String::from("blabla") } };

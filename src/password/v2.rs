@@ -66,6 +66,11 @@ const SCRYPT_PARAM_LOG2_N: u8 = 12;
 const SCRYPT_PARAM_R: u32 = 8;
 const SCRYPT_PARAM_P: u32 = 1;
 
+/// Returns the current default scrypt parameters
+fn get_default_scrypt_params() -> scrypt::ScryptParams {
+    scrypt::ScryptParams::new(SCRYPT_PARAM_LOG2_N, SCRYPT_PARAM_R, SCRYPT_PARAM_P)
+}
+
 /// The version of this lib
 const VERSION: u32 = 2;
 
@@ -141,7 +146,6 @@ fn digest(
     Ok(digest)
 }
 
-
 /// The format of the encrypted JSON content in the password file v1.
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Schema {
@@ -198,12 +202,13 @@ pub struct PasswordStore {
 /// - encrypted blob:  variable length
 impl PasswordStore {
     pub fn new(master_password: SafeString) -> IoResult<PasswordStore> {
+        // TODO: move this elsewhere so "get_default_scrypt_params"
         let salt = generate_random_salt()?;
-
-        let scrypt_params =
-            scrypt::ScryptParams::new(SCRYPT_PARAM_LOG2_N, SCRYPT_PARAM_R, SCRYPT_PARAM_P);
-
-        let key = generate_encryption_key(scrypt_params, master_password.deref(), salt);
+        let key = generate_encryption_key(
+            get_default_scrypt_params(),
+            master_password.deref(),
+            salt,
+        );
 
         Ok(PasswordStore {
             key: key,
@@ -494,5 +499,33 @@ impl PasswordStore {
         let scrypt_params =
             scrypt::ScryptParams::new(self.scrypt_log2_n, self.scrypt_r, self.scrypt_p);
         self.key = generate_encryption_key(scrypt_params, master_password, self.salt);
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::get_default_scrypt_params;
+    use password::v2::{generate_encryption_key, generate_random_iv, generate_random_salt};
+
+    #[test]
+    fn test_generate_random_iv_has_right_length() {
+        assert_eq!(generate_random_iv().unwrap().len(), 16);
+    }
+
+    #[test]
+    fn test_generate_random_salt_has_right_length() {
+        assert_eq!(generate_random_salt().unwrap().len(), 32);
+    }
+
+    #[test]
+    fn test_generate_encryption_key_returns_256_bits_key() {
+        assert_eq!(
+            generate_encryption_key(
+                get_default_scrypt_params(),
+                "hello world",
+                generate_random_salt().unwrap()
+            ).len(),
+            32
+        );
     }
 }

@@ -17,6 +17,7 @@ use std::ops::Drop;
 use std::ops::Deref;
 use serde::ser::{Serialize, Serializer};
 use serde::de::{Deserialize, Deserializer, Visitor, Error};
+use std::convert::Into;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SafeString {
@@ -58,6 +59,18 @@ impl Deref for SafeString {
 
     fn deref(&self) -> &str {
         self.inner.deref()
+    }
+}
+
+impl Into<SafeString> for String {
+    fn into(self) -> SafeString {
+        SafeString::new(self)
+    }
+}
+
+impl<'a> Into<SafeString> for &'a str {
+    fn into(self) -> SafeString {
+        self.to_string().into()
     }
 }
 

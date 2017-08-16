@@ -204,11 +204,8 @@ impl PasswordStore {
     pub fn new(master_password: SafeString) -> IoResult<PasswordStore> {
         // TODO: move this elsewhere so "get_default_scrypt_params"
         let salt = generate_random_salt()?;
-        let key = generate_encryption_key(
-            get_default_scrypt_params(),
-            master_password.deref(),
-            salt,
-        );
+        let key =
+            generate_encryption_key(get_default_scrypt_params(), master_password.deref(), salt);
 
         Ok(PasswordStore {
             key: key,
@@ -505,7 +502,8 @@ impl PasswordStore {
 #[cfg(test)]
 mod test {
     use super::get_default_scrypt_params;
-    use password::v2::{generate_encryption_key, generate_random_iv, generate_random_salt};
+    use password::v2::{PasswordStore, Password, generate_encryption_key, generate_random_iv,
+                       generate_random_salt};
 
     #[test]
     fn test_generate_random_iv_has_right_length() {
@@ -523,9 +521,30 @@ mod test {
             generate_encryption_key(
                 get_default_scrypt_params(),
                 "hello world",
-                generate_random_salt().unwrap()
+                generate_random_salt().unwrap(),
             ).len(),
             32
         );
+    }
+
+    #[test]
+    fn test_create_password_store() {
+        let mut store = PasswordStore::new("****".into()).unwrap();
+
+        assert!(store.add_password(Password::new("name".into(), "username".into(), "password".into())).is_ok());
+
+        // need a wrap around the immutable borrow so the borrow checker is happy
+        {
+            // only the 1 password is here
+            let passwords = store.get_all_passwords();
+            assert_eq!(passwords.len(), 1);
+
+            // is had the right information
+            let p = passwords[0];
+            assert_eq!(p.name, "name");
+            assert_eq!(p.username, "username");
+            assert_eq!(p.password, "password".into());
+            assert_eq!(p.updated_at, p.created_at);
+        }
     }
 }

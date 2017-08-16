@@ -546,5 +546,8 @@ mod test {
             assert_eq!(p.password, "password".into());
             assert_eq!(p.updated_at, p.created_at);
         }
+
+        // cant add two passwords with same app name
+        assert!(store.add_password(Password::new("name".into(), "username".into(), "password".into())).is_err());
     }
 }

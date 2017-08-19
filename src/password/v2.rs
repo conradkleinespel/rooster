@@ -505,6 +505,7 @@ impl PasswordStore {
 #[cfg(test)]
 mod test {
     use super::get_default_scrypt_params;
+    use password::PasswordError;
     use password::v2::{PasswordStore, Password, generate_encryption_key, generate_random_iv,
                        generate_random_salt};
 
@@ -561,11 +562,10 @@ mod test {
         }
 
         // cant add two passwords with same app name
-        assert!(
-            store
-                .add_password(Password::new("name", "username", "password"))
-                .is_err()
-        );
+        match store.add_password(Password::new("name", "username", "password")) {
+            Err(PasswordError::AppExistsError) => {}
+            _ => panic!(),
+        }
     }
 
     #[test]

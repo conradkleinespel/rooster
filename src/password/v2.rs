@@ -158,7 +158,7 @@ impl Schema {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Password {
     pub name: String,
     pub username: String,
@@ -168,12 +168,16 @@ pub struct Password {
 }
 
 impl Password {
-    pub fn new(name: String, username: String, password: SafeString) -> Password {
+    pub fn new<IS1: Into<String>, IS2: Into<String>, ISS: Into<SafeString>>(
+        name: IS1,
+        username: IS2,
+        password: ISS,
+    ) -> Password {
         let timestamp = ffi::time();
         Password {
-            name: name,
-            username: username,
-            password: password,
+            name: name.into(),
+            username: username.into(),
+            password: password.into(),
             created_at: timestamp,
             updated_at: timestamp,
         }
@@ -201,7 +205,7 @@ pub struct PasswordStore {
 /// - signature:       512 bits HMAC-SHA512
 /// - encrypted blob:  variable length
 impl PasswordStore {
-    pub fn new(master_password: SafeString) -> IoResult<PasswordStore> {
+    pub fn new<D: Deref<Target = str>>(master_password: D) -> IoResult<PasswordStore> {
         // TODO: move this elsewhere so "get_default_scrypt_params"
         let salt = generate_random_salt()?;
         let key =
@@ -529,9 +533,19 @@ mod test {
 
     #[test]
     fn test_create_password_store() {
-        let mut store = PasswordStore::new("****".into()).unwrap();
+        let store = PasswordStore::new("****").unwrap();
+        assert_eq!(store.get_all_passwords().len(), 0);
+    }
 
-        assert!(store.add_password(Password::new("name".into(), "username".into(), "password".into())).is_ok());
+    #[test]
+    fn test_add_password() {
+        let mut store = PasswordStore::new("****").unwrap();
+
+        assert!(
+            store
+                .add_password(Password::new("name", "username", "password"))
+                .is_ok()
+        );
 
         // need a wrap around the immutable borrow so the borrow checker is happy
         {
@@ -548,6 +562,44 @@ mod test {
         }
 
         // cant add two passwords with same app name
-        assert!(store.add_password(Password::new("name".into(), "username".into(), "password".into())).is_err());
+        assert!(
+            store
+                .add_password(Password::new("name", "username", "password"))
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn test_change_password() {
+        let mut store = PasswordStore::new("****").unwrap();
+
+        assert!(
+            store
+                .add_password(Password::new("name", "username", "password"))
+                .is_ok()
+        );
+        assert_eq!(
+            store
+                .change_password("name", &|p| {
+                    // change app name and password, keep username
+                    Password::new("newname", p.username, "newpassword")
+                })
+                .unwrap(),
+            Password::new("newname", "username", "newpassword")
+        );
+        assert_eq!(store.get_all_passwords().len(), 1);
+        assert_eq!(store.get_all_passwords()[0].name, "newname");
+        assert_eq!(store.get_all_passwords()[0].username, "username");
+        assert_eq!(store.get_all_passwords()[0].password, "newpassword".into());
+
+        // case insensitive works too
+        assert_eq!(
+            store.change_password("newname", &|p| p).unwrap(),
+            Password::new("newname", "username", "newpassword")
+        );
+        assert_eq!(store.get_all_passwords().len(), 1);
+        assert_eq!(store.get_all_passwords()[0].name, "newname");
+        assert_eq!(store.get_all_passwords()[0].username, "username");
+        assert_eq!(store.get_all_passwords()[0].password, "newpassword".into());
     }
 }

@@ -602,4 +602,35 @@ mod test {
         assert_eq!(store.get_all_passwords()[0].username, "username");
         assert_eq!(store.get_all_passwords()[0].password, "newpassword".into());
     }
+
+    #[test]
+    fn test_delete_password() {
+        let mut store = PasswordStore::new("****").unwrap();
+
+        assert!(
+            store
+                .add_password(Password::new("name1", "username", "password"))
+                .is_ok()
+        );
+        assert!(
+            store
+                .add_password(Password::new("name2", "username", "password"))
+                .is_ok()
+        );
+        assert_eq!(store.get_all_passwords().len(), 2);
+
+        assert_eq!(
+            store.delete_password("name1").unwrap(),
+            Password::new("name1", "username", "password")
+        );
+        assert!(store.get_password("name1").is_none());
+        assert_eq!(store.get_all_passwords().len(), 1);
+        // case insensitive works too
+        assert_eq!(
+            store.delete_password("NAME2").unwrap(),
+            Password::new("name2", "username", "password")
+        );
+        assert!(store.get_password("name2").is_none());
+        assert_eq!(store.get_all_passwords().len(), 0);
+    }
 }

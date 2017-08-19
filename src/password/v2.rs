@@ -21,8 +21,7 @@ use byteorder::{ReadBytesExt, WriteBytesExt, BigEndian};
 use serde_json;
 use safe_string::SafeString;
 use safe_vec::SafeVec;
-
-use super::PasswordError;
+use password::PasswordError;
 use serde_json::Error;
 use std::io::{Seek, SeekFrom, Result as IoResult, Error as IoError, ErrorKind as IoErrorKind,
               Read, Write, Cursor};
@@ -632,5 +631,25 @@ mod test {
         );
         assert!(store.get_password("name2").is_none());
         assert_eq!(store.get_all_passwords().len(), 0);
+    }
+
+    #[test]
+    fn test_get_password() {
+        let mut store = PasswordStore::new("****").unwrap();
+
+        assert_eq!(store.get_password("name"), None);
+        assert!(
+            store
+                .add_password(Password::new("name", "username", "password"))
+                .is_ok()
+        );
+        assert_eq!(
+            store.get_password("name").unwrap(),
+            Password::new("name", "username", "password")
+        );
+        assert_eq!(
+            store.get_password("NaMe").unwrap(),
+            Password::new("name", "username", "password")
+        );
     }
 }

@@ -27,16 +27,28 @@ pub fn callback_help() {
     println!("    rooster import dump.json");
 }
 
-pub fn callback_exec(_matches: &getopts::Matches, store: &mut PasswordStore) -> Result<(), i32> {
+pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
+    if matches.free.len() < 2 {
+        println_err!("Woops, seems like the file path is missing here. For help, try:");
+        println_err!("    rooster import -h");
+        return Err(1);
+    }
+
+    Ok(())
+}
+
+pub fn callback_exec(matches: &getopts::Matches, store: &mut PasswordStore) -> Result<(), i32> {
+    check_args(matches)?;
+
     let imported_pwds: Vec<Password> = {
-        let path_str = &_matches.free[1];
+        let path_str = &matches.free[1];
         let dump_file = File::open(path_str).map_err(|err|{
-            println_stderr!("Uh oh, could not open the file (reason: {:?})", err);
+            println_stderr!("Uh oh, could not open the file (reason: {})", err);
             1
         })?;
         serde_json::from_reader(&dump_file).map_err(|json_err| {
             println_stderr!(
-                "Woops, I could not decode the passwords from JSON (reason: {:?}).",
+                "Woops, I could not import the passwords from JSON (reason: {}).",
                 json_err,
             );
             1
@@ -68,9 +80,9 @@ pub fn callback_exec(_matches: &getopts::Matches, store: &mut PasswordStore) -> 
     if added == 0 {
         println_stderr!("Apparently, I could not find any new password :(");
     } else if added == 1 {
-        println_ok!("Imported {} brand new password into the store!", added);
+        println_ok!("Imported {} brand new password into the Rooster file!", added);
     } else {
-        println_ok!("Imported {} brand new passwords into the store!", added);
+        println_ok!("Imported {} brand new passwords into the Rooster file!", added);
     }
 
     Ok(())

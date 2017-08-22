@@ -108,6 +108,12 @@ static COMMANDS: &'static [Command] = &[
         callback_without_store: None,
     },
     Command {
+        name: "import",
+        callback_exec: Some(commands::import::callback_exec),
+        callback_help: commands::import::callback_help,
+        callback_without_store: None,
+    },
+    Command {
         name: "export",
         callback_exec: Some(commands::export::callback_exec),
         callback_help: commands::export::callback_help,
@@ -568,6 +574,7 @@ fn usage(password_file: &str) {
     println!("    rename                     Rename the app for a password");
     println!("    transfer                   Change the username for a password");
     println!("    list                       List all apps and usernames");
+    println!("    import                     Load all your raw password data from JSON file");
     println!("    export                     Dump all your raw password data in JSON");
     println!("    set-master-password        Set your master password");
     println!("    uninstall                  Show instructions to uninstall Rooster");

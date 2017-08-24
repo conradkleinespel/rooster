@@ -127,5 +127,17 @@ mod test {
                 _ => panic!()
             }
         }
+
+        // At least one not alnum
+        let ps = PasswordSpec::new(false, None);
+        let pw = ps.generate_hard_password().unwrap();
+        let mut ok = false;
+        for c in pw.deref().chars() {
+            match c {
+                'a'...'z' | 'A'...'Z' | '0'...'9' => {},
+                _ => { ok = true }
+            }
+        }
+        assert!(ok);
     }
 }

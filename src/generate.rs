@@ -95,10 +95,11 @@ pub fn check_password_len(opt: Option<usize>) -> Option<usize> {
 
 #[cfg(test)]
 mod test {
+    use std::ops::Deref;
     use generate::PasswordSpec;
 
     #[test]
-    fn default_password_size_is_32() {
+    fn test_default_password_size_is_32() {
         assert_eq!(
             PasswordSpec::new(false, None)
                 .generate_hard_password()
@@ -113,5 +114,18 @@ mod test {
                 .len(),
             16
         );
+    }
+
+    #[test]
+    fn test_generate_password_alnum() {
+        // All alnum
+        let ps = PasswordSpec::new(true, None);
+        let pw = ps.generate_hard_password().unwrap();
+        for c in pw.deref().chars() {
+            match c {
+                'a'...'z' | 'A'...'Z' | '0'...'9' => {},
+                _ => panic!()
+            }
+        }
     }
 }

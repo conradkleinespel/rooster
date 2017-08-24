@@ -652,4 +652,17 @@ mod test {
             Password::new("name", "username", "password")
         );
     }
+
+    #[test]
+    fn test_has_password() {
+        let mut store = PasswordStore::new("****").unwrap();
+
+        assert!(!store.has_password("name"));
+        assert!(
+            store
+                .add_password(Password::new("name", "username", "password"))
+                .is_ok()
+        );
+        assert!(store.has_password("name"));
+    }
 }

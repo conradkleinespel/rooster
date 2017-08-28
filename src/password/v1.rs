@@ -128,3 +128,14 @@ pub fn get_all_passwords(
 
     Ok(passwords)
 }
+
+#[cfg(test)]
+mod test {
+    use super::generate_encryption_key;
+    use std::ops::Deref;
+
+    #[test]
+    fn test_generate_encryption_key_is_256_bits() {
+        assert!(generate_encryption_key("test").deref().len() == (256 / 8));
+    }
+}

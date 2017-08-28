@@ -22,7 +22,3 @@ quale = "1.0"
 shell-escape = "0.1"
 rprompt = "1.0"
 rpassword = "1.0"
-
-[[bin]]
-name = "rooster"
-path = "src/main-rooster.rs"

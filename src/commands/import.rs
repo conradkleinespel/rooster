@@ -42,7 +42,7 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut PasswordStore) -> R
 
     let imported_pwds: Vec<Password> = {
         let path_str = &matches.free[1];
-        let dump_file = File::open(path_str).map_err(|err|{
+        let dump_file = File::open(path_str).map_err(|err| {
             println_stderr!("Uh oh, could not open the file (reason: {})", err);
             1
         })?;
@@ -80,9 +80,15 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut PasswordStore) -> R
     if added == 0 {
         println_stderr!("Apparently, I could not find any new password :(");
     } else if added == 1 {
-        println_ok!("Imported {} brand new password into the Rooster file!", added);
+        println_ok!(
+            "Imported {} brand new password into the Rooster file!",
+            added
+        );
     } else {
-        println_ok!("Imported {} brand new passwords into the Rooster file!", added);
+        println_ok!(
+            "Imported {} brand new passwords into the Rooster file!",
+            added
+        );
     }
 
     Ok(())

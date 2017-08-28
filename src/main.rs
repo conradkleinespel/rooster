@@ -160,6 +160,7 @@ fn command_from_name(name: &str) -> Option<&'static Command> {
     None
 }
 
+#[cfg(test)]
 mod test {
     use super::command_from_name;
 

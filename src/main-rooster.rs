@@ -160,6 +160,21 @@ fn command_from_name(name: &str) -> Option<&'static Command> {
     None
 }
 
+mod test {
+    use super::command_from_name;
+
+    #[test]
+    fn test_command_from_name_returns_none_if_not_exists() {
+        assert!(command_from_name("haha").is_none());
+    }
+
+    #[test]
+    fn test_command_from_name_returns_some_if_exists() {
+        assert!(command_from_name("get").is_some());
+    }
+}
+
+
 fn open_password_file(filename: &str, create: bool) -> IoResult<File> {
     let mut options = std::fs::OpenOptions::new();
     options.read(true);

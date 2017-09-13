@@ -4,7 +4,7 @@
 docker volume rm rooster >& /dev/null
 docker volume create rooster >& /dev/null
 
-# don't create the file
+# create the file
 printf 'y\nxxxx\n' | docker run --rm -i -v rooster:/home/rooster rooster list || exit 1 
 
 # test that the file is there

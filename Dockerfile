@@ -10,7 +10,7 @@ RUN cd /var/rooster && cargo build --release
 FROM alpine:latest
 
 # install runtime dependencies
-RUN apk add --no-cache xclip libxmu libx11 rust-stdlib
+RUN apk add --no-cache xclip libxmu libx11 rust-stdlib jq
 
 # run as non-root
 RUN adduser -S -u 1000 rooster

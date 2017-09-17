@@ -7,13 +7,13 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 cd $DIR
 
-docker build -t rooster .
+#docker build -t rooster .
 
-chmod +x tests
+chmod +x tests/*.sh
 
 for testfile in `ls tests/*.sh`; do
     echo $testfile
-    ./$testfile
+    ./$testfile || exit 1
 done
 
 cd -

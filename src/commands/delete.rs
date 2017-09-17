@@ -24,7 +24,7 @@ pub fn callback_help() {
     println!("");
     println!("Examples:");
     println!("    rooster delete youtube");
-    println!("    rooster delete ytb");
+    println!("    rooster delete ytb     # fuzzy-searching works too");
 }
 
 pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {

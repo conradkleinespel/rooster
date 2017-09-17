@@ -23,9 +23,12 @@ pub fn callback_help() {
     println!("    rooster get -h");
     println!("    rooster get <query>");
     println!("");
+    println!("Options:");
+    println!("    -s, --show        Show the password instead of copying it to the clipboard");
+    println!("");
     println!("Examples:");
     println!("    rooster get youtube");
-    println!("    rooster get ytb");
+    println!("    rooster get ytb     # fuzzy-searching works too");
 }
 
 pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {

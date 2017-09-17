@@ -25,7 +25,7 @@ pub fn callback_help() {
     println!("");
     println!("Examples:");
     println!("    rooster transfer dailymotion new@example.com");
-    println!("    rooster transfer dm new@example.com");
+    println!("    rooster transfer dm new@example.com          # fuzzy-searching works too");
 }
 
 pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {

@@ -575,12 +575,9 @@ fn usage(password_file: &str) {
     println!();
     println!("Options:");
     println!("    -h, --help        Display a help message");
-    println!("    -v, --version     Display the version of Rooster you are using");
-    println!("    -a, --alnum       Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords");
-    println!("    -l, --length      Set a custom length for the generated password, default is 32");
-    println!("    -s, --show        Show the password instead of copying it to the clipboard");
+    println!("    -V, --version     Display the version of Rooster you are using");
     println!();
-    println!("Commands for everyday use:");
+    println!("Commands:");
     println!("    add                        Add a new password manually");
     println!("    change                     Change a password manually");
     println!("    delete                     Delete a password");
@@ -594,13 +591,6 @@ fn usage(password_file: &str) {
     println!("    export                     Dump all your raw password data in JSON");
     println!("    set-master-password        Set your master password");
     println!("    uninstall                  Show instructions to uninstall Rooster");
-    println!("");
-    println!("Some commands (change, delete, regenerate, get, rename, transfer)");
-    println!("support fuzzy search of passwords:");
-    println!("    rooster get google");
-    println!("    rooster get ggl");
-    println!("");
-    println!("If multiple passwords match your search, you will be asked to choose.")
 }
 
 fn main() {
@@ -609,7 +599,7 @@ fn main() {
     let mut opts = Options::new();
     opts.optflag("h", "help", "Display a help message");
     opts.optflag(
-        "v",
+        "V",
         "version",
         "Display the version of Rooster you are using",
     );

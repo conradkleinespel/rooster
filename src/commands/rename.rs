@@ -25,7 +25,7 @@ pub fn callback_help() {
     println!("");
     println!("Examples:");
     println!("    rooster rename youtube Dailymotion");
-    println!("    rooster rename ytb Dailymotion");
+    println!("    rooster rename ytb Dailymotion     # fuzzy-searching works too");
 }
 
 pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {

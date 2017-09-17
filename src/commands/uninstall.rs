@@ -32,10 +32,6 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
         "    sudo rm {}",
         which("rooster").unwrap().to_string_lossy()
     );
-    println!(
-        "    sudo rm {}",
-        which("rooster-clipboard").unwrap().to_string_lossy()
-    );
 
     match get_password_file_path().ok() {
         Some(file) => {

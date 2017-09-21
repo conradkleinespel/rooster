@@ -47,7 +47,7 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
     println_stderr!("");
     println_stderr!("Rooster is a simple password manager for geeks.");
     println_stderr!("");
-    println_stderr!("Let's get started! Type any key to continue.");
+    println_stderr!("Let's get started! Type ENTER to continue.");
 
     let mut dummy = String::new();
     ::std::io::stdin().read_line(&mut dummy).unwrap();
@@ -108,12 +108,14 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
     println_stderr!("");
     println_stderr!("You passwords will be saved in:");
     println_stderr!("    {}", filename_as_string);
-    println_stderr!("");
     if !filename_from_env {
+        println_stderr!("");
         println_stderr!("If you want to move this file, set the $ROOSTER_FILE \
             environment variable to the new path. For instance:");
         println_stderr!("    export ROOSTER_FILE=path/to/passwords.rooster");
     }
+    println_stderr!("");
+    println_stderr!("Type `rooster --help` to see what Rooster can do for you.");
 
     Ok(())
 }

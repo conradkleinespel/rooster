@@ -51,6 +51,8 @@ Rooster has 2 sets of tests:
 - code level tests which you can run with `cargo test`
 - integration tests which you can run with `./integration-tests.sh`
 
+You'll need to install [Docker](https://www.docker.com/) to run integration tests.
+
 ## Contributors
 
 We welcome contribution from everyone. Feel free to open an issue or a pull request at any time.

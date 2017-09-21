@@ -5,7 +5,10 @@ docker volume rm rooster >& /dev/null
 docker volume create rooster >& /dev/null
 
 # create the file
-printf 'y\nxxxx\n' | docker run --rm -i -v rooster:/home/rooster rooster generate YouTube yt@example.com || exit 1
+printf '\nxxxx\n' | docker run --rm -i -v rooster:/home/rooster rooster init || exit 1
+
+# generate a password
+printf 'xxxx\n' | docker run --rm -i -v rooster:/home/rooster rooster generate -s YouTube test@example.com || exit 1
 
 # check that password is listed
 printf 'xxxx\n' | docker run --rm -i -v rooster:/home/rooster rooster list | grep YouTube || exit 1

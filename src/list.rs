@@ -163,7 +163,7 @@ pub fn search_and_choose_password<'a>(
 ) -> Option<&'a Password> {
     let passwords = store.search_passwords(query);
     if passwords.len() == 0 {
-        println_stderr!("I can't find any passwords for \"{}\"", query);
+        println_err!("Woops, I can't find any passwords for \"{}\".", query);
         return None;
     }
 

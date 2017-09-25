@@ -54,8 +54,13 @@ pub fn callback_exec(
     ).ok_or(1)?
         .clone();
 
-    // This should always unwrap successfully, since the password is guaranteed to exist.
-    store.delete_password(&password.name).unwrap();
+    if let Err(err) = store.delete_password(&password.name) {
+        println_err!(
+            "Woops, I couldn't delete this password (reason: {:?}).",
+            err
+        );
+        return Err(1);
+    }
 
     println_ok!("Done! I've deleted the password for \"{}\".", password.name);
 

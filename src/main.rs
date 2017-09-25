@@ -59,7 +59,7 @@ const ROOSTER_FILE_DEFAULT: &'static str = ".passwords.rooster";
 struct Command {
     name: &'static str,
     callback_exec:
-    Option<fn(&getopts::Matches, &mut password::v2::PasswordStore) -> Result<(), i32>>,
+        Option<fn(&getopts::Matches, &mut password::v2::PasswordStore) -> Result<(), i32>>,
     callback_help: fn(),
     callback_without_store: Option<fn(&getopts::Matches) -> Result<(), i32>>,
 }
@@ -200,8 +200,11 @@ fn get_password_store(file: &mut File) -> Result<password::v2::PasswordStore, i3
     return get_password_store_from_input_interactive(&input, 3, false).map_err(|_| 1);
 }
 
-fn get_password_store_from_input_interactive(input: &SafeVec, retries: i32, force_upgrade: bool)
-    -> Result<password::v2::PasswordStore, password::PasswordError> {
+fn get_password_store_from_input_interactive(
+    input: &SafeVec,
+    retries: i32,
+    force_upgrade: bool,
+) -> Result<password::v2::PasswordStore, password::PasswordError> {
     let master_password = match ask_master_password() {
         Ok(p) => p,
         Err(err) => {
@@ -214,8 +217,10 @@ fn get_password_store_from_input_interactive(input: &SafeVec, retries: i32, forc
     };
 
     if retries == 0 {
-        println_err!("Decryption of your Rooster file keeps \
-        failing. This is a sign that your Rooster file is probably corrupted.");
+        println_err!(
+            "Decryption of your Rooster file keeps \
+        failing. This is a sign that your Rooster file is probably corrupted."
+        );
         return Err(password::PasswordError::CorruptionLikelyError);
     }
 
@@ -228,7 +233,9 @@ fn get_password_store_from_input_interactive(input: &SafeVec, retries: i32, forc
             return Err(password::PasswordError::CorruptionError);
         }
         Err(password::PasswordError::OutdatedRoosterBinaryError) => {
-            println_err!("I could not open the Rooster file because your version of Rooster is outdated.");
+            println_err!(
+                "I could not open the Rooster file because your version of Rooster is outdated."
+            );
             println_err!("Try upgrading Rooster to the latest version.");
             return Err(password::PasswordError::OutdatedRoosterBinaryError);
         }
@@ -239,8 +246,10 @@ fn get_password_store_from_input_interactive(input: &SafeVec, retries: i32, forc
         Err(password::PasswordError::NeedUpgradeErrorFromV1) => {
             println_stderr!("Your Rooster file has version 1. You need to upgrade to version 2.");
             println_stderr!("");
-            println_stderr!("WARNING: If in doubt, it could mean you've been hacked. Only \
-            proceed if you recently upgraded your Rooster installation.");
+            println_stderr!(
+                "WARNING: If in doubt, it could mean you've been hacked. Only \
+            proceed if you recently upgraded your Rooster installation."
+            );
             println_stderr!("");
             println_stderr!("Upgrade to version 2? [y/n]");
             loop {
@@ -258,7 +267,10 @@ fn get_password_store_from_input_interactive(input: &SafeVec, retries: i32, forc
                         }
                     }
                     Err(io_err) => {
-                        println_err!("Woops, an error occured while reading your response (reason: {:?}).", io_err);
+                        println_err!(
+                            "Woops, an error occured while reading your response (reason: {:?}).",
+                            io_err
+                        );
                         return Err(password::PasswordError::Io(io_err));
                     }
                 }
@@ -270,7 +282,11 @@ fn get_password_store_from_input_interactive(input: &SafeVec, retries: i32, forc
     }
 }
 
-fn get_password_store_from_input(input: &SafeVec, master_password: &SafeString, upgrade: bool) -> Result<password::v2::PasswordStore, password::PasswordError> {
+fn get_password_store_from_input(
+    input: &SafeVec,
+    master_password: &SafeString,
+    upgrade: bool,
+) -> Result<password::v2::PasswordStore, password::PasswordError> {
     // Try to open the file as is.
     match password::v2::PasswordStore::from_input(master_password.clone(), input.clone()) {
         Ok(store) => {
@@ -310,11 +326,8 @@ fn execute_command_from_filename(
     store: &mut password::v2::PasswordStore,
 ) -> Result<(), i32> {
     // Execute the command and save the new password list
-    match command.callback_exec {
-        Some(cb) => {
-            (cb)(matches, store)?;
-        }
-        None => {}
+    if let Some(cb) = command.callback_exec {
+        (cb)(matches, store)?;
     }
 
     match store.sync(file) {
@@ -331,21 +344,20 @@ fn get_password_file_path() -> Result<(PathBuf, bool), i32> {
     // First, look for the ROOSTER_FILE environment variable.
     let rooster_file_from_env_var = env::var(ROOSTER_FILE_ENV_VAR);
     let (path, from_env) = match rooster_file_from_env_var {
-        Ok(filename) => {
-            (PathBuf::from(filename), true)
-        }
+        Ok(filename) => (PathBuf::from(filename), true),
         Err(VarError::NotPresent) => {
             // If the environment variable is not there, we'll look in the default location:
             // ~/.passwords.rooster
-            let mut file_default = PathBuf::from(
-                env::home_dir().ok_or(1)?.as_os_str().to_os_string().into_string().map_err(|_| 1)?
-            );
+            let mut file_default = PathBuf::from(env::home_dir()
+                .ok_or(1)?
+                .as_os_str()
+                .to_os_string()
+                .into_string()
+                .map_err(|_| 1)?);
             file_default.push(ROOSTER_FILE_DEFAULT);
             (file_default, false)
         }
-        Err(VarError::NotUnicode(_)) => {
-            return Err(1)
-        }
+        Err(VarError::NotUnicode(_)) => return Err(1),
     };
     Ok((path, from_env))
 }
@@ -456,16 +468,10 @@ fn main() {
         std::process::exit(0);
     }
 
-    match command.callback_without_store {
-        Some(cb) => {
-            match (cb)(&matches) {
-                Err(i) => {
-                    std::process::exit(i);
-                }
-                Ok(_) => {}
-            };
+    if let Some(cb) = command.callback_without_store {
+        if let Err(i) = (cb)(&matches) {
+            std::process::exit(i);
         }
-        None => {}
     }
 
     if command.callback_exec.is_some() {
@@ -473,7 +479,10 @@ fn main() {
         let (password_file_path, password_file_path_from_env) = match get_password_file_path() {
             Ok(path) => path,
             Err(_) => {
-                println_err!("Woops, I could not read the path to your password file. Make sure it only contains ASCII characters.");
+                println_err!(
+                    "Woops, I could not read the path to your password file. \
+                    Make sure it only contains ASCII characters."
+                );
                 std::process::exit(1);
             }
         };
@@ -484,8 +493,10 @@ fn main() {
                 println_err!("Woops, I couldn't find your password file at:");
                 println_err!("    {}", password_file_path_as_string);
                 println_err!("");
-                println_err!("Update or remove the ROOSTER_FILE environment variable \
-                and try again.");
+                println_err!(
+                    "Update or remove the ROOSTER_FILE environment variable \
+                and try again."
+                );
             } else {
                 println_title!("|---------- First time user  ---------|");
                 println_stderr!("");
@@ -493,7 +504,10 @@ fn main() {
                 println_stderr!("");
                 println_title!("|----------- Long time user ----------|");
                 println_stderr!("");
-                println_stderr!("You already have a Rooster file? Set the ROOSTER_FILE environment variable. For instance:");
+                println_stderr!(
+                    "You already have a Rooster file? Set the ROOSTER_FILE environment variable. \
+                    For instance:"
+                );
                 println_stderr!("    export ROOSTER_FILE=path/to/passwords.rooster");
             }
             std::process::exit(1);

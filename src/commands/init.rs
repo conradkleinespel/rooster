@@ -30,7 +30,10 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
     let (filename, filename_from_env) = match ::get_password_file_path() {
         Ok(path) => path,
         Err(_) => {
-            println_err!("Woops, I could not read the path to your password file. Make sure it only contains ASCII characters.");
+            println_err!(
+                "Woops, I could not read the path to your password file. Make sure it only \
+                contains ASCII characters."
+            );
             return Err(1);
         }
     };
@@ -50,20 +53,25 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
     println_stderr!("Let's get started! Type ENTER to continue.");
 
     let mut dummy = String::new();
-    ::std::io::stdin().read_line(&mut dummy).unwrap();
+    if let Err(err) = ::std::io::stdin().read_line(&mut dummy) {
+        println_err!("Woops, I didn't see the ENTER key (reason: {:?}).", err);
+        return Err(1);
+    }
 
     println_title!("|---------- Set Master Password ---------|");
     println_stderr!("");
-    println_stderr!("With Rooster, you only need to remember one password: \
-    the Master Password. It keeps all of you other passwords safe.");
+    println_stderr!(
+        "With Rooster, you only need to remember one password: \
+    the Master Password. It keeps all of you other passwords safe."
+    );
     println_stderr!("");
-    println_stderr!("The stronger it is, the better your passwords are \
-                      protected.");
+    println_stderr!(
+        "The stronger it is, the better your passwords are \
+                      protected."
+    );
     println_stderr!("");
 
-    let master_password = prompt_password_stderr(
-        "What would you like it to be? "
-    )
+    let master_password = prompt_password_stderr("What would you like it to be? ")
         .map(SafeString::new)
         .map_err(|err| {
             println_err!("Woops, I couldn't read the master passwords ({:?}).", err);
@@ -73,8 +81,11 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
     let store = match ::password::v2::PasswordStore::new(master_password) {
         Ok(store) => store,
         Err(err) => {
-            println_err!("Woops, I couldn't use the random number generator on your machine \
-            (reason: {:?}). Without it, I can't create a secure password file.", err);
+            println_err!(
+                "Woops, I couldn't use the random number generator on your machine \
+            (reason: {:?}). Without it, I can't create a secure password file.",
+                err
+            );
             return Err(1);
         }
     };
@@ -82,25 +93,29 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
     let mut file = match ::create_password_file(filename_as_string.as_str()).map_err(|_| 1) {
         Ok(file) => file,
         Err(err) => {
-            println_err!("Woops, I couldn't create a new password file (reason: {:?})", err);
+            println_err!(
+                "Woops, I couldn't create a new password file (reason: {:?})",
+                err
+            );
             return Err(1);
         }
     };
-    match store.sync(&mut file) {
-        Ok(_) => {}
-        Err(err) => {
-            match ::std::fs::remove_file(filename) {
-                Ok(_) => {},
-                Err(err) => {
-                    println_err!("Woops, I was able to create a new password file but couldn't save \
-                    it (reason: {:?}). You may want to remove this dangling file:", err);
-                    println_err!("    {}", filename_as_string);
-                    return Err(1);
-                }
-            }
-            println_err!("Woops, I couldn't create a new password file (reason: {:?}).", err);
+
+    if let Err(err) = store.sync(&mut file) {
+        if let Err(err) = ::std::fs::remove_file(filename) {
+            println_err!(
+                "Woops, I was able to create a new password file but couldn't save \
+            it (reason: {:?}). You may want to remove this dangling file:",
+                err
+            );
+            println_err!("    {}", filename_as_string);
             return Err(1);
         }
+        println_err!(
+            "Woops, I couldn't create a new password file (reason: {:?}).",
+            err
+        );
+        return Err(1);
     }
 
     println_stderr!("");
@@ -110,8 +125,10 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
     println_stderr!("    {}", filename_as_string);
     if !filename_from_env {
         println_stderr!("");
-        println_stderr!("If you want to move this file, set the $ROOSTER_FILE \
-            environment variable to the new path. For instance:");
+        println_stderr!(
+            "If you want to move this file, set the $ROOSTER_FILE \
+            environment variable to the new path. For instance:"
+        );
         println_stderr!("    export ROOSTER_FILE=path/to/passwords.rooster");
     }
     println_stderr!("");

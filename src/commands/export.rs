@@ -44,7 +44,9 @@ pub fn callback_exec(
             return Err(1);
         }
     };
+
     let passwords = SafeString::new(passwords_json);
+    // We exceptionally print to STDOUT because the export will most likely be redirected to a file
     println!("{}", passwords.deref());
     Ok(())
 }

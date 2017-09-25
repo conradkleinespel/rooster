@@ -15,7 +15,7 @@
 pub mod v1;
 pub mod v2;
 
-use std::io::{Error as IoError};
+use std::io::Error as IoError;
 use std::ops::Deref;
 use std::convert::From;
 use safe_string::SafeString;

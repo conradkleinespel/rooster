@@ -205,10 +205,9 @@ pub struct PasswordStore {
 /// - encrypted blob:  variable length
 impl PasswordStore {
     pub fn new<D: Deref<Target = str>>(master_password: D) -> IoResult<PasswordStore> {
-        // TODO: move this elsewhere so "get_default_scrypt_params"
         let salt = generate_random_salt()?;
-        let key =
-            generate_encryption_key(get_default_scrypt_params(), master_password.deref(), salt);
+        let scrypt_params = get_default_scrypt_params();
+        let key = generate_encryption_key(scrypt_params, master_password.deref(), salt);
 
         Ok(PasswordStore {
             key: key,
@@ -432,7 +431,8 @@ impl PasswordStore {
             let mut matches_query = true;
             let mut last_i = 0;
             for c in name.chars() {
-                match app_name[last_i..].find(c.to_lowercase().next().unwrap()) {
+                let c_lowercase = format!("{}", c).to_lowercase();
+                match app_name[last_i..].find(c_lowercase.as_str()) {
                     // Query chars must be present in the app name in the right order.
                     Some(ic) => {
                         last_i += ic + 1;

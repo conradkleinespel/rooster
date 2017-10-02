@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // Generated automatically from xvmc.xml by rs_client.py on Sat Oct 28 15:03:39 2017.
+=======
+// Generated automatically from xvmc.xml by rs_client.py on Mon Sep 18 15:10:59 2017.
+>>>>>>> c4c65b3... Vendoring
 // Do not edit!
 
 #![allow(unused_unsafe)]

@@ -1,0 +1,31 @@
+[package]
+name = "clipboard-win"
+version = "2.0.1"
+authors = ["Douman <douman@gmx.se>"]
+description = "Provides simple way to interact with Windows clipboard."
+license = "MIT"
+
+keywords = ["Windows", "winapi", "clipboard"]
+categories = []
+
+repository = "https://github.com/DoumanAsh/clipboard-win"
+documentation = "https://docs.rs/clipboard-win/*/x86_64-pc-windows-msvc/clipboard_win/"
+
+readme = "README.md"
+
+[package.metadata.docs.rs]
+default-target = "x86_64-pc-windows-msvc"
+
+[badges]
+appveyor = { repository = "https://github.com/DoumanAsh/clipboard-win", branch = "master", service = "github" }
+
+[target.'cfg(windows)'.dependencies]
+winapi = "^0.2.5"
+user32-sys = "^0.2.0"
+kernel32-sys = "^0.2.1"
+
+[lib]
+name = "clipboard_win"
+path = "src/lib.rs"
+test = false
+

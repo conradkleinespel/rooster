@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // Generated automatically from ge.xml by rs_client.py on Sat Oct 28 15:03:32 2017.
+=======
+// Generated automatically from ge.xml by rs_client.py on Wed Sep 20 20:27:35 2017.
+>>>>>>> c4c65b3... Vendoring
 // Do not edit!
 
 

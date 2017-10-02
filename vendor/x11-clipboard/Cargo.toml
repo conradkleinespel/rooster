@@ -1,0 +1,16 @@
+[package]
+name = "x11-clipboard"
+version = "0.1.4"
+authors = ["quininer kel <quininer@live.com>"]
+description = "x11 clipboard support for Rust."
+repository = "https://github.com/quininer/x11-clipboard"
+documentation = "https://docs.rs/x11-clipboard/"
+keywords = [ "x11", "xcb", "clipboard" ]
+license = "MIT"
+
+[badges]
+travis-ci = { repository = "quininer/x11-clipboard" }
+
+[dependencies]
+error-chain = "0.10"
+xcb = { version = "0.7", features = [ "thread" ] }

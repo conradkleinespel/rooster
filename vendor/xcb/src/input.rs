@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // Generated automatically from xinput.xml by rs_client.py on Sat Oct 28 15:03:35 2017.
+=======
+// Generated automatically from xinput.xml by rs_client.py on Wed Sep 20 20:27:33 2017.
+>>>>>>> c4c65b3... Vendoring
 // Do not edit!
 
 #![allow(unused_unsafe)]
@@ -7700,6 +7704,7 @@ impl DeviceKeyPressEvent {
     }
     /// Constructs a new DeviceKeyPressEvent
     /// `response_type` must be set to one of:
+<<<<<<< HEAD
     ///     - `DEVICE_KEY_PRESS`
     ///     - `DEVICE_KEY_RELEASE`
     ///     - `DEVICE_BUTTON_PRESS`
@@ -7707,6 +7712,15 @@ impl DeviceKeyPressEvent {
     ///     - `DEVICE_MOTION_NOTIFY`
     ///     - `PROXIMITY_IN`
     ///     - `PROXIMITY_OUT`
+=======
+    ///     - `PROXIMITY_IN`
+    ///     - `PROXIMITY_OUT`
+    ///     - `DEVICE_KEY_RELEASE`
+    ///     - `DEVICE_KEY_PRESS`
+    ///     - `DEVICE_BUTTON_PRESS`
+    ///     - `DEVICE_MOTION_NOTIFY`
+    ///     - `DEVICE_BUTTON_RELEASE`
+>>>>>>> c4c65b3... Vendoring
     pub fn new(response_type: u8,
                detail: u8,
                time: xproto::Timestamp,
@@ -7723,6 +7737,7 @@ impl DeviceKeyPressEvent {
             -> DeviceKeyPressEvent {
         unsafe {
             let raw = libc::malloc(32 as usize) as *mut xcb_input_device_key_press_event_t;
+<<<<<<< HEAD
             assert!(response_type == DEVICE_KEY_PRESS ||
                     response_type == DEVICE_KEY_RELEASE ||
                     response_type == DEVICE_BUTTON_PRESS ||
@@ -7730,6 +7745,15 @@ impl DeviceKeyPressEvent {
                     response_type == DEVICE_MOTION_NOTIFY ||
                     response_type == PROXIMITY_IN ||
                     response_type == PROXIMITY_OUT,
+=======
+            assert!(response_type == PROXIMITY_IN ||
+                    response_type == PROXIMITY_OUT ||
+                    response_type == DEVICE_KEY_RELEASE ||
+                    response_type == DEVICE_KEY_PRESS ||
+                    response_type == DEVICE_BUTTON_PRESS ||
+                    response_type == DEVICE_MOTION_NOTIFY ||
+                    response_type == DEVICE_BUTTON_RELEASE,
+>>>>>>> c4c65b3... Vendoring
                     "wrong response_type supplied to DeviceKeyPressEvent::new");
             (*raw).response_type = response_type;
             (*raw).detail = detail;
@@ -7799,8 +7823,13 @@ impl DeviceFocusInEvent {
     }
     /// Constructs a new DeviceFocusInEvent
     /// `response_type` must be set to one of:
+<<<<<<< HEAD
     ///     - `DEVICE_FOCUS_IN`
     ///     - `DEVICE_FOCUS_OUT`
+=======
+    ///     - `DEVICE_FOCUS_OUT`
+    ///     - `DEVICE_FOCUS_IN`
+>>>>>>> c4c65b3... Vendoring
     pub fn new(response_type: u8,
                detail: u8,
                time: xproto::Timestamp,
@@ -7810,8 +7839,13 @@ impl DeviceFocusInEvent {
             -> DeviceFocusInEvent {
         unsafe {
             let raw = libc::malloc(32 as usize) as *mut xcb_input_device_focus_in_event_t;
+<<<<<<< HEAD
             assert!(response_type == DEVICE_FOCUS_IN ||
                     response_type == DEVICE_FOCUS_OUT,
+=======
+            assert!(response_type == DEVICE_FOCUS_OUT ||
+                    response_type == DEVICE_FOCUS_IN,
+>>>>>>> c4c65b3... Vendoring
                     "wrong response_type supplied to DeviceFocusInEvent::new");
             (*raw).response_type = response_type;
             (*raw).detail = detail;
@@ -8618,10 +8652,17 @@ impl EnterEvent {
     }
     /// Constructs a new EnterEvent
     /// `response_type` must be set to one of:
+<<<<<<< HEAD
     ///     - `ENTER`
     ///     - `LEAVE`
     ///     - `FOCUS_IN`
     ///     - `FOCUS_OUT`
+=======
+    ///     - `FOCUS_OUT`
+    ///     - `ENTER`
+    ///     - `FOCUS_IN`
+    ///     - `LEAVE`
+>>>>>>> c4c65b3... Vendoring
     pub fn new(response_type: u8,
                deviceid: DeviceId,
                time: xproto::Timestamp,
@@ -8643,10 +8684,17 @@ impl EnterEvent {
             -> EnterEvent {
         unsafe {
             let raw = libc::malloc(32 as usize) as *mut xcb_input_enter_event_t;
+<<<<<<< HEAD
             assert!(response_type == ENTER ||
                     response_type == LEAVE ||
                     response_type == FOCUS_IN ||
                     response_type == FOCUS_OUT,
+=======
+            assert!(response_type == FOCUS_OUT ||
+                    response_type == ENTER ||
+                    response_type == FOCUS_IN ||
+                    response_type == LEAVE,
+>>>>>>> c4c65b3... Vendoring
                     "wrong response_type supplied to EnterEvent::new");
             (*raw).response_type = response_type;
             (*raw).deviceid = deviceid;
@@ -8889,8 +8937,13 @@ impl RawKeyPressEvent {
     }
     /// Constructs a new RawKeyPressEvent
     /// `response_type` must be set to one of:
+<<<<<<< HEAD
     ///     - `RAW_KEY_PRESS`
     ///     - `RAW_KEY_RELEASE`
+=======
+    ///     - `RAW_KEY_RELEASE`
+    ///     - `RAW_KEY_PRESS`
+>>>>>>> c4c65b3... Vendoring
     pub fn new(response_type: u8,
                deviceid: DeviceId,
                time: xproto::Timestamp,
@@ -8901,8 +8954,13 @@ impl RawKeyPressEvent {
             -> RawKeyPressEvent {
         unsafe {
             let raw = libc::malloc(32 as usize) as *mut xcb_input_raw_key_press_event_t;
+<<<<<<< HEAD
             assert!(response_type == RAW_KEY_PRESS ||
                     response_type == RAW_KEY_RELEASE,
+=======
+            assert!(response_type == RAW_KEY_RELEASE ||
+                    response_type == RAW_KEY_PRESS,
+>>>>>>> c4c65b3... Vendoring
                     "wrong response_type supplied to RawKeyPressEvent::new");
             (*raw).response_type = response_type;
             (*raw).deviceid = deviceid;
@@ -8964,8 +9022,13 @@ impl RawButtonPressEvent {
     /// Constructs a new RawButtonPressEvent
     /// `response_type` must be set to one of:
     ///     - `RAW_BUTTON_PRESS`
+<<<<<<< HEAD
     ///     - `RAW_BUTTON_RELEASE`
     ///     - `RAW_MOTION`
+=======
+    ///     - `RAW_MOTION`
+    ///     - `RAW_BUTTON_RELEASE`
+>>>>>>> c4c65b3... Vendoring
     pub fn new(response_type: u8,
                deviceid: DeviceId,
                time: xproto::Timestamp,
@@ -8977,8 +9040,13 @@ impl RawButtonPressEvent {
         unsafe {
             let raw = libc::malloc(32 as usize) as *mut xcb_input_raw_button_press_event_t;
             assert!(response_type == RAW_BUTTON_PRESS ||
+<<<<<<< HEAD
                     response_type == RAW_BUTTON_RELEASE ||
                     response_type == RAW_MOTION,
+=======
+                    response_type == RAW_MOTION ||
+                    response_type == RAW_BUTTON_RELEASE,
+>>>>>>> c4c65b3... Vendoring
                     "wrong response_type supplied to RawButtonPressEvent::new");
             (*raw).response_type = response_type;
             (*raw).deviceid = deviceid;
@@ -9271,9 +9339,15 @@ impl RawTouchBeginEvent {
     }
     /// Constructs a new RawTouchBeginEvent
     /// `response_type` must be set to one of:
+<<<<<<< HEAD
     ///     - `RAW_TOUCH_BEGIN`
     ///     - `RAW_TOUCH_UPDATE`
     ///     - `RAW_TOUCH_END`
+=======
+    ///     - `RAW_TOUCH_END`
+    ///     - `RAW_TOUCH_BEGIN`
+    ///     - `RAW_TOUCH_UPDATE`
+>>>>>>> c4c65b3... Vendoring
     pub fn new(response_type: u8,
                deviceid: DeviceId,
                time: xproto::Timestamp,
@@ -9284,9 +9358,15 @@ impl RawTouchBeginEvent {
             -> RawTouchBeginEvent {
         unsafe {
             let raw = libc::malloc(32 as usize) as *mut xcb_input_raw_touch_begin_event_t;
+<<<<<<< HEAD
             assert!(response_type == RAW_TOUCH_BEGIN ||
                     response_type == RAW_TOUCH_UPDATE ||
                     response_type == RAW_TOUCH_END,
+=======
+            assert!(response_type == RAW_TOUCH_END ||
+                    response_type == RAW_TOUCH_BEGIN ||
+                    response_type == RAW_TOUCH_UPDATE,
+>>>>>>> c4c65b3... Vendoring
                     "wrong response_type supplied to RawTouchBeginEvent::new");
             (*raw).response_type = response_type;
             (*raw).deviceid = deviceid;

@@ -1,0 +1,21 @@
+[package]
+name = "opengl_window"
+version = "0.1.0"
+authors = ["Remi THEBAULT <remi.thebault@gmail.com>"]
+
+[[bin]]
+name = "opengl_window"
+path = "main.rs"
+
+[dependencies.x11]
+version = "2.3"
+features = ["xlib", "glx"]
+
+[dependencies.xcb]
+version = "0.7"
+path = "../.."
+features = ["xlib_xcb", "dri2"]
+
+[dependencies]
+libc = "0.2"
+gl = "0.5.2"

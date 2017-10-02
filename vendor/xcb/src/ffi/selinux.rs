@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // Generated automatically from xselinux.xml by rs_client.py on Sat Oct 28 15:03:38 2017.
+=======
+// Generated automatically from xselinux.xml by rs_client.py on Wed Sep 20 20:27:33 2017.
+>>>>>>> c4c65b3... Vendoring
 // Do not edit!
 
 

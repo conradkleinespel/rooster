@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // Generated automatically from xproto.xml by rs_client.py on Sat Oct 28 15:03:37 2017.
+=======
+// Generated automatically from xproto.xml by rs_client.py on Mon Sep 18 15:11:06 2017.
+>>>>>>> c4c65b3... Vendoring
 // Do not edit!
 
 

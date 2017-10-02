@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // Generated automatically from xproto.xml by rs_client.py on Sat Oct 28 15:03:37 2017.
+=======
+// Generated automatically from xproto.xml by rs_client.py on Mon Sep 18 15:11:06 2017.
+>>>>>>> c4c65b3... Vendoring
 // Do not edit!
 
 #![allow(unused_unsafe)]
@@ -2129,8 +2133,13 @@ impl EnterNotifyEvent {
     }
     /// Constructs a new EnterNotifyEvent
     /// `response_type` must be set to one of:
+<<<<<<< HEAD
     ///     - `ENTER_NOTIFY`
     ///     - `LEAVE_NOTIFY`
+=======
+    ///     - `LEAVE_NOTIFY`
+    ///     - `ENTER_NOTIFY`
+>>>>>>> c4c65b3... Vendoring
     pub fn new(response_type: u8,
                detail: u8,
                time: Timestamp,
@@ -2147,8 +2156,13 @@ impl EnterNotifyEvent {
             -> EnterNotifyEvent {
         unsafe {
             let raw = libc::malloc(32 as usize) as *mut xcb_enter_notify_event_t;
+<<<<<<< HEAD
             assert!(response_type == ENTER_NOTIFY ||
                     response_type == LEAVE_NOTIFY,
+=======
+            assert!(response_type == LEAVE_NOTIFY ||
+                    response_type == ENTER_NOTIFY,
+>>>>>>> c4c65b3... Vendoring
                     "wrong response_type supplied to EnterNotifyEvent::new");
             (*raw).response_type = response_type;
             (*raw).detail = detail;

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // Generated automatically from dri3.xml by rs_client.py on Sat Oct 28 15:03:32 2017.
+=======
+// Generated automatically from dri3.xml by rs_client.py on Mon Sep 18 15:11:02 2017.
+>>>>>>> c4c65b3... Vendoring
 // Do not edit!
 
 #![allow(unused_unsafe)]

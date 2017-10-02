@@ -6,3 +6,6 @@
 
 # cargo-fmt backup files
 *.rs.bk
+
+# python cache in vendored crates
+__pycache__

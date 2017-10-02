@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // Generated automatically from res.xml by rs_client.py on Sat Oct 28 15:03:34 2017.
+=======
+// Generated automatically from res.xml by rs_client.py on Mon Sep 18 15:11:01 2017.
+>>>>>>> c4c65b3... Vendoring
 // Do not edit!
 
 #![allow(unused_unsafe)]

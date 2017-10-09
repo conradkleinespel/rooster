@@ -197,14 +197,27 @@ fn get_password_store(file: &mut File) -> Result<password::v2::PasswordStore, i3
     let mut input: SafeVec = SafeVec::new(Vec::new());
     file.read_to_end(input.inner_mut()).map_err(|_| 1)?;
 
-    return get_password_store_from_input_interactive(&input, 3, false).map_err(|_| 1);
+    return get_password_store_from_input_interactive(&input, 3, false, false).map_err(|_| 1);
 }
 
 fn get_password_store_from_input_interactive(
     input: &SafeVec,
     retries: i32,
     force_upgrade: bool,
+    retry: bool,
 ) -> Result<password::v2::PasswordStore, password::PasswordError> {
+    if retries == 0 {
+        println_err!(
+            "Decryption of your Rooster file keeps failing. \
+            Your Rooster file is probably corrupted."
+        );
+        return Err(password::PasswordError::CorruptionLikelyError);
+    }
+
+    if retry {
+        println_err!("Woops, that's not the right password. Let's try again.");
+    }
+
     let master_password = match ask_master_password() {
         Ok(p) => p,
         Err(err) => {
@@ -215,14 +228,6 @@ fn get_password_store_from_input_interactive(
             std::process::exit(1);
         }
     };
-
-    if retries == 0 {
-        println_err!(
-            "Decryption of your Rooster file keeps \
-        failing. This is a sign that your Rooster file is probably corrupted."
-        );
-        return Err(password::PasswordError::CorruptionLikelyError);
-    }
 
     match get_password_store_from_input(&input, &master_password, force_upgrade) {
         Ok(store) => {
@@ -258,7 +263,12 @@ fn get_password_store_from_input_interactive(
                     Ok(_) => {
                         if line.starts_with('y') {
                             // This time we'll try to upgrade
-                            return get_password_store_from_input_interactive(&input, retries, true);
+                            return get_password_store_from_input_interactive(
+                                &input,
+                                retries,
+                                true,
+                                false,
+                            );
                         } else if line.starts_with('n') {
                             // The user doesn't want to upgrade, that's fine
                             return Err(password::PasswordError::NoUpgradeError);
@@ -277,7 +287,7 @@ fn get_password_store_from_input_interactive(
             }
         }
         _ => {
-            return get_password_store_from_input_interactive(&input, retries - 1, false);
+            return get_password_store_from_input_interactive(&input, retries - 1, false, true);
         }
     }
 }
@@ -375,8 +385,8 @@ fn usage() {
     println!("    rooster <command> -h");
     println!();
     println!("Options:");
-    println!("    -h, --help        Display a help message");
-    println!("    -V, --version     Display the version of Rooster you are using");
+    println!("    -h, --help                 Display a help message");
+    println!("    -V, --version              Display the version of Rooster you are using");
     println!();
     println!("Commands:");
     println!("    init                       Create a new password file");

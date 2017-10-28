@@ -1,5 +1,3 @@
-**DO COMPILE THIS BRANCH, IT CONTAINS UNAUDITED CODE - SEE AUDIT.md**
-
 ![Rooster Banner](rooster-banner.png)
 
 ## Why another password manager

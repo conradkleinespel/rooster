@@ -12,7 +12,7 @@
 
 [package]
 name = "rpassword"
-version = "1.0.2"
+version = "2.0.0"
 authors = ["Conrad Kleinespel <conradk@conradk.com>"]
 description = "Read passwords in console applications."
 homepage = "https://github.com/conradkdotcom/rpassword"
@@ -21,8 +21,6 @@ readme = "README.md"
 keywords = ["read", "password", "security", "pass", "getpass"]
 license = "Apache-2.0"
 repository = "https://github.com/conradkdotcom/rpassword"
-[dependencies.rprompt]
-version = "1.0"
 [target."cfg(unix)".dependencies.libc]
 version = "0.2"
 [target."cfg(windows)".dependencies.winapi]

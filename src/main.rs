@@ -25,6 +25,7 @@ extern crate serde;
 extern crate serde_json;
 extern crate clipboard;
 extern crate shell_escape;
+extern crate zxcvbn;
 
 #[macro_use]
 extern crate serde_derive;
@@ -148,6 +149,12 @@ static COMMANDS: &'static [Command] = &[
         callback_exec: None,
         callback_help: commands::init::callback_help,
         callback_without_store: Some(commands::init::callback_exec),
+    },
+    Command {
+        name: "weak",
+        callback_exec: Some(commands::weak::callback_exec),
+        callback_help: commands::weak::callback_help,
+        callback_without_store: None,
     },
 ];
 
@@ -403,6 +410,7 @@ fn usage() {
     println!("    export                     Dump all your raw password data in JSON");
     println!("    set-master-password        Set your master password");
     println!("    uninstall                  Show instructions to uninstall Rooster");
+    println!("    weak                       Show weak passwords app names so you can improve them");
 }
 
 fn main() {

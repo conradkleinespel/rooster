@@ -62,6 +62,7 @@ pub fn callback_exec(
         .clone();
 
     println_stderr!("");
+    // TODO: prevent empty passwords
     let password_as_string = prompt_password_stderr(
         format!("What password do you want for \"{}\"? ", password.name)
             .as_str(),

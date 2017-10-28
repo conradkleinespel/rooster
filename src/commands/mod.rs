@@ -26,3 +26,4 @@ pub mod transfer;
 pub mod change;
 pub mod uninstall;
 pub mod init;
+pub mod weak;

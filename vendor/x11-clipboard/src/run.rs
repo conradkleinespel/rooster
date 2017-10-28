@@ -30,16 +30,15 @@ pub fn run(context: Arc<Context>, setmap: SetMap, max_length: usize, receiver: &
     let mut state_map = HashMap::new();
 
     while let Some(event) = context.connection.wait_for_event() {
-        if let Some(property) = receiver
-            .try_recv().ok()
-            .and_then(|selection| incr_map.remove(&selection))
-        {
-            state_map.remove(&property);
+        while let Ok(selection) = receiver.try_recv() {
+            if let Some(property) = incr_map.remove(&selection) {
+                state_map.remove(&property);
+            }
         }
 
         match event.response_type() & !0x80 {
             xcb::SELECTION_REQUEST => {
-                let event = xcb::cast_event::<xcb::SelectionRequestEvent>(&event);
+                let event = unsafe { xcb::cast_event::<xcb::SelectionRequestEvent>(&event) };
                 let read_map = try_continue!(setmap.read().ok());
                 let &(target, ref value) = try_continue!(read_map.get(&event.selection()));
 
@@ -49,7 +48,7 @@ pub fn run(context: Arc<Context>, setmap: SetMap, max_length: usize, receiver: &
                         event.requestor(), event.property(), xcb::ATOM_ATOM, 32,
                         &[context.atoms.targets, target]
                     );
-                } else if event.target() == target {
+                } else {
                     if value.len() < max_length - 24 {
                         xcb::change_property(
                             &context.connection, xcb::PROP_MODE_REPLACE as u8,
@@ -78,8 +77,6 @@ pub fn run(context: Arc<Context>, setmap: SetMap, max_length: usize, receiver: &
                             }
                         );
                     }
-                } else {
-                    continue
                 }
 
                 xcb::send_event(
@@ -95,7 +92,7 @@ pub fn run(context: Arc<Context>, setmap: SetMap, max_length: usize, receiver: &
                 context.connection.flush();
             },
             xcb::PROPERTY_NOTIFY => {
-                let event = xcb::cast_event::<xcb::PropertyNotifyEvent>(&event);
+                let event = unsafe { xcb::cast_event::<xcb::PropertyNotifyEvent>(&event) };
                 if event.state() != xcb::PROPERTY_DELETE as u8 { continue };
 
                 let is_end = {
@@ -107,7 +104,7 @@ pub fn run(context: Arc<Context>, setmap: SetMap, max_length: usize, receiver: &
                     xcb::change_property(
                         &context.connection, xcb::PROP_MODE_REPLACE as u8,
                         state.requestor, state.property, target, 8,
-                        &value[state.pos..(state.pos + len)]
+                        &value[state.pos..][..len]
                     );
 
                     state.pos += len;
@@ -120,7 +117,7 @@ pub fn run(context: Arc<Context>, setmap: SetMap, max_length: usize, receiver: &
                 context.connection.flush();
             },
             xcb::SELECTION_CLEAR => {
-                let event = xcb::cast_event::<xcb::SelectionClearEvent>(&event);
+                let event = unsafe { xcb::cast_event::<xcb::SelectionClearEvent>(&event) };
                 if let Some(property) = incr_map.remove(&event.selection()) {
                     state_map.remove(&property);
                 }

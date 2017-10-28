@@ -9,7 +9,7 @@ Rust-XCB is only intended as an interface to XCB, so provides nothing above and 
 
 ```toml
 [dependencies]
-xcb = "0.7"
+xcb = "0.8"
 ```
 
 __Documentation__:
@@ -124,7 +124,9 @@ fn main() {
 
                     },
                     xcb::KEY_PRESS => {
-                        let key_press : &xcb::KeyPressEvent = xcb::cast_event(&event);
+                        let key_press : &xcb::KeyPressEvent = unsafe {
+                            xcb::cast_event(&event)
+                        };
                         println!("Key '{}' pressed", key_press.detail());
                         break;
                     },

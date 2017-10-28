@@ -45,7 +45,7 @@ use std::option::Option;
 use std::error;
 use std::fmt;
 use std::mem;
-use std::ptr::null;
+use std::ptr::{null, null_mut};
 use std::marker::PhantomData;
 // std::num::Zero is unstable in rustc 1.5 => remove the Zero defined
 // hereunder as soon as Zero gets stabilized (or replaced by something else)
@@ -53,6 +53,7 @@ use std::marker::PhantomData;
 use std::cmp::Ordering;
 use std::ops::{BitAnd, BitOr};
 use std::ffi::CString;
+use std::os::unix::io::{AsRawFd, RawFd};
 
 
 /// Current protocol version
@@ -119,10 +120,8 @@ unsafe impl<T> Sync for Event<T> {}
 
 /// Casts the generic event to the right event. Assumes that the given
 /// event is really the correct type.
-pub fn cast_event<'r, T>(event : &'r GenericEvent) -> &'r T {
-    // This isn't very safe... but other options incur yet more overhead
-    // that I really don't want to.
-    unsafe { mem::transmute(event) }
+pub unsafe fn cast_event<'r, T>(event : &'r GenericEvent) -> &'r T {
+    mem::transmute(event)
 }
 
 
@@ -177,10 +176,8 @@ unsafe impl<T> Sync for Error<T> {}
 
 /// Casts the generic error to the right error. Assumes that the given
 /// error is really the correct type.
-pub fn cast_error<'r, T>(error : &'r GenericError) -> &'r T {
-    // This isn't very safe... but other options incur yet more overhead
-    // that I really don't want to.
-    unsafe { mem::transmute(error) }
+pub unsafe fn cast_error<'r, T>(error : &'r GenericError) -> &'r T {
+    mem::transmute(error)
 }
 
 
@@ -558,7 +555,6 @@ impl Connection {
     /// Returns Ok(connection object, preferred screen) in case of success, or
     /// Err(ConnError) in case of error. If no screen is preferred, the second
     /// member of the tuple is set to 0.
-    #[cfg(not(feature="xlib_xcb"))]
     pub fn connect(displayname: Option<&str>) -> ConnResult<(Connection, i32)> {
         unsafe {
             let display = displayname.map(|s| CString::new(s).unwrap());
@@ -572,7 +568,7 @@ impl Connection {
             // so we simply assert without handling this in the return
             assert!(!cconn.is_null(), "had incorrect pointer");
 
-            let conn = Connection { c: cconn };
+            let conn = Self::from_raw_conn(cconn);
 
             conn.has_error().map(|_| {
                 (conn, screen_num as i32)
@@ -622,7 +618,6 @@ impl Connection {
     /// Connects to the X server specified by displayname, using the
     /// authorization auth.
     /// The second member of the returned tuple is the preferred screen, or 0
-    #[cfg(not(feature="xlib_xcb"))]
     pub fn connect_with_auth_info(display: Option<&str>, auth_info: &AuthInfo)
     -> ConnResult<(Connection, i32)> {
         unsafe {
@@ -638,7 +633,7 @@ impl Connection {
             // so we simply assert without handling this in the return
             assert!(!cconn.is_null(), "had incorrect pointer");
 
-            let conn = Connection { c: cconn };
+            let conn = Self::from_raw_conn(cconn);
 
             conn.has_error().map(|_| {
                 (conn, screen_num as i32)
@@ -647,27 +642,38 @@ impl Connection {
     }
 
     /// builds a new Connection object from an available connection
-    #[cfg(not(feature="xlib_xcb"))]
     pub unsafe fn from_raw_conn(conn: *mut xcb_connection_t) -> Connection {
         assert!(!conn.is_null());
 
-        Connection {
+        #[cfg(not(feature="xlib_xcb"))]
+        return Connection {
             c:  conn,
+        };
+
+        #[cfg(feature="xlib_xcb")]
+        return Connection {
+            c:  conn,
+            dpy: null_mut(),
+        };
+    }
+}
+
+impl AsRawFd for Connection {
+    fn as_raw_fd(&self) -> RawFd {
+        unsafe {
+            xcb_get_file_descriptor(self.c)
         }
     }
-
 }
 
 impl Drop for Connection {
-    #[cfg(not(feature="xlib_xcb"))]
     fn drop(&mut self) {
+        #[cfg(not(feature="xlib_xcb"))]
         unsafe {
             xcb_disconnect(self.c);
         }
-    }
 
-    #[cfg(feature="xlib_xcb")]
-    fn drop(&mut self) {
+        #[cfg(feature="xlib_xcb")]
         unsafe {
             if self.dpy.is_null() {
                 xcb_disconnect(self.c);

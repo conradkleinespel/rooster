@@ -1,3 +1,19 @@
+ * 0.8.1
+ rtbo - 15/08/2017
+    - fix lifetime inconsistency (#40)
+
+ * 0.7.7
+ rtbo - 15/08/2017
+    - branch 0.7.x to support servo
+    - fix lifetime inconsistency (#40)
+
+ * 0.8.0
+ mjkillough/eduardosm/rtbo - 11/07/2017
+    - error trait and unsafe cast_error (#32) - mjkillough
+    - unsafe cast_event - rtbo
+    - allow xcb::connect without xlib_xcb feature
+      (fixes also doc generation) (#35) - eduardosm
+
  * 0.7.6
  rtbo/ibabushkin - 14/11/2016
     - much better handling of union accessors (#27) Credits to Inokentiy Babushkin

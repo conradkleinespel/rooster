@@ -12,7 +12,7 @@
 
 [package]
 name = "xcb"
-version = "0.7.7"
+version = "0.8.1"
 authors = ["Remi Thebault <remi.thebault@gmail.com>"]
 build = "build.rs"
 exclude = ["examples/*", "scripts/*"]
@@ -25,45 +25,45 @@ repository = "https://github.com/rtbo/rust-xcb"
 [dependencies.log]
 version = "0.3"
 
-[dependencies.libc]
-version = "0.2"
-
 [dependencies.x11]
 version = "2.3"
 features = ["xlib"]
 optional = true
+
+[dependencies.libc]
+version = "0.2"
 [build-dependencies.libc]
 version = "0.2"
 
 [features]
-glx = []
+xtest = []
+xf86dri = []
+xvmc = ["xv"]
+xinput = ["xfixes"]
+xkb = []
+thread = []
+dri3 = []
 xprint = []
+xinerama = []
+xlib_xcb = ["x11/xlib"]
+xselinux = []
+present = ["render", "xfixes", "sync"]
+xf86vidmode = []
+ge = []
+dri2 = []
+screensaver = []
 xevie = []
+shm = []
+debug_all = ["thread", "composite", "damage", "dpms", "dri2", "dri3", "glx", "randr", "record", "render", "res", "screensaver", "shape", "shm", "xevie", "xf86dri", "xfixes", "xinerama", "xkb", "xprint", "xselinux", "xtest", "xvmc", "xv", "xlib_xcb"]
+randr = ["render"]
+shape = []
+record = []
 render = []
 res = []
 xv = ["shm"]
-ge = []
-screensaver = []
-xf86vidmode = []
-dri2 = []
-dpms = []
-shape = []
-xinput = ["xfixes"]
-xvmc = ["xv"]
-dri3 = []
 sync = []
-debug_all = ["thread", "composite", "damage", "dpms", "dri2", "dri3", "glx", "randr", "record", "render", "res", "screensaver", "shape", "shm", "xevie", "xf86dri", "xfixes", "xinerama", "xkb", "xprint", "xselinux", "xtest", "xvmc", "xv", "xlib_xcb"]
-xkb = []
-damage = ["xfixes"]
 composite = ["xfixes"]
-present = ["render", "xfixes", "sync"]
-record = []
-xtest = []
-xlib_xcb = ["x11/xlib"]
-xf86dri = []
-randr = ["render"]
+glx = []
+damage = ["xfixes"]
+dpms = []
 xfixes = ["render", "shape"]
-shm = []
-thread = []
-xinerama = []
-xselinux = []

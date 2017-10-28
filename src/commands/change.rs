@@ -52,7 +52,6 @@ pub fn callback_exec(
 
     let query = &matches.free[1];
 
-    println_stderr!("");
     let password = list::search_and_choose_password(
         store,
         query,
@@ -61,8 +60,6 @@ pub fn callback_exec(
     ).ok_or(1)?
         .clone();
 
-    println_stderr!("");
-    // TODO: prevent empty passwords
     let password_as_string = prompt_password_stderr(
         format!("What password do you want for \"{}\"? ", password.name)
             .as_str(),

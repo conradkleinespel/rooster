@@ -45,7 +45,6 @@ pub fn callback_exec(
 
     let query = &matches.free[1];
 
-    println_stderr!("");
     let password = list::search_and_choose_password(
         store,
         query,

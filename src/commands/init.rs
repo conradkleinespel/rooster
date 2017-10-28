@@ -39,18 +39,18 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
     };
     let filename_as_string = filename.to_string_lossy().into_owned();
     if filename.exists() {
-        println_stderr!("Woops, there is already a Rooster file located at:");
-        println_stderr!("    {}", filename_as_string);
-        println_stderr!("");
-        println_stderr!("Type `rooster --help` to see what Rooster can do for you.");
+        println_err!("Woops, there is already a Rooster file located at:");
+        println_err!("    {}", filename_as_string);
+        println_err!("");
+        println_err!("Type `rooster --help` to see what Rooster can do for you.");
         return Err(1);
     }
 
     println_title!("|---------- Welcome to Rooster  ---------|");
-    println_stderr!("");
-    println_stderr!("Rooster is a simple password manager for geeks.");
-    println_stderr!("");
-    println_stderr!("Let's get started! Type ENTER to continue.");
+    println!("");
+    println!("Rooster is a simple password manager for geeks.");
+    println!("");
+    println!("Let's get started! Type ENTER to continue.");
 
     let mut dummy = String::new();
     if let Err(err) = ::std::io::stdin().read_line(&mut dummy) {
@@ -59,17 +59,17 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
     }
 
     println_title!("|---------- Set Master Password ---------|");
-    println_stderr!("");
-    println_stderr!(
+    println!("");
+    println!(
         "With Rooster, you only need to remember one password: \
     the Master Password. It keeps all of you other passwords safe."
     );
-    println_stderr!("");
-    println_stderr!(
+    println!("");
+    println!(
         "The stronger it is, the better your passwords are \
                       protected."
     );
-    println_stderr!("");
+    println!("");
 
     let master_password = prompt_password_stderr("What would you like it to be? ")
         .map(SafeString::new)
@@ -118,21 +118,21 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
         return Err(1);
     }
 
-    println_stderr!("");
+    println!("");
     println_title!("|--- All set, you can now use Rooster ---|");
-    println_stderr!("");
-    println_stderr!("You passwords will be saved in:");
-    println_stderr!("    {}", filename_as_string);
+    println!("");
+    println!("You passwords will be saved in:");
+    println!("    {}", filename_as_string);
     if !filename_from_env {
-        println_stderr!("");
-        println_stderr!(
+        println!("");
+        println!(
             "If you want to move this file, set the $ROOSTER_FILE \
             environment variable to the new path. For instance:"
         );
-        println_stderr!("    export ROOSTER_FILE=path/to/passwords.rooster");
+        println!("    export ROOSTER_FILE=path/to/passwords.rooster");
     }
-    println_stderr!("");
-    println_stderr!("Type `rooster --help` to see what Rooster can do for you.");
+    println!("");
+    println!("Type `rooster --help` to see what Rooster can do for you.");
 
     Ok(())
 }

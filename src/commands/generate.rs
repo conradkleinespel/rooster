@@ -70,7 +70,7 @@ pub fn callback_exec(
     let password_as_string = match pwspec.generate_hard_password() {
         Ok(password_as_string) => password_as_string,
         Err(io_err) => {
-            println_stderr!(
+            println_err!(
                 "Woops, I could not generate the password (reason: {:?}).",
                 io_err
             );

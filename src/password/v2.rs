@@ -394,6 +394,9 @@ impl PasswordStore {
 
     /// Adds a password to the file.
     pub fn add_password(&mut self, password: Password) -> Result<(), PasswordError> {
+        if password.password.deref().len() == 0 {
+            return Err(PasswordError::EmptyPasswordError);
+        }
         if self.has_password(password.name.deref()) {
             return Err(PasswordError::AppExistsError);
         }
@@ -493,10 +496,16 @@ impl PasswordStore {
         app_name: &str,
         closure: &Fn(Password) -> Password,
     ) -> Result<Password, PasswordError> {
-        let old_p = self.delete_password(app_name.deref())?;
-        let new_p = closure(old_p);
-        self.add_password(new_p.clone())?;
-        Ok(new_p)
+        let old_password = self.delete_password(app_name.deref())?;
+        let new_password = closure(old_password.clone());
+        match self.add_password(new_password.clone()) {
+            Ok(_) => Ok(new_password),
+            Err(err) => {
+                // Password was not added, we'll add the old one back
+                self.add_password(old_password)?;
+                Err(err)
+            }
+        }
     }
 
     pub fn change_master_password(&mut self, master_password: &str) {

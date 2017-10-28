@@ -29,7 +29,7 @@ macro_rules! println_err(
 #[macro_export]
 macro_rules! println_ok(
     ($($args:tt)*) => (
-        println_stderr!(
+        println!(
             "{}",
             format!(
                 "{}{}{}",
@@ -44,7 +44,7 @@ macro_rules! println_ok(
 #[macro_export]
 macro_rules! println_title(
     ($($args:tt)*) => (
-        println_stderr!(
+        println!(
             "{}",
             format!(
                 "{}{}{}",
@@ -59,27 +59,6 @@ macro_rules! println_title(
 #[macro_export]
 macro_rules! print_stderr(
     ($($arg:tt)*) => (
-        match write!(::std::io::stderr(), $($arg)*) {
-            Ok(_) => {
-                if let Err(x) = ::std::io::stderr().flush() {
-                    panic!("Unable to write to stderr: {}", x);
-                }
-            },
-            Err(x) => panic!("Unable to write to stderr: {}", x);
-        }
-    )
-);
-
-#[macro_export]
-macro_rules! print_stdout(
-    ($($arg:tt)*) => (
-        match write!(::std::io::stdout(), $($arg)*) {
-            Ok(_) => {
-                if let Err(x) = ::std::io::stdout().flush() {
-                    panic!("Unable to write to stdout: {}", x);
-                }
-            },
-            Err(x) => panic!("Unable to write to stdout: {}", x),
-        }
+        write!(::std::io::stderr(), $($arg)*).and_then(|_| ::std::io::stderr().flush()).unwrap()
     )
 );

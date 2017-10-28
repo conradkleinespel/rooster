@@ -53,7 +53,6 @@ pub fn callback_exec(
 
     let query = &matches.free[1];
 
-    println_stderr!("");
     let password = list::search_and_choose_password(
         store,
         query,
@@ -72,7 +71,7 @@ pub fn callback_exec(
     let password_as_string = match pwspec.generate_hard_password() {
         Ok(password_as_string) => password_as_string,
         Err(io_err) => {
-            println_stderr!(
+            println_err!(
                 "Woops, I could not generate the password (reason: {:?}).",
                 io_err
             );

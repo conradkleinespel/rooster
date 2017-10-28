@@ -47,7 +47,6 @@ pub fn callback_exec(
     let query = &matches.free[1];
     let new_name = &matches.free[2];
 
-    println_stderr!("");
     let password = list::search_and_choose_password(
         store,
         query,
@@ -55,7 +54,6 @@ pub fn callback_exec(
         "Which password would you like to rename?",
     ).ok_or(1)?
         .clone();
-    println_stderr!("");
 
     let change_result =
         store.change_password(&password.name, &|old_password: password::v2::Password| {

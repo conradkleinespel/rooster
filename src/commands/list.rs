@@ -15,7 +15,6 @@
 use getopts;
 use password;
 use list;
-use std::io::Write;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -35,7 +34,6 @@ pub fn callback_exec(
     if passwords.len() == 0 {
         println!("No passwords on record yet. Add one with `rooster add <app> <username>`.");
     } else {
-        println_stderr!("");
         list::print_list_of_passwords(
             &passwords,
             list::WITHOUT_NUMBERS,

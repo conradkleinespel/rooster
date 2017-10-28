@@ -59,7 +59,6 @@ pub fn callback_exec(
         return Err(1);
     }
 
-    // TODO: prevent empty passwords
     match prompt_password_stderr(
         format!("What password do you want for \"{}\"? ", app_name).as_str(),
     ) {

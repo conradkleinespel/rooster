@@ -34,6 +34,7 @@ pub enum PasswordError {
     CorruptionLikelyError,
     NeedUpgradeErrorFromV1,
     NoUpgradeError,
+    EmptyPasswordError,
 }
 
 impl From<IoError> for PasswordError {

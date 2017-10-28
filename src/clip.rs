@@ -14,7 +14,6 @@
 
 use password;
 use safe_string::SafeString;
-use std::io::Write;
 use std::ops::Deref;
 
 // On Windows and Mac, we'll use the native solutions provided by the OS libraries

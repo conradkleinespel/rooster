@@ -90,7 +90,7 @@ pub fn print_list_of_passwords(
     for s in list {
         match output_stream {
             OutputStream::Stdout => println!("{}", s),
-            OutputStream::Stderr => println_stderr!("{}", s),
+            OutputStream::Stderr => println!("{}", s),
         }
     }
 }
@@ -103,10 +103,10 @@ fn request_password_index_from_stdin(passwords: &Vec<&Password>, prompt: &str) -
     loop {
 
         if passwords.len() > 1 {
-            println_stderr!("{}", prompt);
-            println_stderr!("Type in number from 1 to {}", passwords.len());
+            println!("{}", prompt);
+            print_stderr!("Type a number from 1 to {}: ", passwords.len());
         } else if passwords.len() == 1 {
-            println_stderr!("If this is the password you mean, type number 1.");
+            print_stderr!("If this is the password you mean, type \"1\" and hit ENTER: ");
         }
 
         line.clear();
@@ -115,7 +115,7 @@ fn request_password_index_from_stdin(passwords: &Vec<&Password>, prompt: &str) -
                 match line.trim().parse::<usize>() {
                     Ok(index) => {
                         if index == 0 || index > passwords.len() {
-                            println_err!(
+                            print_stderr!(
                                 "I need a number between 1 and {}. Let's try again:",
                                 passwords.len()
                             );
@@ -125,7 +125,7 @@ fn request_password_index_from_stdin(passwords: &Vec<&Password>, prompt: &str) -
                         return index - 1;
                     }
                     Err(err) => {
-                        println_err!(
+                        print_stderr!(
                             "This isn't a valid number (reason: {}). Let's try again (1 to {}): ",
                             err,
                             passwords.len()
@@ -135,7 +135,7 @@ fn request_password_index_from_stdin(passwords: &Vec<&Password>, prompt: &str) -
                 };
             }
             Err(err) => {
-                println_err!(
+                print_stderr!(
                     "I couldn't read that (reason: {}). Let's try again (1 to {}): ",
                     err,
                     passwords.len()
@@ -151,7 +151,7 @@ pub fn choose_password_in_list(
     prompt: &str,
 ) -> usize {
     print_list_of_passwords(passwords, with_numbers, OutputStream::Stderr);
-    println_stderr!("");
+    println!("");
     request_password_index_from_stdin(passwords, prompt)
 }
 

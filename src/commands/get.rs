@@ -60,7 +60,6 @@ pub fn callback_exec(
             "to copy to your clipboard"
         },
     );
-    println_stderr!("");
     let password = list::search_and_choose_password(store, query, list::WITH_NUMBERS, &prompt)
         .ok_or(1)?;
 

@@ -37,7 +37,7 @@ pub fn callback_exec(
     let passwords_json = match serde_json::to_string(&passwords_ref) {
         Ok(passwords_json) => passwords_json,
         Err(json_err) => {
-            println_stderr!(
+            println_err!(
                 "Woops, I could not encode the passwords into JSON (reason: {:?}).",
                 json_err
             );

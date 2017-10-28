@@ -256,14 +256,14 @@ fn get_password_store_from_input_interactive(
             return Err(password::PasswordError::Io(err));
         }
         Err(password::PasswordError::NeedUpgradeErrorFromV1) => {
-            println_stderr!("Your Rooster file has version 1. You need to upgrade to version 2.");
-            println_stderr!("");
-            println_stderr!(
+            println!("Your Rooster file has version 1. You need to upgrade to version 2.");
+            println!("");
+            println!(
                 "WARNING: If in doubt, it could mean you've been hacked. Only \
             proceed if you recently upgraded your Rooster installation."
             );
-            println_stderr!("");
-            println_stderr!("Upgrade to version 2? [y/n]");
+            println!("");
+            println!("Upgrade to version 2? [y/n]");
             loop {
                 let mut line = String::new();
                 match stdin().read_line(&mut line) {
@@ -280,7 +280,7 @@ fn get_password_store_from_input_interactive(
                             // The user doesn't want to upgrade, that's fine
                             return Err(password::PasswordError::NoUpgradeError);
                         } else {
-                            println_stderr!("I did not get that. Upgrade from v1 to v2? [y/n]");
+                            println!("I did not get that. Upgrade from v1 to v2? [y/n]");
                         }
                     }
                     Err(io_err) => {
@@ -517,16 +517,16 @@ fn main() {
                 );
             } else {
                 println_title!("|---------- First time user  ---------|");
-                println_stderr!("");
-                println_stderr!("First time running Rooster? Try `rooster init`.");
-                println_stderr!("");
+                println!("");
+                println!("First time running Rooster? Try `rooster init`.");
+                println!("");
                 println_title!("|----------- Long time user ----------|");
-                println_stderr!("");
-                println_stderr!(
+                println!("");
+                println!(
                     "You already have a Rooster file? Set the ROOSTER_FILE environment variable. \
                     For instance:"
                 );
-                println_stderr!("    export ROOSTER_FILE=path/to/passwords.rooster");
+                println!("    export ROOSTER_FILE=path/to/passwords.rooster");
             }
             std::process::exit(1);
         }

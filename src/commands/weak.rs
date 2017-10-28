@@ -21,7 +21,10 @@ pub fn callback_help() {
     println!("Usage:");
     println!("    rooster weak -h");
     println!("    rooster weak");
-    println!("");
+    println!();
+    println!("Options:");
+    println!("    -s, --show        Show the password next to the app name");
+    println!();
     println!("Examples:");
     println!("    rooster weak");
 }

@@ -151,7 +151,7 @@ pub fn choose_password_in_list(
     prompt: &str,
 ) -> usize {
     print_list_of_passwords(passwords, with_numbers, OutputStream::Stderr);
-    println!("");
+    println!();
     request_password_index_from_stdin(passwords, prompt)
 }
 

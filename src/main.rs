@@ -257,12 +257,12 @@ fn get_password_store_from_input_interactive(
         }
         Err(password::PasswordError::NeedUpgradeErrorFromV1) => {
             println!("Your Rooster file has version 1. You need to upgrade to version 2.");
-            println!("");
+            println!();
             println!(
                 "WARNING: If in doubt, it could mean you've been hacked. Only \
             proceed if you recently upgraded your Rooster installation."
             );
-            println!("");
+            println!();
             println!("Upgrade to version 2? [y/n]");
             loop {
                 let mut line = String::new();
@@ -410,7 +410,7 @@ fn usage() {
     println!("    export                     Dump all your raw password data in JSON");
     println!("    set-master-password        Set your master password");
     println!("    uninstall                  Show instructions to uninstall Rooster");
-    println!("    weak                       Show weak passwords app names so you can improve them");
+    println!("    weak                       List apps that have weak passwords");
 }
 
 fn main() {
@@ -517,11 +517,11 @@ fn main() {
                 );
             } else {
                 println_title!("|---------- First time user  ---------|");
-                println!("");
+                println!();
                 println!("First time running Rooster? Try `rooster init`.");
-                println!("");
+                println!();
                 println_title!("|----------- Long time user ----------|");
-                println!("");
+                println!();
                 println!(
                     "You already have a Rooster file? Set the ROOSTER_FILE environment variable. \
                     For instance:"

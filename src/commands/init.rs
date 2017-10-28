@@ -47,9 +47,9 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
     }
 
     println_title!("|---------- Welcome to Rooster  ---------|");
-    println!("");
+    println!();
     println!("Rooster is a simple password manager for geeks.");
-    println!("");
+    println!();
     println!("Let's get started! Type ENTER to continue.");
 
     let mut dummy = String::new();
@@ -59,17 +59,17 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
     }
 
     println_title!("|---------- Set Master Password ---------|");
-    println!("");
+    println!();
     println!(
         "With Rooster, you only need to remember one password: \
     the Master Password. It keeps all of you other passwords safe."
     );
-    println!("");
+    println!();
     println!(
         "The stronger it is, the better your passwords are \
                       protected."
     );
-    println!("");
+    println!();
 
     let master_password = prompt_password_stderr("What would you like it to be? ")
         .map(SafeString::new)
@@ -118,20 +118,20 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
         return Err(1);
     }
 
-    println!("");
+    println!();
     println_title!("|--- All set, you can now use Rooster ---|");
-    println!("");
+    println!();
     println!("You passwords will be saved in:");
     println!("    {}", filename_as_string);
     if !filename_from_env {
-        println!("");
+        println!();
         println!(
             "If you want to move this file, set the $ROOSTER_FILE \
             environment variable to the new path. For instance:"
         );
         println!("    export ROOSTER_FILE=path/to/passwords.rooster");
     }
-    println!("");
+    println!();
     println!("Type `rooster --help` to see what Rooster can do for you.");
 
     Ok(())

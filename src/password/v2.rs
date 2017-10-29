@@ -579,6 +579,14 @@ mod test {
             Err(PasswordError::AppExistsError) => {}
             _ => panic!(),
         }
+
+        // empty password => not allowed
+        let mut store = PasswordStore::new("****").unwrap();
+        assert!(
+            store
+                .add_password(Password::new("name", "username", ""))
+                .is_err()
+        );
     }
 
     #[test]
@@ -613,6 +621,24 @@ mod test {
         assert_eq!(store.get_all_passwords()[0].name, "newname");
         assert_eq!(store.get_all_passwords()[0].username, "username");
         assert_eq!(store.get_all_passwords()[0].password, "newpassword".into());
+
+        // empty password => do not change anything
+        let mut store = PasswordStore::new("****").unwrap();
+        assert!(
+            store
+                .add_password(Password::new("name", "username", "password"))
+                .is_ok()
+        );
+        assert!(store
+            .change_password("name", &|p| {
+                // change app name and password, keep username
+                Password::new(p.username.clone(), p.username.clone(), "")
+            })
+            .is_err()
+        );
+        assert_eq!(store.get_all_passwords()[0].name, "name");
+        assert_eq!(store.get_all_passwords()[0].username, "username");
+        assert_eq!(store.get_all_passwords()[0].password, "password".into());
     }
 
     #[test]

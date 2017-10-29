@@ -12,3 +12,9 @@ printf 'xxxx\nabcd\n' | docker run --rm -i -v rooster:/home/rooster rooster add 
 
 # check the password
 printf 'xxxx\n' | docker run --rm -i -v rooster:/home/rooster rooster get -s youtube 2>&1 | grep abcd || exit 1
+
+# check empty password not allowed
+printf 'xxxx\n\n' | docker run --rm -i -v rooster:/home/rooster rooster add -s Empty test@example.com
+if [ "$?" = "0" ]; then
+    exit 1
+fi

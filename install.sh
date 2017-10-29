@@ -1,8 +1,8 @@
 #!/bin/sh
 
 pkgname=rooster
-pkgver=2.7.0
-sha256=8d273666af02f0643aec6c85ad347fa4008a476060e53bf40afe5cea429a7551
+pkgver=2.7.1
+sha256=b1413d220f240e9f9fc99e3be705c029a10f82e67df2858ee15ba09c3f5c1b51
 os=`uname`
 
 # Arch Linux gets its own package on the AUR
@@ -10,7 +10,7 @@ cat /etc/*-release | grep -i 'Arch Linux' > /dev/null
 if [ "$?" = "0" ]; then
     echo 'Looks like you are using Arch Linux. You can find Rooster on the AUR:'
     echo 'https://aur.archlinux.org/packages/rooster'
-#    exit
+    exit
 fi
 
 # install Rust/Cargo so we can compile the sources

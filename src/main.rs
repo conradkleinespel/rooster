@@ -106,7 +106,7 @@ static COMMANDS: &'static [Command] = &[
         name: "import",
         callback_exec: Some(commands::import::callback_exec),
         callback_help: commands::import::callback_help,
-        callback_without_store: None,
+        callback_without_store: Some(commands::import::check_args),
     },
     Command {
         name: "export",

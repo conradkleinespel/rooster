@@ -28,7 +28,7 @@ curl -sSL 'https://raw.githubusercontent.com/conradkdotcom/rooster/master/instal
 
 For **BSD and other Linux distributions**:
 
-- make sure you have `pkg-config`, `python3`, `libxmu-dev`, `libx11-dev` and one of `xsel`/`xclip`
+- make sure you have `gcc`, `pkg-config`, `python3`, `libxmu-dev`, `libx11-dev` and one of `xsel`/`xclip`
 - install Rust and Cargo with:
     ```bash
     curl https://sh.rustup.rs -sSf | sh -s -- -y

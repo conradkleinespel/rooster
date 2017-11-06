@@ -70,7 +70,7 @@ pub fn callback_exec(
 
     match change_result {
         Ok(_) => {
-            println_ok!("Done! I've transferd {} to {}", old_username, new_username);
+            println_ok!("Done! I've transfered {} to {}", old_username, new_username);
             Ok(())
         }
         Err(err) => {

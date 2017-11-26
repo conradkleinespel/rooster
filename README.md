@@ -18,7 +18,9 @@ To top it off, it works Linux, BSD and OSX.
 
 ## Installation
 
-On **Arch Linux**, you install [Rooster from AUR](https://aur.archlinux.org/packages/rooster).
+On **Arch Linux**, install [Rooster from AUR](https://aur.archlinux.org/packages/rooster).
+
+On **Void Linux**, install [Rooster from XBPS](https://github.com/voidlinux/void-packages/blob/master/srcpkgs/rooster/template). 
 
 On **Fedora/CentOS/Ubuntu/OSX**:
 

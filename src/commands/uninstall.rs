@@ -32,7 +32,7 @@ pub fn callback_help() {
 
 #[cfg(target_os = "windows)]
 pub fn callback_exec(_matches: &getopts:Matches) -> Result<(), i32> {
-     println_err!("Uninstall option not available on Windows. Please use \'cargo uninstall rooster\'");
+     println_err!("Uninstall option not available on Windows. Please use `cargo uninstall rooster`");
             return Err(1);
 }
 

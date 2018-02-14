@@ -24,6 +24,8 @@ pub mod set_master_password;
 pub mod rename;
 pub mod transfer;
 pub mod change;
+#[cfg(not(target_os = "windows"))]
 pub mod uninstall;
+
 pub mod init;
 pub mod weak;

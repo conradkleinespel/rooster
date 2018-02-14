@@ -20,7 +20,10 @@ extern crate crypto;
 extern crate rpassword;
 extern crate rand;
 extern crate byteorder;
+
+#[cfg(not(target_os = "windows"))]
 extern crate quale;
+
 extern crate serde;
 extern crate serde_json;
 extern crate clipboard;

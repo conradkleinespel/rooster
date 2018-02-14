@@ -14,7 +14,10 @@
 
 use getopts;
 use get_password_file_path;
+
+#[cfg(not(target_os = "windows"))]
 use quale::which;
+
 use std::ops::Deref;
 use std::io::Write;
 
@@ -27,6 +30,13 @@ pub fn callback_help() {
     println!("    rooster uninstall");
 }
 
+#[cfg(target_os = "windows)]
+pub fn callback_exec(_matches: &getopts:Matches) -> Result<(), i32> {
+     println_err!("Uninstall option not available on Windows. Please use \'cargo uninstall rooster\'");
+            return Err(1);
+}
+
+#[cfg(not(target_os = "windows"))]
 pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
     let path = match which("rooster") {
         Some(path) => path.to_string_lossy().into_owned(),

@@ -60,7 +60,7 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
         if from_env {
             println!();
             println!(
-                "Seems like you've set the ROOSTER_FILE environment variable in your configuration. You may want to remove it to clean things up."
+                "Seems like you have set the ROOSTER_FILE environment variable in your configuration. You may want to remove it to clean things up."
             );
         }
     }

@@ -54,7 +54,7 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
     if let Some((filename, from_env)) = get_password_file_path().ok() {
         println!();
         println!(
-            "If you want to remove your password file as well, you can — just make sure you don't \
+            "If you want to remove your password file as well, you can - just make sure you don't \
             lock yourself out of your online accounts. It is located at:"
         );
         println!("    {}", filename.to_string_lossy().deref());

@@ -29,7 +29,7 @@ pub fn copy_to_clipboard(s: &SafeString) -> Result<(), ()> {
 
 // On UNIX, the most stable way to copy to the clipboard is using one of the existing
 // and battle tested tools: xsel and xclip.
-#[cfg(all(unix, not(macos), not(windows))]
+#[cfg(all(unix, not(macos), not(windows)))]
 pub fn copy_to_clipboard(s: &SafeString) -> Result<(), ()> {
     use shell_escape;
     use std::process::Command;

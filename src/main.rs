@@ -141,6 +141,7 @@ static COMMANDS: &'static [Command] = &[
         callback_help: commands::change::callback_help,
         callback_without_store: Some(commands::change::check_args),
     },
+    #[cfg(not(target_os = "windows"))]
     Command {
         name: "uninstall",
         callback_exec: None,

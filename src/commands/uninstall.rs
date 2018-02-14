@@ -14,10 +14,7 @@
 
 use getopts;
 use get_password_file_path;
-
-#[cfg(not(target_os = "windows"))]
 use quale::which;
-
 use std::ops::Deref;
 use std::io::Write;
 
@@ -30,13 +27,6 @@ pub fn callback_help() {
     println!("    rooster uninstall");
 }
 
-#[cfg(target_os = "windows)]
-pub fn callback_exec(_matches: &getopts:Matches) -> Result<(), i32> {
-     println_err!("Uninstall option not available on Windows. Please use: cargo uninstall rooster");
-            return Err(1);
-}
-
-#[cfg(not(target_os = "windows"))]
 pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
     let path = match which("rooster") {
         Some(path) => path.to_string_lossy().into_owned(),
@@ -53,11 +43,17 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
 
     if let Some((filename, from_env)) = get_password_file_path().ok() {
         println!();
-        println!("If you want to remove your password file as well, you can - just make sure you do not lock yourself out of your online accounts. It is located at:");
+        println!(
+            "If you want to remove your password file as well, you can — just make sure you don't \
+            lock yourself out of your online accounts. It is located at:"
+        );
         println!("    {}", filename.to_string_lossy().deref());
         if from_env {
             println!();
-            println!("Seems like you have set the ROOSTER_FILE environment variable in your configuration. You may want to remove it to clean things up.");
+            println!(
+                "Seems like you've set the ROOSTER_FILE environment variable in your shell \
+            configuration. You may want to remove it to clean things up."
+            );
         }
     }
 

@@ -46,6 +46,22 @@ Once you have installed Rooster (see instructions below), you can view documenta
 rooster --help
 ```
 
+## Restricting capabilities
+
+For added trustless security, you can restrict the operating system capabilities that Rooster has access to.
+
+For instance, to run Rooster without network access on Linux, you might do this:
+
+```shell
+# make unshare usable without being root
+sudo chmod u+s "`which unshare`"
+
+# run rooster without network
+unshare -n rooster
+```
+
+Other operating systems have similar protections.
+
 ## Automated tests
 
 Rooster has 2 sets of tests:

@@ -1,3 +1,18 @@
+**Version 1.0.0**
+ - [SEMVER_MINOR] Add support for UTF-8 strings (https://github.com/shssoichiro/zxcvbn-rs/issues/4)
+ - [SEMVER_MAJOR] Remove the `ZxcvbnError::NonAsciiPassword` variant, since this error can no longer occur
+
+**Version 0.7.0**
+ - [SEMVER_MAJOR] Refactor `Match` to use an enum internally, to avoid cluttering the struct with several `Option` types (https://github.com/shssoichiro/zxcvbn-rs/issues/19)
+ - Make `Match` public (https://github.com/shssoichiro/zxcvbn-rs/issues/17)
+
+**Version 0.6.3**
+ - Refactor handling of strings to use streaming of characters. This brings zxcvbn closer to working on UTF-8 inputs.
+ - Fix an issue that would cause bruteforce scores to be too low (https://github.com/shssoichiro/zxcvbn-rs/issues/15)
+
+**Version 0.6.2**
+ - Upgrade dependencies and fix linter warnings
+
 **Version 0.6.1**
  - Upgrade `derive_builder` to 0.5.0
  - Fix a bug that was causing incorrect scoring for some passwords (https://github.com/shssoichiro/zxcvbn-rs/issues/13)

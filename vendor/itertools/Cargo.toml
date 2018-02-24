@@ -12,7 +12,7 @@
 
 [package]
 name = "itertools"
-version = "0.6.5"
+version = "0.7.6"
 authors = ["bluss"]
 description = "Extra iterator adaptors, iterator methods, free functions, and macros."
 documentation = "https://docs.rs/itertools/"
@@ -35,7 +35,9 @@ default-features = false
 version = "0.2"
 
 [dev-dependencies.quickcheck]
-version = "0.4"
+version = "0.5"
 default-features = false
 
 [features]
+default = ["use_std"]
+use_std = []

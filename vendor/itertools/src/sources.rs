@@ -36,7 +36,9 @@ impl<F> fmt::Debug for RepeatCall<F>
 ///     vec![1, 1, 1, 1, 1]
 /// );
 /// ```
-pub fn repeat_call<F>(function: F) -> RepeatCall<F> {
+pub fn repeat_call<F, A>(function: F) -> RepeatCall<F>
+    where F: FnMut() -> A
+{
     RepeatCall { f: function }
 }
 
@@ -109,6 +111,7 @@ impl<St, F> fmt::Debug for Unfold<St, F>
 
 /// See [`unfold`](../fn.unfold.html) for more information.
 #[derive(Clone)]
+#[must_use = "iterators are lazy and do nothing unless consumed"]
 pub struct Unfold<St, F> {
     f: F,
     /// Internal state that will be passed to the closure on the next iteration
@@ -138,6 +141,7 @@ impl<A, St, F> Iterator for Unfold<St, F>
 ///
 /// [`iterate()`]: ../fn.iterate.html
 #[derive(Clone)]
+#[must_use = "iterators are lazy and do nothing unless consumed"]
 pub struct Iterate<St, F> {
     state: St,
     f: F,

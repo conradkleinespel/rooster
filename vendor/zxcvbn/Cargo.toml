@@ -12,53 +12,61 @@
 
 [package]
 name = "zxcvbn"
-version = "0.6.1"
+version = "1.0.0"
 authors = ["Josh Holmer <jholmer.in@gmail.com>"]
 description = "An entropy-based password strength estimator, originally for Javascript by Dropbox."
 homepage = "https://github.com/shssoichiro/zxcvbn-rs"
 documentation = "https://docs.rs/zxcvbn"
 license = "MIT"
 repository = "https://github.com/shssoichiro/zxcvbn-rs"
+[profile.test]
+opt-level = 2
+[dependencies.clippy]
+version = ">=0.0.100"
+optional = true
+
 [dependencies.derive_builder]
 version = "0.5.0"
+
+[dependencies.fancy-regex]
+version = "0.1.0"
+
+[dependencies.itertools]
+version = "0.7.0"
+
+[dependencies.lazy_static]
+version = "1.0.0"
+
+[dependencies.quick-error]
+version = "1.2.0"
+
+[dependencies.regex]
+version = "0.2.0"
+
+[dependencies.serde]
+version = "1.0.0"
+optional = true
 
 [dependencies.serde_derive]
 version = "1.0.0"
 optional = true
 
-[dependencies.regex]
-version = "0.2.0"
-
-[dependencies.lazy_static]
-version = "0.2.2"
-
-[dependencies.clippy]
-version = ">=0.0.100"
-optional = true
-
 [dependencies.time]
 version = "0.1.35"
-
-[dependencies.fancy-regex]
-version = "0.1.0"
-
-[dependencies.quick-error]
-version = "1.2.0"
-
-[dependencies.itertools]
+[dev-dependencies.quickcheck]
 version = "0.6.0"
 
-[dependencies.serde]
-version = "1.0.0"
-optional = true
 [dev-dependencies.serde_json]
 version = "1.0.0"
 
-[dev-dependencies.quickcheck]
-version = "0.4.1"
-
 [features]
-unstable = ["regex/simd-accel", "lazy_static/nightly"]
+default = []
 dev = ["clippy", "unstable"]
 ser = ["serde", "serde_derive"]
-default = []
+unstable = ["regex/simd-accel", "lazy_static/nightly"]
+[badges.maintenance]
+status = "passively-maintained"
+
+[badges.travis-ci]
+branch = "master"
+repository = "shssoichiro/zxcvbn-rs"

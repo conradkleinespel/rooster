@@ -4,18 +4,16 @@
 //! option. This file may not be copied, modified, or distributed
 //! except according to those terms.
 
+mod multi_product;
+#[cfg(feature = "use_std")]
+pub use self::multi_product::*;
+
 use std::fmt;
 use std::mem::replace;
-use std::ops::Index;
-use std::iter::{Fuse, Peekable};
-use std::collections::HashSet;
-use std::hash::Hash;
+use std::iter::{Fuse, Peekable, FromIterator};
 use std::marker::PhantomData;
 use size_hint;
 use fold;
-
-pub mod multipeek;
-pub use self::multipeek::MultiPeek;
 
 macro_rules! clone_fields {
     ($name:ident, $base:expr, $($field:ident),+) => (
@@ -27,7 +25,6 @@ macro_rules! clone_fields {
     );
 }
 
-
 /// An iterator adaptor that alternates elements from two iterators until both
 /// run out.
 ///
@@ -35,6 +32,7 @@ macro_rules! clone_fields {
 ///
 /// See [`.interleave()`](../trait.Itertools.html#method.interleave) for more information.
 #[derive(Clone, Debug)]
+#[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
 pub struct Interleave<I, J> {
     a: Fuse<I>,
     b: Fuse<J>,
@@ -97,6 +95,7 @@ impl<I, J> Iterator for Interleave<I, J>
 /// See [`.interleave_shortest()`](../trait.Itertools.html#method.interleave_shortest)
 /// for more information.
 #[derive(Clone, Debug)]
+#[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
 pub struct InterleaveShortest<I, J>
     where I: Iterator,
           J: Iterator<Item = I::Item>
@@ -267,67 +266,6 @@ impl<I> Iterator for PutBack<I>
     }
 }
 
-/// An iterator adaptor that allows putting multiple
-/// items in front of the iterator.
-///
-/// Iterator element type is `I::Item`.
-#[derive(Debug, Clone)]
-pub struct PutBackN<I: Iterator> {
-    top: Vec<I::Item>,
-    iter: I,
-}
-
-/// Create an iterator where you can put back multiple values to the front
-/// of the iteration.
-///
-/// Iterator element type is `I::Item`.
-pub fn put_back_n<I>(iterable: I) -> PutBackN<I::IntoIter>
-    where I: IntoIterator
-{
-    PutBackN {
-        top: Vec::new(),
-        iter: iterable.into_iter(),
-    }
-}
-
-impl<I: Iterator> PutBackN<I> {
-    /// Puts x in front of the iterator.
-    /// The values are yielded in order of the most recently put back
-    /// values first.
-    ///
-    /// ```rust
-    /// use itertools::put_back_n;
-    ///
-    /// let mut it = put_back_n(1..5);
-    /// it.next();
-    /// it.put_back(1);
-    /// it.put_back(0);
-    ///
-    /// assert!(itertools::equal(it, 0..5));
-    /// ```
-    #[inline]
-    pub fn put_back(&mut self, x: I::Item) {
-        self.top.push(x);
-    }
-}
-
-impl<I: Iterator> Iterator for PutBackN<I> {
-    type Item = I::Item;
-    #[inline]
-    fn next(&mut self) -> Option<I::Item> {
-        if self.top.is_empty() {
-            self.iter.next()
-        } else {
-            self.top.pop()
-        }
-    }
-
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        size_hint::add_scalar(self.iter.size_hint(), self.top.len())
-    }
-}
-
 #[derive(Debug, Clone)]
 /// An iterator adaptor that iterates over the cartesian product of
 /// the element sets of two iterators `I` and `J`.
@@ -335,6 +273,7 @@ impl<I: Iterator> Iterator for PutBackN<I> {
 /// Iterator element type is `(I::Item, J::Item)`.
 ///
 /// See [`.cartesian_product()`](../trait.Itertools.html#method.cartesian_product) for more information.
+#[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
 pub struct Product<I, J>
     where I: Iterator
 {
@@ -430,6 +369,7 @@ impl<I, J> Iterator for Product<I, J>
 ///
 /// See [`.batching()`](../trait.Itertools.html#method.batching) for more information.
 #[derive(Clone)]
+#[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
 pub struct Batching<I, F> {
     f: F,
     iter: I,
@@ -469,6 +409,7 @@ impl<B, F, I> Iterator for Batching<I, F>
 ///
 /// See [`.step()`](../trait.Itertools.html#method.step) for more information.
 #[derive(Clone, Debug)]
+#[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
 pub struct Step<I> {
     iter: Fuse<I>,
     skip: usize,
@@ -582,6 +523,7 @@ impl<I, J> MergeCore<I, J>
 /// Iterator element type is `I::Item`.
 ///
 /// See [`.merge()`](../trait.Itertools.html#method.merge_by) for more information.
+#[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
 pub struct Merge<I, J>
     where I: Iterator,
           J: Iterator<Item = I::Item>
@@ -654,6 +596,7 @@ impl<I, J> Iterator for Merge<I, J>
 /// Iterator element type is `I::Item`.
 ///
 /// See [`.merge_by()`](../trait.Itertools.html#method.merge_by) for more information.
+#[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
 pub struct MergeBy<I, J, F>
     where I: Iterator,
           J: Iterator<Item = I::Item>
@@ -754,6 +697,7 @@ impl<I> CoalesceCore<I>
 /// An iterator adaptor that may join together adjacent elements.
 ///
 /// See [`.coalesce()`](../trait.Itertools.html#method.coalesce) for more information.
+#[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
 pub struct Coalesce<I, F>
     where I: Iterator
 {
@@ -808,6 +752,7 @@ impl<I, F> Iterator for Coalesce<I, F>
 /// An iterator adaptor that removes repeated duplicates.
 ///
 /// See [`.dedup()`](../trait.Itertools.html#method.dedup) for more information.
+#[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
 pub struct Dedup<I>
     where I: Iterator
 {
@@ -880,6 +825,7 @@ impl<I> Iterator for Dedup<I>
 /// to only pick off elements while the predicate returns `true`.
 ///
 /// See [`.take_while_ref()`](../trait.Itertools.html#method.take_while_ref) for more information.
+#[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
 pub struct TakeWhileRef<'a, I: 'a, F> {
     iter: &'a mut I,
     f: F,
@@ -930,6 +876,7 @@ impl<'a, I, F> Iterator for TakeWhileRef<'a, I, F>
 ///
 /// See [`.while_some()`](../trait.Itertools.html#method.while_some) for more information.
 #[derive(Clone, Debug)]
+#[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
 pub struct WhileSome<I> {
     iter: I,
 }
@@ -963,6 +910,7 @@ impl<I, A> Iterator for WhileSome<I>
 /// See [`.tuple_combinations()`](../trait.Itertools.html#method.tuple_combinations) for more
 /// information.
 #[derive(Debug)]
+#[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
 pub struct TupleCombinations<I, T>
     where I: Iterator,
           T: HasCombination<I>
@@ -1086,284 +1034,12 @@ impl_tuple_combination!(Tuple2Combination Tuple1Combination ; A, A, A ; a);
 impl_tuple_combination!(Tuple3Combination Tuple2Combination ; A, A, A, A ; a b);
 impl_tuple_combination!(Tuple4Combination Tuple3Combination ; A, A, A, A, A; a b c);
 
-#[derive(Debug)]
-struct LazyBuffer<I: Iterator> {
-    it: I,
-    done: bool,
-    buffer: Vec<I::Item>,
-}
-
-impl<I> LazyBuffer<I>
-    where I: Iterator
-{
-    pub fn new(it: I) -> LazyBuffer<I> {
-        let mut it = it;
-        let mut buffer = Vec::new();
-        let done;
-        if let Some(first) = it.next() {
-            buffer.push(first);
-            done = false;
-        } else {
-            done = true;
-        }
-        LazyBuffer {
-            it: it,
-            done: done,
-            buffer: buffer,
-        }
-    }
-
-    pub fn len(&self) -> usize {
-        self.buffer.len()
-    }
-
-    pub fn is_done(&self) -> bool {
-        self.done
-    }
-
-    pub fn get_next(&mut self) -> bool {
-        if self.done {
-            return false;
-        }
-        let next_item = self.it.next();
-        match next_item {
-            Some(x) => {
-                self.buffer.push(x);
-                true
-            }
-            None => {
-                self.done = true;
-                false
-            }
-        }
-    }
-}
-
-impl<I> Index<usize> for LazyBuffer<I>
-    where I: Iterator,
-          I::Item: Sized
-{
-    type Output = I::Item;
-
-    fn index<'b>(&'b self, _index: usize) -> &'b I::Item {
-        self.buffer.index(_index)
-    }
-}
-
-/// An iterator to iterate through all the `n`-length combinations in an iterator.
-///
-/// See [`.combinations()`](../trait.Itertools.html#method.combinations) for more information.
-pub struct Combinations<I: Iterator> {
-    n: usize,
-    indices: Vec<usize>,
-    pool: LazyBuffer<I>,
-    first: bool,
-}
-
-impl<I> fmt::Debug for Combinations<I>
-    where I: Iterator + fmt::Debug,
-          I::Item: fmt::Debug,
-{
-    debug_fmt_fields!(Combinations, n, indices, pool, first);
-}
-
-/// Create a new `Combinations` from a clonable iterator.
-pub fn combinations<I>(iter: I, n: usize) -> Combinations<I>
-    where I: Iterator
-{
-    let mut indices: Vec<usize> = Vec::with_capacity(n);
-    for i in 0..n {
-        indices.push(i);
-    }
-    let mut pool: LazyBuffer<I> = LazyBuffer::new(iter);
-
-    for _ in 0..n {
-        if !pool.get_next() {
-            break;
-        }
-    }
-
-    Combinations {
-        n: n,
-        indices: indices,
-        pool: pool,
-        first: true,
-    }
-}
-
-impl<I> Iterator for Combinations<I>
-    where I: Iterator,
-          I::Item: Clone
-{
-    type Item = Vec<I::Item>;
-    fn next(&mut self) -> Option<Self::Item> {
-        let mut pool_len = self.pool.len();
-        if self.pool.is_done() {
-            if pool_len == 0 || self.n > pool_len {
-                return None;
-            }
-        }
-
-        if self.first {
-            self.first = false;
-        } else if self.n == 0 {
-            return None;
-        } else {
-            // Scan from the end, looking for an index to increment
-            let mut i: usize = self.n - 1;
-
-            // Check if we need to consume more from the iterator
-            if self.indices[i] == pool_len - 1 && !self.pool.is_done() {
-                if self.pool.get_next() {
-                    pool_len += 1;
-                }
-            }
-
-            while self.indices[i] == i + pool_len - self.n {
-                if i > 0 {
-                    i -= 1;
-                } else {
-                    // Reached the last combination
-                    return None;
-                }
-            }
-
-            // Increment index, and reset the ones to its right
-            self.indices[i] += 1;
-            let mut j = i + 1;
-            while j < self.n {
-                self.indices[j] = self.indices[j - 1] + 1;
-                j += 1;
-            }
-        }
-
-        // Create result vector based on the indices
-        let mut result = Vec::with_capacity(self.n);
-        for i in self.indices.iter() {
-            result.push(self.pool[*i].clone());
-        }
-        Some(result)
-    }
-}
-
-/// An iterator adapter to filter out duplicate elements.
-///
-/// See [`.unique_by()`](../trait.Itertools.html#method.unique) for more information.
-#[derive(Clone)]
-pub struct UniqueBy<I: Iterator, V, F> {
-    iter: I,
-    used: HashSet<V>,
-    f: F,
-}
-
-impl<I, V, F> fmt::Debug for UniqueBy<I, V, F>
-    where I: Iterator + fmt::Debug,
-          V: fmt::Debug + Hash + Eq,
-{
-    debug_fmt_fields!(UniqueBy, iter, used);
-}
-
-/// Create a new `UniqueBy` iterator.
-pub fn unique_by<I, V, F>(iter: I, f: F) -> UniqueBy<I, V, F>
-    where V: Eq + Hash,
-          F: FnMut(&I::Item) -> V,
-          I: Iterator,
-{
-    UniqueBy {
-        iter: iter,
-        used: HashSet::new(),
-        f: f,
-    }
-}
-
-impl<I, V, F> Iterator for UniqueBy<I, V, F>
-    where I: Iterator,
-          V: Eq + Hash,
-          F: FnMut(&I::Item) -> V
-{
-    type Item = I::Item;
-
-    fn next(&mut self) -> Option<I::Item> {
-        loop {
-            match self.iter.next() {
-                None => return None,
-                Some(v) => {
-                    let key = (self.f)(&v);
-                    if self.used.insert(key) {
-                        return Some(v);
-                    }
-                }
-            }
-        }
-    }
-
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        let (low, hi) = self.iter.size_hint();
-        ((low > 0 && self.used.is_empty()) as usize, hi)
-    }
-}
-
-impl<I> Iterator for Unique<I>
-    where I: Iterator,
-          I::Item: Eq + Hash + Clone
-{
-    type Item = I::Item;
-
-    fn next(&mut self) -> Option<I::Item> {
-        loop {
-            match self.iter.iter.next() {
-                None => return None,
-                Some(v) => {
-                    if !self.iter.used.contains(&v) {
-                        // FIXME: Avoid this double lookup when the entry api allows
-                        self.iter.used.insert(v.clone());
-                        return Some(v);
-                    }
-                }
-            }
-        }
-    }
-
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        let (low, hi) = self.iter.iter.size_hint();
-        ((low > 0 && self.iter.used.is_empty()) as usize, hi)
-    }
-}
-
-/// An iterator adapter to filter out duplicate elements.
-///
-/// See [`.unique()`](../trait.Itertools.html#method.unique) for more information.
-#[derive(Clone)]
-pub struct Unique<I: Iterator> {
-    iter: UniqueBy<I, I::Item, ()>,
-}
-
-impl<I> fmt::Debug for Unique<I>
-    where I: Iterator + fmt::Debug,
-          I::Item: Hash + Eq + fmt::Debug,
-{
-    debug_fmt_fields!(Unique, iter);
-}
-
-pub fn unique<I>(iter: I) -> Unique<I>
-    where I: Iterator,
-          I::Item: Eq + Hash,
-{
-    Unique {
-        iter: UniqueBy {
-            iter: iter,
-            used: HashSet::new(),
-            f: (),
-        }
-    }
-}
 
 /// An iterator adapter to simply flatten a structure.
 ///
 /// See [`.flatten()`](../trait.Itertools.html#method.flatten) for more information.
 #[derive(Clone, Debug)]
+#[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
 pub struct Flatten<I, J> {
     iter: I,
     front: Option<J>,
@@ -1410,11 +1086,13 @@ impl<I, J> Iterator for Flatten<I, J>
         }
         self.iter.fold(accum, move |accum, iter| fold(iter, accum, &mut f))
     }
+
 }
 
 /// An iterator adapter to apply a transformation within a nested `Result`.
 ///
 /// See [`.map_results()`](../trait.Itertools.html#method.map_results) for more information.
+#[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
 pub struct MapResults<I, F> {
     iter: I,
     f: F
@@ -1444,11 +1122,26 @@ impl<I, F, T, U, E> Iterator for MapResults<I, F>
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.iter.size_hint()
     }
+
+    fn fold<Acc, Fold>(self, init: Acc, mut fold_f: Fold) -> Acc
+        where Fold: FnMut(Acc, Self::Item) -> Acc,
+    {
+        let mut f = self.f;
+        self.iter.fold(init, move |acc, v| fold_f(acc, v.map(&mut f)))
+    }
+
+    fn collect<C>(self) -> C
+        where C: FromIterator<Self::Item>
+    {
+        let mut f = self.f;
+        self.iter.map(move |v| v.map(&mut f)).collect()
+    }
 }
 
 /// An iterator adapter to get the positions of each element that matches a predicate.
 ///
 /// See [`.positions()`](../trait.Itertools.html#method.positions) for more information.
+#[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
 pub struct Positions<I, F> {
     iter: I,
     f: F,
@@ -1503,3 +1196,77 @@ impl<I, F> DoubleEndedIterator for Positions<I, F>
     }
 }
 
+/// An iterator adapter to apply a mutating function to each element before yielding it.
+///
+/// See [`.update()`](../trait.Itertools.html#method.update) for more information.
+#[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
+pub struct Update<I, F> {
+    iter: I,
+    f: F,
+}
+
+/// Create a new `Update` iterator.
+pub fn update<I, F>(iter: I, f: F) -> Update<I, F>
+where
+    I: Iterator,
+    F: FnMut(&mut I::Item),
+{
+    Update { iter: iter, f: f }
+}
+
+impl<I, F> Iterator for Update<I, F>
+where
+    I: Iterator,
+    F: FnMut(&mut I::Item),
+{
+    type Item = I::Item;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(mut v) = self.iter.next() {
+            (self.f)(&mut v);
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
+
+    fn fold<Acc, G>(self, init: Acc, mut g: G) -> Acc
+        where G: FnMut(Acc, Self::Item) -> Acc,
+    {
+        let mut f = self.f;
+        self.iter.fold(init, move |acc, mut v| { f(&mut v); g(acc, v) })
+    }
+
+    // if possible, re-use inner iterator specializations in collect
+    fn collect<C>(self) -> C
+        where C: FromIterator<Self::Item>
+    {
+        let mut f = self.f;
+        self.iter.map(move |mut v| { f(&mut v); v }).collect()
+    }
+}
+
+impl<I, F> ExactSizeIterator for Update<I, F>
+where
+    I: ExactSizeIterator,
+    F: FnMut(&mut I::Item),
+{}
+
+impl<I, F> DoubleEndedIterator for Update<I, F>
+where
+    I: DoubleEndedIterator,
+    F: FnMut(&mut I::Item),
+{
+    fn next_back(&mut self) -> Option<Self::Item> {
+        if let Some(mut v) = self.iter.next_back() {
+            (self.f)(&mut v);
+            Some(v)
+        } else {
+            None
+        }
+    }
+}

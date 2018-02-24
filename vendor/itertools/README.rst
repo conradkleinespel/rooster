@@ -21,7 +21,7 @@ How to use with cargo:
 .. code:: toml
 
     [dependencies]
-    itertools = "0.6.3"
+    itertools = "0.7.3"
 
 How to use in your crate:
 
@@ -40,6 +40,62 @@ How to contribute:
 
 Recent Changes
 --------------
+
+- 0.7.6
+
+  - Add new adaptor ``.multi_cartesian_product()`` which is an n-ary product
+    iterator by @tobz1000
+  - Add new method ``.sorted_by_key()`` by @Xion
+  - Provide simpler and faster ``.count()`` for ``.unique()`` and ``.unique_by()``
+
+- 0.7.5
+
+  - ``.multipeek()`` now implements ``PeekingNext``, by @nicopap.
+
+- 0.7.4
+
+  - Add new adaptor ``.update()`` by @lucasem; this adaptor is used
+    to modify an element before passing it on in an iterator chain.
+
+- 0.7.3
+
+  - Add new method ``.collect_tuple()`` by @matklad; it makes a tuple out of
+    the iterator's elements if the number of them matches **exactly**.
+  - Implement ``fold`` and ``collect`` for ``.map_results()`` which means
+    it reuses the code of the standard ``.map()`` for these methods.
+
+- 0.7.2
+
+  - Add new adaptor ``.merge_join_by`` by @srijs; a heterogeneous merge join
+    for two ordered sequences.
+
+- 0.7.1
+
+  - Iterator adaptors and iterators in itertools now use the same ``must_use``
+    reminder that the standard library adaptors do, by @matematikaedit and @bluss
+    *“iterator adaptors are lazy and do nothing unless consumed”*.
+
+- 0.7.0
+
+  - Faster ``izip!()`` by @krdln
+
+    - ``izip!()`` is now a wrapper for repeated regular ``.zip()`` and
+      a single ``.map()``. This means it optimizes as well as the standard
+      library ``.zip()`` it uses.
+      **Note:** ``multizip`` and ``izip!()`` are now different! The former
+      has a named type but the latter optimizes better.
+
+  - Faster ``.unique()``
+
+  - ``no_std`` support, which is opt-in!
+
+    - Many lovable features are still there without std, like ``izip!()``
+      or ``.format()`` or ``.merge()``, but not those that use collections.
+
+  - Trait bounds were required up front instead of just on the type:
+    ``group_by``'s ``PartialEq`` by @Phlosioneer and ``repeat_call``'s
+    ``FnMut``.
+  - Removed deprecated constructor ``Zip::new`` — use ``izip!()`` or ``multizip()``
 
 - 0.6.5
 

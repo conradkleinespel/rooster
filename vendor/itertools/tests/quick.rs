@@ -101,7 +101,7 @@ impl qc::Arbitrary for Inexact {
 /// Our base iterator that we can impl Arbitrary for
 ///
 /// By default we'll return inexact bounds estimates for size_hint
-/// to make tests harder ro pass.
+/// to make tests harder to pass.
 ///
 /// NOTE: Iter is tricky and is not fused, to help catch bugs.
 /// At the end it will return None once, then return Some(0),
@@ -184,6 +184,64 @@ impl<T, HK> qc::Arbitrary for Iter<T, HK>
                 )
             )
         )
+    }
+}
+
+/// A meta-iterator which yields `Iter<i32>`s whose start/endpoints are
+/// increased or decreased linearly on each iteration.
+#[derive(Clone, Debug)]
+struct ShiftRange<HK = Inexact> {
+    range_start: i32,
+    range_end: i32,
+    start_step: i32,
+    end_step: i32,
+    iter_count: u32,
+    hint_kind: HK,
+}
+
+impl<HK> Iterator for ShiftRange<HK> where HK: HintKind {
+    type Item = Iter<i32, HK>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.iter_count == 0 {
+            return None;
+        }
+
+        let iter = Iter::new(self.range_start..self.range_end, self.hint_kind);
+
+        self.range_start += self.start_step;
+        self.range_end += self.end_step;
+        self.iter_count -= 1;
+
+        Some(iter)
+    }
+}
+
+impl ExactSizeIterator for ShiftRange<Exact> { }
+
+impl<HK> qc::Arbitrary for ShiftRange<HK>
+    where HK: HintKind
+{
+    fn arbitrary<G: qc::Gen>(g: &mut G) -> Self {
+        const MAX_STARTING_RANGE_DIFF: i32 = 32;
+        const MAX_STEP_MODULO: i32 = 8;
+        const MAX_ITER_COUNT: u32 = 3;
+
+        let range_start = qc::Arbitrary::arbitrary(g);
+        let range_end = range_start + g.gen_range(0, MAX_STARTING_RANGE_DIFF + 1);
+        let start_step = g.gen_range(-MAX_STEP_MODULO, MAX_STEP_MODULO + 1);
+        let end_step = g.gen_range(-MAX_STEP_MODULO, MAX_STEP_MODULO + 1);
+        let iter_count = g.gen_range(0, MAX_ITER_COUNT + 1);
+        let hint_kind = qc::Arbitrary::arbitrary(g);
+
+        ShiftRange {
+            range_start: range_start,
+            range_end: range_end,
+            start_step: start_step,
+            end_step: end_step,
+            iter_count: iter_count,
+            hint_kind: hint_kind
+        }
     }
 }
 
@@ -318,6 +376,32 @@ quickcheck! {
         assert_eq!(answer, actual);
     }
 
+    fn size_multi_product(a: ShiftRange) -> bool {
+        correct_size_hint(a.multi_cartesian_product())
+    }
+    fn correct_multi_product3(a: ShiftRange, take_manual: usize) -> () {
+        // Fix no. of iterators at 3
+        let a = ShiftRange { iter_count: 3, ..a };
+
+        // test correctness of MultiProduct through regular iteration (take)
+        // and through fold.
+        let mut iters = a.clone();
+        let i0 = iters.next().unwrap();
+        let i1r = &iters.next().unwrap();
+        let i2r = &iters.next().unwrap();
+        let answer: Vec<_> = i0.flat_map(move |ei0| i1r.clone().flat_map(move |ei1| i2r.clone().map(move |ei2| vec![ei0, ei1, ei2]))).collect();
+        let mut multi_product = a.clone().multi_cartesian_product();
+        let mut actual = Vec::new();
+
+        actual.extend((&mut multi_product).take(take_manual));
+        if actual.len() == take_manual {
+            multi_product.fold((), |(), elt| actual.push(elt));
+        }
+        assert_eq!(answer, actual);
+
+        assert_eq!(answer.into_iter().last(), a.clone().multi_cartesian_product().last());
+    }
+
     fn size_step(a: Iter<i16, Exact>, s: usize) -> bool {
         let mut s = s;
         if s == 0 {
@@ -384,6 +468,11 @@ quickcheck! {
         correct_size_hint(multizip((&rc, &rc, b)))
     }
 
+    fn size_zip_macro(a: Iter<i16, Exact>, b: Iter<i16, Exact>, c: Iter<i16, Exact>) -> bool {
+        let filt = a.clone().dedup();
+        correct_size_hint(izip!(filt, b.clone(), c.clone())) &&
+            exact_size(izip!(a, b, c))
+    }
     fn equal_kmerge(a: Vec<i16>, b: Vec<i16>, c: Vec<i16>) -> bool {
         use itertools::free::kmerge;
         let mut sa = a.clone();
@@ -526,12 +615,17 @@ quickcheck! {
 
     fn equal_combinations_2(a: Vec<u8>) -> bool {
         let mut v = Vec::new();
-        for (i, &x) in enumerate(&a) {
-            for &y in &a[i + 1..] {
+        for (i, x) in enumerate(&a) {
+            for y in &a[i + 1..] {
                 v.push((x, y));
             }
         }
-        itertools::equal(cloned(&a).tuple_combinations::<(_, _)>(), cloned(&v))
+        itertools::equal(a.iter().tuple_combinations::<(_, _)>(), v)
+    }
+
+    fn collect_tuple_matches_size(a: Iter<i16>) -> bool {
+        let size = a.clone().count();
+        a.collect_tuple::<(_, _, _)>().is_some() == (size == 3)
     }
 }
 
@@ -655,6 +749,18 @@ quickcheck! {
 quickcheck! {
     fn size_unique(it: Iter<i8>) -> bool {
         correct_size_hint(it.unique())
+    }
+
+    fn count_unique(it: Vec<i8>, take_first: u8) -> () {
+        let answer = {
+            let mut v = it.clone();
+            v.sort(); v.dedup();
+            v.len()
+        };
+        let mut iter = cloned(&it).unique();
+        let first_count = (&mut iter).take(take_first as usize).count();
+        let rest_count = iter.count();
+        assert_eq!(answer, first_count + rest_count);
     }
 }
 

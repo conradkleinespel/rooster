@@ -12,7 +12,7 @@
 //! "passwords must contain three of {lower, upper, numbers, symbols}".
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
-#![recursion_limit="128"]
+#![recursion_limit = "128"]
 #![warn(missing_docs)]
 
 #[macro_use]
@@ -25,23 +25,23 @@ extern crate lazy_static;
 extern crate quick_error;
 extern crate regex;
 #[cfg(feature = "ser")]
+extern crate serde;
+#[cfg(feature = "ser")]
 #[macro_use]
 extern crate serde_derive;
-#[cfg(feature = "ser")]
-extern crate serde;
 extern crate time;
 
 #[cfg(test)]
 #[macro_use]
 extern crate quickcheck;
 
-use std::ascii::AsciiExt;
-use matching::Match;
+pub use matching::Match;
 
 mod adjacency_graphs;
 pub mod feedback;
 mod frequency_lists;
-mod matching;
+/// Defines structures for matches found in a password
+pub mod matching;
 mod scoring;
 pub mod time_estimates;
 
@@ -77,10 +77,6 @@ quick_error! {
         BlankPassword {
             description("Zxcvbn cannot evaluate a blank password")
         }
-        /// Indicates that the password contained non-ASCII characters
-        NonAsciiPassword {
-            description("Zxcvbn can only evaluate ASCII passwords; this feature may be added in the future")
-        }
     }
 }
 
@@ -97,19 +93,11 @@ pub fn zxcvbn(password: &str, user_inputs: &[&str]) -> Result<Entropy, ZxcvbnErr
         return Err(ZxcvbnError::BlankPassword);
     }
 
-    if !password.is_ascii() {
-        return Err(ZxcvbnError::NonAsciiPassword);
-    }
-
     let start_time_ns = time::precise_time_ns();
 
     // Only evaluate the first 100 characters of the input.
     // This prevents potential DoS attacks from sending extremely long input strings.
-    let password = if password.len() > 100 {
-        &password[0..100]
-    } else {
-        password
-    };
+    let password = password.chars().take(100).collect::<String>();
 
     let sanitized_inputs = user_inputs
         .iter()
@@ -117,8 +105,8 @@ pub fn zxcvbn(password: &str, user_inputs: &[&str]) -> Result<Entropy, ZxcvbnErr
         .map(|(i, x)| (x.to_lowercase(), i + 1))
         .collect();
 
-    let matches = matching::omnimatch(password, &sanitized_inputs);
-    let result = scoring::most_guessable_match_sequence(password, &matches, false);
+    let matches = matching::omnimatch(&password, &sanitized_inputs);
+    let result = scoring::most_guessable_match_sequence(&password, &matches, false);
     let calc_time = (time::precise_time_ns() - start_time_ns) / 1_000_000;
     let (attack_times, attack_times_display, score) =
         time_estimates::estimate_attack_times(result.guesses);
@@ -153,7 +141,7 @@ mod tests {
     fn test_zxcvbn() {
         let password = "r0sebudmaelstrom11/20/91aaaa";
         let entropy = zxcvbn(password, &[]).unwrap();
-        assert_eq!(entropy.guesses, 455972282752000);
+        assert_eq!(entropy.guesses, 473_471_216_704_000);
         assert_eq!(entropy.guesses_log10, 14);
         assert_eq!(entropy.score, 4);
         assert!(!entropy.sequence.is_empty());
@@ -161,9 +149,41 @@ mod tests {
     }
 
     #[test]
+    fn test_zxcvbn_unicode() {
+        let password = "𐰊𐰂𐰄𐰀𐰁";
+        let entropy = zxcvbn(password, &[]).unwrap();
+        assert_eq!(entropy.score, 1);
+    }
+
+    #[test]
+    fn test_zxcvbn_unicode_2() {
+        let password = "r0sebudmaelstrom丂/20/91aaaa";
+        let entropy = zxcvbn(password, &[]).unwrap();
+        assert_eq!(entropy.score, 4);
+    }
+
+    #[test]
     fn test_issue_13() {
         let password = "Imaginative-Say-Shoulder-Dish-0";
         let entropy = zxcvbn(password, &[]).unwrap();
         assert_eq!(entropy.score, 4);
+    }
+
+    #[test]
+    fn test_issue_15_example_1() {
+        let password = "TestMeNow!";
+        let entropy = zxcvbn(password, &[]).unwrap();
+        assert_eq!(entropy.guesses, 372_010_000);
+        assert_eq!(entropy.guesses_log10, 8);
+        assert_eq!(entropy.score, 3);
+    }
+
+    #[test]
+    fn test_issue_15_example_2() {
+        let password = "hey<123";
+        let entropy = zxcvbn(password, &[]).unwrap();
+        assert_eq!(entropy.guesses, 1_010_000);
+        assert_eq!(entropy.guesses_log10, 6);
+        assert_eq!(entropy.score, 2);
     }
 }

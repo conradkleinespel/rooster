@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 pkgname=rooster
 pkgver=2.7.1

@@ -21,14 +21,21 @@ if [ "$QEMU" != "" ]; then
     # image is .gz : download and uncompress it
     qemufile=$(echo ${QEMU%.gz} | sed 's/\//__/g')
     if [ ! -f $tmpdir/$qemufile ]; then
-      curl https://s3.amazonaws.com/rust-lang-ci/libc/$QEMU | \
+      curl https://s3-us-west-1.amazonaws.com/rust-lang-ci2/libc/$QEMU | \
         gunzip -d > $tmpdir/$qemufile
+    fi
+  elif [ -z "${QEMU#*.xz}" ]; then
+    # image is .xz : download and uncompress it
+    qemufile=$(echo ${QEMU%.xz} | sed 's/\//__/g')
+    if [ ! -f $tmpdir/$qemufile ]; then
+      curl https://s3-us-west-1.amazonaws.com/rust-lang-ci2/libc/$QEMU | \
+        unxz > $tmpdir/$qemufile
     fi
   else
     # plain qcow2 image: just download it
     qemufile=$(echo ${QEMU} | sed 's/\//__/g')
     if [ ! -f $tmpdir/$qemufile ]; then
-      curl https://s3.amazonaws.com/rust-lang-ci/libc/$QEMU \
+      curl https://s3-us-west-1.amazonaws.com/rust-lang-ci2/libc/$QEMU \
         > $tmpdir/$qemufile
     fi
   fi
@@ -41,8 +48,12 @@ if [ "$QEMU" != "" ]; then
 
   # Do the standard rigamarole of cross-compiling an executable and then the
   # script to run just executes the binary.
-  cargo build --manifest-path libc-test/Cargo.toml --target $TARGET
-  cp $CARGO_TARGET_DIR/$TARGET/debug/libc-test $tmpdir/mount/
+  cargo build \
+    --manifest-path libc-test/Cargo.toml \
+    --target $TARGET \
+    --test main
+  rm $CARGO_TARGET_DIR/$TARGET/debug/main-*.d
+  cp $CARGO_TARGET_DIR/$TARGET/debug/main-* $tmpdir/mount/libc-test
   echo 'exec $1/libc-test' > $tmpdir/mount/run.sh
 
   du -sh $tmpdir/mount
@@ -68,4 +79,20 @@ if [ "$QEMU" != "" ]; then
   exec grep "^PASSED .* tests" $CARGO_TARGET_DIR/out.log
 fi
 
-exec cargo test --manifest-path libc-test/Cargo.toml --target $TARGET
+# FIXME: x86_64-unknown-linux-gnux32 fail to compile without --release
+# See https://github.com/rust-lang/rust/issues/45417
+opt=
+if [ "$TARGET" = "x86_64-unknown-linux-gnux32" ]; then
+  opt="--release"
+fi
+
+# Building with --no-default-features is currently broken on rumprun because we
+# need cfg(target_vendor), which is currently unstable.
+if [ "$TARGET" != "x86_64-rumprun-netbsd" ]; then
+  cargo test $opt --no-default-features --manifest-path libc-test/Cargo.toml --target $TARGET
+fi
+# Test the #[repr(align(x))] feature if this is building on Rust >= 1.25
+if [ $(rustc --version | sed -E 's/^rustc 1\.([0-9]*)\..*/\1/') -ge 25 ]; then
+  cargo test $opt --features align --manifest-path libc-test/Cargo.toml --target $TARGET
+fi
+exec cargo test $opt --manifest-path libc-test/Cargo.toml --target $TARGET

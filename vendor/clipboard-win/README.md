@@ -67,3 +67,7 @@ fn main() {
 }
 ```
 
+# Feature list
+
+* `utf16error` - Uses non-lossy conversion from UTF-16 to UTF-8. On error returns `io::error`
+with kind `InvalidData`

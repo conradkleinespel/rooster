@@ -2,11 +2,23 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.5.1] - 2017-12-16
+
+### Changed
+- The standard library `collections` crate was merged into `alloc`
+  ([PR](https://github.com/rust-lang/rust/pull/42648)).
+  Correspondingly when using this crate within a crate with `#![no_std]` you must
+  use `#![feature(alloc)] extern crate alloc` in your crate,
+  was `#![feature(collections)] extern crate collections`.
+
+### Fixed
+- `unused_mut` lint (variable does not need to be mutable) #104
+
 ## [0.5.0] - 2017-06-30
 
 ### Changed
 
-- `#[builder(default)]` and `#[builder(default="...")]` at the struct level
+- `#[builder(default)]` and `#[builder(default = "...")]` at the struct level
   change their behaviour and construct a default value for the struct,
   instead of all fields individually.
 - builder fields are no longer public by default; Fields can be explicitly
@@ -14,8 +26,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
   `#[builder(field(public))]`
 
 ### Removed
-- removed previously deprecated syntax `#[builder(setter_prefix="with")]`,
-  please use `#[builder(setter(prefix="with"))]` instead
+- removed previously deprecated syntax `#[builder(setter_prefix = "with")]`,
+  please use `#[builder(setter(prefix = "with"))]` instead
 
 ## [0.4.7] - 2017-04-29
 
@@ -28,13 +40,13 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [0.4.6] - 2017-04-26
 
 ### Added
-- pre-build validation via `#[builder(build_fn(validate="path::to::fn"))]`
+- pre-build validation via `#[builder(build_fn(validate = "path::to::fn"))]`
 
 ## [0.4.5] - 2017-04-25
 
 ### Added
-- customize setter names via `#[builder(setter(name="..."))]`
-- customize build_fn name via `#[builder(build_fn(name="..."))]`
+- customize setter names via `#[builder(setter(name = "..."))]`
+- customize build_fn name via `#[builder(build_fn(name = "..."))]`
 - suppress build method generation via `#[builder(build_fn(skip))]`
 - derive additional traits via `#[builder(derive(Trait1, Trait2, ...))]`
 - set field visibility separate from setter visibility via
@@ -72,7 +84,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [0.4.1] - 2017-04-08
 
 ### Deprecated
-- `#[builder(default)]` and `#[builder(default="...")]` at the struct level will
+- `#[builder(default)]` and `#[builder(default = "...")]` at the struct level will
   change their behaviour in 0.5.0 and construct a default value for the struct,
   instead of all fields individually. To opt into the new behaviour and squelch
   this deprecation warning you can add the `struct_default` feature flag.
@@ -81,11 +93,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 - skip setters, e.g. `#[builder(setter(skip))]`
-- default values, e.g. `#[builder(default="42")]` or just `#[builder(default)]`
+- default values, e.g. `#[builder(default = "42")]` or just `#[builder(default)]`
 
 ### Changed
-- deprecated syntax `#[builder(setter_prefix="with")]`,
-  please use `#[builder(setter(prefix="with"))]` instead
+- deprecated syntax `#[builder(setter_prefix = "with")]`,
+  please use `#[builder(setter(prefix = "with"))]` instead
 - setter conversions are now off by default, you can opt-into via
   `#[builder(setter(into))]`
 - logging is behind a feature flag. To activate it, please add
@@ -102,13 +114,13 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 Requires Rust 1.15 or newer.
 
 ### Added
-- different setter pattern, e.g. `#[builder(pattern="immutable")]`
+- different setter pattern, e.g. `#[builder(pattern = "immutable")]`
 - private setters, e.g. `#[builder(private)]`
 - additional debug info via env_logger, e.g.
   `RUST_LOG=derive_builder=trace cargo test`
-- prefixes, e.g. `#[builder(setter_prefix="with")]`
+- prefixes, e.g. `#[builder(setter_prefix = "with")]`
 - field specific overrides
-- customize builder name, e.g. `#[builder(name="MyBuilder")]`
+- customize builder name, e.g. `#[builder(name = "MyBuilder")]`
 
 ### Changed
 - migration to macros 1.1
@@ -147,7 +159,8 @@ Requires Rust 1.15 or newer.
  - generate setter methods
  - support for generic structs
 
-[Unreleased]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.7...HEAD
+[Unreleased]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.5.1...HEAD
+[0.5.1]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.5.0...v0.5.1
 [0.5.0]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.7...v0.5.0
 [0.4.7]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.6...v0.4.7
 [0.4.6]:  https://github.com/colin-kiegel/rust-derive-builder/compare/v0.4.5...v0.4.6

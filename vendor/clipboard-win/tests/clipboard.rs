@@ -106,4 +106,22 @@ fn set_data() {
     let result = result.unwrap();
     assert_eq!(result.len(), wide_text.len());
     assert_eq!(result, wide_text);
+
+    let expected_text = "For my waifu!";
+    let text = "For my waifu!\0gg"; //Pass some garbage after \0
+    //Check set of wide utf-8 bytes
+    let seq_num_before = Clipboard::seq_num();
+    let result = set_clipboard_string(text);
+    assert!(result.is_ok());
+    assert!(Clipboard::is_format_avail(formats::CF_UNICODETEXT));
+    let seq_num_after = Clipboard::seq_num();
+    assert!(seq_num_before != seq_num_after);
+
+    //Check get of wide utf-8 bytes
+    let result = get_clipboard_string();
+    assert!(result.is_ok());
+    let result = result.unwrap();
+    assert_eq!(result.len(), expected_text.len());
+    assert_eq!(result, expected_text);
+
 }

@@ -1,6 +1,5 @@
 use dox::{mem, Option};
 
-pub type c_char = i8;
 pub type wchar_t = i32;
 pub type off_t = i64;
 pub type useconds_t = u32;
@@ -184,6 +183,9 @@ pub const IP_MULTICAST_IF: ::c_int = 9;
 pub const IP_MULTICAST_TTL: ::c_int = 10;
 pub const IP_MULTICAST_LOOP: ::c_int = 11;
 
+pub const IPV6_UNICAST_HOPS: ::c_int = 4;
+pub const IPV6_MULTICAST_IF: ::c_int = 9;
+pub const IPV6_MULTICAST_HOPS: ::c_int = 10;
 pub const IPV6_MULTICAST_LOOP: ::c_int = 11;
 pub const IPV6_V6ONLY: ::c_int = 27;
 
@@ -299,6 +301,7 @@ pub const MDMBUF: ::tcflag_t = 0x00100000;
 pub const WNOHANG: ::c_int = 0x00000001;
 pub const WUNTRACED: ::c_int = 0x00000002;
 
+pub const RTLD_LAZY: ::c_int = 0x1;
 pub const RTLD_NOW: ::c_int = 0x2;
 pub const RTLD_NEXT: *mut ::c_void = -1isize as *mut ::c_void;
 pub const RTLD_DEFAULT: *mut ::c_void = -2isize as *mut ::c_void;
@@ -313,6 +316,12 @@ pub const TCP_MAXSEG: ::c_int = 2;
 
 pub const PIPE_BUF: usize = 512;
 
+pub const POLLIN: ::c_short = 0x1;
+pub const POLLPRI: ::c_short = 0x2;
+pub const POLLOUT: ::c_short = 0x4;
+pub const POLLERR: ::c_short = 0x8;
+pub const POLLHUP: ::c_short = 0x10;
+pub const POLLNVAL: ::c_short = 0x20;
 pub const POLLRDNORM: ::c_short = 0x040;
 pub const POLLWRNORM: ::c_short = 0x004;
 pub const POLLRDBAND: ::c_short = 0x080;
@@ -360,6 +369,10 @@ f! {
     pub fn WCOREDUMP(status: ::c_int) -> bool {
         (status & 0o200) != 0
     }
+
+    pub fn QCMD(cmd: ::c_int, type_: ::c_int) -> ::c_int {
+        (cmd << 8) | (type_ & 0x00ff)
+    }
 }
 
 extern {
@@ -375,6 +388,10 @@ extern {
     pub fn getpwent() -> *mut passwd;
     pub fn setpwent();
     pub fn endpwent();
+    pub fn setgrent();
+    pub fn endgrent();
+    pub fn getgrent() -> *mut ::group;
+
     pub fn getprogname() -> *const ::c_char;
     pub fn setprogname(name: *const ::c_char);
     pub fn getloadavg(loadavg: *mut ::c_double, nelem: ::c_int) -> ::c_int;
@@ -387,12 +404,14 @@ extern {
 
     #[cfg_attr(target_os = "macos", link_name = "glob$INODE64")]
     #[cfg_attr(target_os = "netbsd", link_name = "__glob30")]
+    #[cfg_attr(target_os = "freebsd", link_name = "glob@FBSD_1.0")]
     pub fn glob(pattern: *const ::c_char,
                 flags: ::c_int,
                 errfunc: Option<extern fn(epath: *const ::c_char,
                                           errno: ::c_int) -> ::c_int>,
                 pglob: *mut ::glob_t) -> ::c_int;
     #[cfg_attr(target_os = "netbsd", link_name = "__globfree30")]
+    #[cfg_attr(target_os = "freebsd", link_name = "globfree@FBSD_1.0")]
     pub fn globfree(pglob: *mut ::glob_t);
 
     pub fn posix_madvise(addr: *mut ::c_void, len: ::size_t, advice: ::c_int)
@@ -480,6 +499,9 @@ extern {
                            oldset: *mut sigset_t) -> ::c_int;
     pub fn sem_open(name: *const ::c_char, oflag: ::c_int, ...) -> *mut sem_t;
     pub fn getgrnam(name: *const ::c_char) -> *mut ::group;
+    #[cfg_attr(all(target_os = "macos", target_arch = "x86"),
+               link_name = "pthread_cancel$UNIX2003")]
+    pub fn pthread_cancel(thread: ::pthread_t) -> ::c_int;
     pub fn pthread_kill(thread: ::pthread_t, sig: ::c_int) -> ::c_int;
     pub fn sem_unlink(name: *const ::c_char) -> ::c_int;
     pub fn daemon(nochdir: ::c_int, noclose: ::c_int) -> ::c_int;

@@ -12,7 +12,7 @@
 
 [package]
 name = "zxcvbn"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Josh Holmer <jholmer.in@gmail.com>"]
 description = "An entropy-based password strength estimator, originally for Javascript by Dropbox."
 homepage = "https://github.com/shssoichiro/zxcvbn-rs"
@@ -41,7 +41,7 @@ version = "1.0.0"
 version = "1.2.0"
 
 [dependencies.regex]
-version = "0.2.0"
+version = "1.0.0"
 
 [dependencies.serde]
 version = "1.0.0"
@@ -63,7 +63,7 @@ version = "1.0.0"
 default = []
 dev = ["clippy", "unstable"]
 ser = ["serde", "serde_derive"]
-unstable = ["regex/simd-accel", "lazy_static/nightly"]
+unstable = ["lazy_static/nightly"]
 [badges.maintenance]
 status = "passively-maintained"
 

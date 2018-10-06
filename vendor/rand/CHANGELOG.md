@@ -2,17 +2,145 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
-and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.2] - 2018-01-05
+A [separate changelog is kept for rand_core](rand_core/CHANGELOG.md).
+
+You may also find the [Update Guide](UPDATING.md) useful.
+
+## [0.5.5] - 2018-08-07
+### Documentation
+- Fix links in documentation (#582)
+
+## [0.5.4] - 2018-07-11
+### Platform support
+- Make `OsRng` work via WASM/stdweb for WebWorkers
+
+## [0.5.3] - 2018-06-26
+### Platform support
+- OpenBSD, Bitrig: fix compilation (broken in 0.5.1) (#530)
+
+## [0.5.2] - 2018-06-18
+### Platform support
+- Hide `OsRng` and `JitterRng` on unsupported platforms (#512; fixes #503).
+
+## [0.5.1] - 2018-06-08
+
+### New distributions
+- Added Cauchy distribution. (#474, #486)
+- Added Pareto distribution. (#495)
+
+### Platform support and `OsRng`
+- Remove blanket Unix implementation. (#484)
+- Remove Wasm unimplemented stub. (#484)
+- Dragonfly BSD: read from `/dev/random`. (#484)
+- Bitrig: use `getentropy` like OpenBSD. (#484)
+- Solaris: (untested) use `getrandom` if available, otherwise `/dev/random`. (#484)
+- Emscripten, `stdweb`: split the read up in chunks. (#484)
+- Emscripten, Haiku: don't do an extra blocking read from `/dev/random`. (#484)
+- Linux, NetBSD, Solaris: read in blocking mode on first use in `fill_bytes`. (#484)
+- Fuchsia, CloudABI: fix compilation (broken in Rand 0.5). (#484)
+
+## [0.5.0] - 2018-05-21
+
+### Crate features and organisation
+- Minimum Rust version update: 1.22.0. (#239)
+- Create a separate `rand_core` crate. (#288)
+- Deprecate `rand_derive`. (#256)
+- Add `prelude` (and module reorganisation). (#435)
+- Add `log` feature. Logging is now available in `JitterRng`, `OsRng`, `EntropyRng` and `ReseedingRng`. (#246)
+- Add `serde1` feature for some PRNGs. (#189)
+- `stdweb` feature for `OsRng` support on WASM via stdweb. (#272, #336)
+
+### `Rng` trait
+- Split `Rng` in `RngCore` and `Rng` extension trait.
+  `next_u32`, `next_u64` and `fill_bytes` are now part of `RngCore`. (#265)
+- Add `Rng::sample`. (#256)
+- Deprecate `Rng::gen_weighted_bool`. (#308)
+- Add `Rng::gen_bool`. (#308)
+- Remove `Rng::next_f32` and `Rng::next_f64`. (#273)
+- Add optimized `Rng::fill` and `Rng::try_fill` methods. (#247)
+- Deprecate `Rng::gen_iter`. (#286)
+- Deprecate `Rng::gen_ascii_chars`. (#279)
+
+### `rand_core` crate
+- `rand` now depends on new `rand_core` crate (#288)
+- `RngCore` and `SeedableRng` are now part of `rand_core`. (#288)
+- Add modules to help implementing RNGs `impl` and `le`. (#209, #228)
+- Add `Error` and `ErrorKind`. (#225)
+- Add `CryptoRng` marker trait. (#273)
+- Add `BlockRngCore` trait. (#281)
+- Add `BlockRng` and `BlockRng64` wrappers to help implementations. (#281, #325)
+- Revise the `SeedableRng` trait. (#233)
+- Remove default implementations for `RngCore::next_u64` and `RngCore::fill_bytes`. (#288)
+- Add `RngCore::try_fill_bytes`. (#225)
+
+### Other traits and types
+- Add `FromEntropy` trait. (#233, #375)
+- Add `SmallRng` wrapper. (#296)
+- Rewrite `ReseedingRng` to only work with `BlockRngCore` (substantial performance improvement). (#281)
+- Deprecate `weak_rng`. Use `SmallRng` instead. (#296)
+- Deprecate `AsciiGenerator`. (#279)
+
+### Random number generators
+- Switch `StdRng` and `thread_rng` to HC-128. (#277)
+- `StdRng` must now be created with `from_entropy` instead of `new`
+- Change `thread_rng` reseeding threshold to 32 MiB. (#277)
+- PRNGs no longer implement `Copy`. (#209)
+- `Debug` implementations no longer show internals. (#209)
+- Implement `Clone` for `ReseedingRng`, `JitterRng`, OsRng`. (#383, #384)
+- Implement serialization for `XorShiftRng`, `IsaacRng` and `Isaac64Rng` under the `serde1` feature. (#189)
+- Implement `BlockRngCore` for `ChaChaCore` and `Hc128Core`. (#281)
+- All PRNGs are now portable across big- and little-endian architectures. (#209)
+- `Isaac64Rng::next_u32` no longer throws away half the results. (#209)
+- Add `IsaacRng::new_from_u64` and `Isaac64Rng::new_from_u64`. (#209)
+- Add the HC-128 CSPRNG `Hc128Rng`. (#210)
+- Change ChaCha20 to have 64-bit counter and 64-bit stream. (#349)
+- Changes to `JitterRng` to get its size down from 2112 to 24 bytes. (#251)
+- Various performance improvements to all PRNGs.
+
+### Platform support and `OsRng`
+- Add support for CloudABI. (#224)
+- Remove support for NaCl. (#225)
+- WASM support for `OsRng` via stdweb, behind the `stdweb` feature. (#272, #336)
+- Use `getrandom` on more platforms for Linux, and on Android. (#338)
+- Use the `SecRandomCopyBytes` interface on macOS. (#322)
+- On systems that do not have a syscall interface, only keep a single file descriptor open for `OsRng`. (#239)
+- On Unix, first try a single read from `/dev/random`, then `/dev/urandom`. (#338)
+- Better error handling and reporting in `OsRng` (using new error type). (#225)
+- `OsRng` now uses non-blocking when available. (#225)
+- Add `EntropyRng`, which provides `OsRng`, but has `JitterRng` as a fallback. (#235)
+
+### Distributions
+- New `Distribution` trait. (#256)
+- Add `Distribution::sample_iter` and `Rng::::sample_iter`. (#361)
+- Deprecate `Rand`, `Sample` and `IndependentSample` traits. (#256)
+- Add a `Standard` distribution (replaces most `Rand` implementations). (#256)
+- Add `Binomial` and `Poisson` distributions. (#96)
+- Add `Bernoulli` dsitribution. (#411)
+- Add `Alphanumeric` distribution. (#279)
+- Remove `Closed01` distribution, add `OpenClosed01`. (#274, #420)
+- Rework `Range` type, making it possible to implement it for user types. (#274)
+- Rename `Range` to `Uniform`. (#395)
+- Add `Uniform::new_inclusive` for inclusive ranges. (#274)
+- Use widening multiply method for much faster integer range reduction. (#274)
+- `Standard` distribution for `char` uses `Uniform` internally. (#274)
+- `Standard` distribution for `bool` uses sign test. (#274)
+- Implement `Standard` distribution for `Wrapping<T>`. (#436)
+- Implement `Uniform` distribution for `Duration`. (#427)
+
+
+## [0.4.2] - 2018-01-06
 ### Changed
-- Use winapi on Windows
+- Use `winapi` on Windows
 - Update for Fuchsia OS
 - Remove dev-dependency on `log`
+
 
 ## [0.4.1] - 2017-12-17
 ### Added
 - `no_std` support
+
 
 ## [0.4.0-pre.0] - 2017-12-11
 ### Added
@@ -28,6 +156,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Deprecated
   - `sample` function deprecated (replaced by `sample_iter`)
+
+
+## [0.3.20] - 2018-01-06
+### Changed
+- Remove dev-dependency on `log`
+- Update `fuchsia-zircon` dependency to 0.3.2
+
+
+## [0.3.19] - 2017-12-27
+### Changed
+- Require `log <= 0.3.8` for dev builds
+- Update `fuchsia-zircon` dependency to 0.3
+- Fix broken links in docs (to unblock compiler docs testing CI)
+
 
 ## [0.3.18] - 2017-11-06
 ### Changed
@@ -177,7 +319,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Compatible with Rust master
 
 ### Removed
-- Removed Copy inplementaions from RNGs
+- Removed Copy implementations from RNGs
 
 
 ## [0.1.2] - 2015-02-03
@@ -223,7 +365,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `Rng::gen_ascii_chars()` which will return an infinite stream of random ascii characters
 
 ### Changed
-- Now only depends on libcore!   2adf5363f88ffe06f6d2ea5c338d1b186d47f4a1
+- Now only depends on libcore!
 - Remove `Rng.choose()`, rename `Rng.choose_option()` to `.choose()`
 - Rename OSRng to OsRng
 - The WeightedChoice structure is no longer built with a `Vec<Weighted<T>>`,
@@ -262,4 +404,3 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.10-pre] - 2014-03-02
 ### Added
 - Seperate `rand` out of the standard library
-

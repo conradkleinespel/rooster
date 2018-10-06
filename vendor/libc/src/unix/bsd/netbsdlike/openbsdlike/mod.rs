@@ -176,6 +176,31 @@ s! {
         pub ifm_xflags: ::c_int,
         pub ifm_data: if_data,
     }
+
+    pub struct sockaddr_dl {
+        pub sdl_len: ::c_uchar,
+        pub sdl_family: ::c_uchar,
+        pub sdl_index: ::c_ushort,
+        pub sdl_type: ::c_uchar,
+        pub sdl_nlen: ::c_uchar,
+        pub sdl_alen: ::c_uchar,
+        pub sdl_slen: ::c_uchar,
+        pub sdl_data: [::c_char; 24],
+    }
+
+    pub struct sockpeercred {
+        pub uid: ::uid_t,
+        pub gid: ::gid_t,
+        pub pid: ::pid_t,
+    }
+
+    pub struct arphdr {
+        pub ar_hrd: u16,
+        pub ar_pro: u16,
+        pub ar_hln: u8,
+        pub ar_pln: u8,
+        pub ar_op: u16,
+    }
 }
 
 pub const UT_NAMESIZE: usize = 32;
@@ -200,7 +225,11 @@ pub const ECANCELED : ::c_int = 88;
 pub const EIDRM : ::c_int = 89;
 pub const ENOMSG : ::c_int = 90;
 pub const ENOTSUP : ::c_int = 91;
-pub const ELAST : ::c_int = 91;
+pub const EBADMSG : ::c_int = 92;
+pub const ENOTRECOVERABLE : ::c_int = 93;
+pub const EOWNERDEAD : ::c_int = 94;
+pub const EPROTO : ::c_int = 95;
+pub const ELAST : ::c_int = 95;
 
 pub const F_DUPFD_CLOEXEC : ::c_int = 10;
 
@@ -220,6 +249,75 @@ pub const SO_NETPROC: ::c_int = 0x1020;
 pub const SO_RTABLE: ::c_int = 0x1021;
 pub const SO_PEERCRED: ::c_int = 0x1022;
 pub const SO_SPLICE: ::c_int = 0x1023;
+
+// sys/netinet/in.h
+// Protocols (RFC 1700)
+// NOTE: These are in addition to the constants defined in src/unix/mod.rs
+
+// IPPROTO_IP defined in src/unix/mod.rs
+/// Hop-by-hop option header
+pub const IPPROTO_HOPOPTS: ::c_int = 0;
+// IPPROTO_ICMP defined in src/unix/mod.rs
+/// group mgmt protocol
+pub const IPPROTO_IGMP: ::c_int = 2;
+/// gateway^2 (deprecated)
+pub const IPPROTO_GGP: ::c_int = 3;
+/// for compatibility
+pub const IPPROTO_IPIP: ::c_int = 4;
+// IPPROTO_TCP defined in src/unix/mod.rs
+/// exterior gateway protocol
+pub const IPPROTO_EGP: ::c_int = 8;
+/// pup
+pub const IPPROTO_PUP: ::c_int = 12;
+// IPPROTO_UDP defined in src/unix/mod.rs
+/// xns idp
+pub const IPPROTO_IDP: ::c_int = 22;
+/// tp-4 w/ class negotiation
+pub const IPPROTO_TP: ::c_int = 29;
+// IPPROTO_IPV6 defined in src/unix/mod.rs
+/// IP6 routing header
+pub const IPPROTO_ROUTING: ::c_int = 43;
+/// IP6 fragmentation header
+pub const IPPROTO_FRAGMENT: ::c_int = 44;
+/// resource reservation
+pub const IPPROTO_RSVP: ::c_int = 46;
+/// General Routing Encap.
+pub const IPPROTO_GRE: ::c_int = 47;
+/// IP6 Encap Sec. Payload
+pub const IPPROTO_ESP: ::c_int = 50;
+/// IP6 Auth Header
+pub const IPPROTO_AH: ::c_int = 51;
+/// IP Mobility RFC 2004
+pub const IPPROTO_MOBILE: ::c_int = 55;
+// IPPROTO_ICMPV6 defined in src/unix/mod.rs
+/// IP6 no next header
+pub const IPPROTO_NONE: ::c_int = 59;
+/// IP6 destination option
+pub const IPPROTO_DSTOPTS: ::c_int = 60;
+/// ISO cnlp
+pub const IPPROTO_EON: ::c_int = 80;
+/// Ethernet-in-IP
+pub const IPPROTO_ETHERIP: ::c_int = 97;
+/// encapsulation header
+pub const IPPROTO_ENCAP: ::c_int = 98;
+/// Protocol indep. multicast
+pub const IPPROTO_PIM: ::c_int = 103;
+/// IP Payload Comp. Protocol
+pub const IPPROTO_IPCOMP: ::c_int = 108;
+/// CARP
+pub const IPPROTO_CARP: ::c_int = 112;
+/// unicast MPLS packet
+pub const IPPROTO_MPLS: ::c_int = 137;
+/// PFSYNC
+pub const IPPROTO_PFSYNC: ::c_int = 240;
+pub const IPPROTO_MAX: ::c_int = 256;
+
+/* Only used internally, so it can be outside the range of valid IP protocols */
+/// Divert sockets
+pub const IPPROTO_DIVERT: ::c_int = 258;
+
+pub const IP_RECVDSTADDR: ::c_int = 7;
+pub const IP_SENDSRCADDR: ::c_int = IP_RECVDSTADDR;
 
 pub const AF_ECMA: ::c_int = 8;
 pub const AF_ROUTE: ::c_int = 17;
@@ -273,7 +371,17 @@ pub const EIPSEC : ::c_int = 82;
 pub const ENOMEDIUM : ::c_int = 85;
 pub const EMEDIUMTYPE : ::c_int = 86;
 
+pub const EAI_BADFLAGS: ::c_int = -1;
+pub const EAI_NONAME: ::c_int = -2;
+pub const EAI_AGAIN: ::c_int = -3;
+pub const EAI_FAIL: ::c_int = -4;
+pub const EAI_NODATA: ::c_int = -5;
+pub const EAI_FAMILY: ::c_int = -6;
+pub const EAI_SOCKTYPE: ::c_int = -7;
+pub const EAI_SERVICE: ::c_int = -8;
+pub const EAI_MEMORY: ::c_int = -10;
 pub const EAI_SYSTEM: ::c_int = -11;
+pub const EAI_OVERFLOW: ::c_int = -14;
 
 pub const RUSAGE_THREAD: ::c_int = 1;
 
@@ -479,6 +587,7 @@ pub const CTL_MACHDEP: ::c_int = 7;
 pub const CTL_DDB: ::c_int = 9;
 pub const CTL_VFS: ::c_int = 10;
 pub const CTL_MAXID: ::c_int = 11;
+pub const HW_NCPUONLINE: ::c_int = 25;
 pub const KERN_OSTYPE: ::c_int = 1;
 pub const KERN_OSRELEASE: ::c_int = 2;
 pub const KERN_OSREV: ::c_int = 3;
@@ -553,7 +662,8 @@ pub const KERN_PROC_VMMAP: ::c_int = 80;
 pub const KERN_GLOBAL_PTRACE: ::c_int = 81;
 pub const KERN_CONSBUFSIZE: ::c_int = 82;
 pub const KERN_CONSBUF: ::c_int = 83;
-pub const KERN_MAXID: ::c_int = 84;
+pub const KERN_AUDIO: ::c_int = 84;
+pub const KERN_MAXID: ::c_int = 85;
 pub const KERN_PROC_ALL: ::c_int = 0;
 pub const KERN_PROC_PID: ::c_int = 1;
 pub const KERN_PROC_PGRP: ::c_int = 2;
@@ -584,6 +694,8 @@ pub const ONLRET: ::tcflag_t = 0x80;
 pub const SOCK_CLOEXEC: ::c_int = 0x8000;
 pub const SOCK_NONBLOCK: ::c_int = 0x4000;
 pub const SOCK_DNS: ::c_int = 0x1000;
+
+pub const WCONTINUED: ::c_int = 8;
 
 f! {
     pub fn WIFCONTINUED(status: ::c_int) -> bool {
@@ -620,8 +732,6 @@ extern {
                   newlen: ::size_t)
                   -> ::c_int;
     pub fn getentropy(buf: *mut ::c_void, buflen: ::size_t) -> ::c_int;
-    pub fn pledge(promises: *const ::c_char,
-                  paths: *mut *const ::c_char) -> ::c_int;
     pub fn setresgid(rgid: ::gid_t, egid: ::gid_t, sgid: ::gid_t) -> ::c_int;
     pub fn setresuid(ruid: ::uid_t, euid: ::uid_t, suid: ::uid_t) -> ::c_int;
 }
@@ -637,6 +747,3 @@ cfg_if! {
         // Unknown target_os
     }
 }
-
-mod other;
-pub use self::other::*;

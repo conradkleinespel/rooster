@@ -98,6 +98,23 @@
 //! # }
 //! ```
 //!
+//! The result of square bracket indexing like `v["name"]` is a borrow of the
+//! data at that index, so the type is `&Value`. A JSON map can be indexed with
+//! string keys, while a JSON array can be indexed with integer keys. If the
+//! type of the data is not right for the type with which it is being indexed,
+//! or if a map does not contain the key being indexed, or if the index into a
+//! vector is out of bounds, the returned element is `Value::Null`.
+//!
+//! When a `Value` is printed, it is printed as a JSON string. So in the code
+//! above, the output looks like `Please call "John Doe" at the number "+44
+//! 1234567"`. The quotation marks appear because `v["name"]` is a `&Value`
+//! containing a JSON string and its JSON representation is `"John Doe"`.
+//! Printing as a plain string without quotation marks involves converting from
+//! a JSON string to a Rust string with [`as_str()`] or avoiding the use of
+//! `Value` as described in the following section.
+//!
+//! [`as_str()`]: https://docs.serde.rs/serde_json/enum.Value.html#method.as_str
+//!
 //! The `Value` representation is sufficient for very basic tasks but can be
 //! tedious to work with for anything more significant. Error handling is
 //! verbose to implement correctly, for example imagine trying to detect the
@@ -283,6 +300,11 @@
 //! `HashMap<K, V>`, as well as any structs or enums annotated with
 //! `#[derive(Serialize)]`.
 //!
+//! # No-std support
+//!
+//! This crate currently requires the Rust standard library. For JSON support in
+//! Serde without a standard library, please see the [`serde-json-core`] crate.
+//!
 //! [value]: https://docs.serde.rs/serde_json/value/enum.Value.html
 //! [from_str]: https://docs.serde.rs/serde_json/de/fn.from_str.html
 //! [from_slice]: https://docs.serde.rs/serde_json/de/fn.from_slice.html
@@ -291,11 +313,16 @@
 //! [to_vec]: https://docs.serde.rs/serde_json/ser/fn.to_vec.html
 //! [to_writer]: https://docs.serde.rs/serde_json/ser/fn.to_writer.html
 //! [macro]: https://docs.serde.rs/serde_json/macro.json.html
+//! [`serde-json-core`]: https://japaric.github.io/serde-json-core/serde_json_core/
 
-#![doc(html_root_url = "https://docs.rs/serde_json/1.0.3")]
+#![doc(html_root_url = "https://docs.rs/serde_json/1.0.32")]
+#![cfg_attr(feature = "cargo-clippy", allow(renamed_and_removed_lints))]
 #![cfg_attr(feature = "cargo-clippy", deny(clippy, clippy_pedantic))]
-// Because of "JavaScript"... fixed in Manishearth/rust-clippy#1071
-#![cfg_attr(feature = "cargo-clippy", allow(doc_markdown))]
+// Whitelisted clippy lints
+#![cfg_attr(
+    feature = "cargo-clippy",
+    allow(doc_markdown, needless_pass_by_value)
+)]
 // Whitelisted clippy_pedantic lints
 #![cfg_attr(feature = "cargo-clippy", allow(
 // Deserializer::from_str, into_iter
@@ -316,27 +343,40 @@
     use_self,
 // not practical
     missing_docs_in_private_items,
+    similar_names,
+// we support older compilers
+    redundant_field_names,
 ))]
-
 #![deny(missing_docs)]
 
-extern crate num_traits;
 #[macro_use]
 extern crate serde;
-extern crate itoa;
-extern crate dtoa;
 #[cfg(feature = "preserve_order")]
-extern crate linked_hash_map;
+extern crate indexmap;
+extern crate itoa;
+extern crate ryu;
 
 #[doc(inline)]
-pub use self::de::{Deserializer, StreamDeserializer, from_reader, from_slice, from_str};
+pub use self::de::{from_reader, from_slice, from_str, Deserializer, StreamDeserializer};
 #[doc(inline)]
 pub use self::error::{Error, Result};
 #[doc(inline)]
-pub use self::ser::{Serializer, to_string, to_string_pretty, to_vec, to_vec_pretty, to_writer,
-                    to_writer_pretty};
+pub use self::ser::{
+    to_string, to_string_pretty, to_vec, to_vec_pretty, to_writer, to_writer_pretty, Serializer,
+};
 #[doc(inline)]
-pub use self::value::{Map, Number, Value, from_value, to_value};
+pub use self::value::{from_value, to_value, Map, Number, Value};
+
+// We only use our own error type; no need for From conversions provided by the
+// standard library's try! macro. This reduces lines of LLVM IR by 4%.
+macro_rules! try {
+    ($e:expr) => {
+        match $e {
+            ::std::result::Result::Ok(val) => val,
+            ::std::result::Result::Err(err) => return ::std::result::Result::Err(err),
+        }
+    };
+}
 
 #[macro_use]
 mod macros;
@@ -350,3 +390,6 @@ pub mod value;
 mod iter;
 mod number;
 mod read;
+
+#[cfg(feature = "raw_value")]
+mod raw;

@@ -5,8 +5,6 @@ use std::collections::HashMap;
 use xcb::{ self, Atom };
 use ::{ INCR_CHUNK_SIZE, Context, SetMap };
 
-
-
 macro_rules! try_continue {
     ( $expr:expr ) => {
         match $expr {
@@ -23,9 +21,7 @@ struct IncrState {
     pos: usize
 }
 
-
-#[inline]
-pub fn run(context: Arc<Context>, setmap: SetMap, max_length: usize, receiver: &Receiver<Atom>) {
+pub fn run(context: &Arc<Context>, setmap: &SetMap, max_length: usize, receiver: &Receiver<Atom>) {
     let mut incr_map = HashMap::new();
     let mut state_map = HashMap::new();
 
@@ -48,35 +44,33 @@ pub fn run(context: Arc<Context>, setmap: SetMap, max_length: usize, receiver: &
                         event.requestor(), event.property(), xcb::ATOM_ATOM, 32,
                         &[context.atoms.targets, target]
                     );
+                } else if value.len() < max_length - 24 {
+                    xcb::change_property(
+                        &context.connection, xcb::PROP_MODE_REPLACE as u8,
+                        event.requestor(), event.property(), target, 8,
+                        value
+                    );
                 } else {
-                    if value.len() < max_length - 24 {
-                        xcb::change_property(
-                            &context.connection, xcb::PROP_MODE_REPLACE as u8,
-                            event.requestor(), event.property(), target, 8,
-                            value
-                        );
-                    } else {
-                        xcb::change_window_attributes(
-                            &context.connection, event.requestor(),
-                            &[(xcb::CW_EVENT_MASK, xcb::EVENT_MASK_PROPERTY_CHANGE)]
-                        );
-                        xcb::change_property(
-                            &context.connection, xcb::PROP_MODE_REPLACE as u8,
-                            event.requestor(), event.property(), context.atoms.incr, 32,
-                            &[0u8; 0]
-                        );
+                    xcb::change_window_attributes(
+                        &context.connection, event.requestor(),
+                        &[(xcb::CW_EVENT_MASK, xcb::EVENT_MASK_PROPERTY_CHANGE)]
+                    );
+                    xcb::change_property(
+                        &context.connection, xcb::PROP_MODE_REPLACE as u8,
+                        event.requestor(), event.property(), context.atoms.incr, 32,
+                        &[0u8; 0]
+                    );
 
-                        incr_map.insert(event.selection(), event.property());
-                        state_map.insert(
-                            event.property(),
-                            IncrState {
-                                selection: event.selection(),
-                                requestor: event.requestor(),
-                                property: event.property(),
-                                pos: 0
-                            }
-                        );
-                    }
+                    incr_map.insert(event.selection(), event.property());
+                    state_map.insert(
+                        event.property(),
+                        IncrState {
+                            selection: event.selection(),
+                            requestor: event.requestor(),
+                            property: event.property(),
+                            pos: 0
+                        }
+                    );
                 }
 
                 xcb::send_event(

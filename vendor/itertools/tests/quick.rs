@@ -17,6 +17,7 @@ use itertools::{
     multizip,
     EitherOrBoth,
 };
+use itertools::flatten;
 use itertools::free::{
     cloned,
     enumerate,
@@ -604,12 +605,12 @@ quickcheck! {
     }
 
     fn equal_flatten(a: Vec<Option<i32>>) -> bool {
-        itertools::equal(a.iter().flatten(),
+        itertools::equal(flatten(&a),
                          a.iter().filter_map(|x| x.as_ref()))
     }
 
     fn equal_flatten_vec(a: Vec<Vec<u8>>) -> bool {
-        itertools::equal(a.iter().flatten(),
+        itertools::equal(flatten(&a),
                          a.iter().flat_map(|x| x))
     }
 
@@ -908,6 +909,20 @@ quickcheck! {
     }
 }
 
+quickcheck! {
+    fn correct_group_map_modulo_key(a: Vec<u8>, modulo: u8) -> () {
+        let modulo = if modulo == 0 { 1 } else { modulo }; // Avoid `% 0`
+        let count = a.len();
+        let lookup = a.into_iter().map(|i| (i % modulo, i)).into_group_map();
+
+        assert_eq!(lookup.values().flat_map(|vals| vals.iter()).count(), count);
+
+        for (&key, vals) in lookup.iter() {
+            assert!(vals.iter().all(|&val| val % modulo == key));
+        }
+    }
+}
+
 /// A peculiar type: Equality compares both tuple items, but ordering only the
 /// first item.  This is so we can check the stability property easily.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -969,5 +984,36 @@ quickcheck! {
             _ => MinMaxResult::MinMax(min.unwrap(), max.unwrap()),
         };
         TestResult::from_bool(minmax == expected)
+    }
+}
+
+quickcheck! {
+    fn tree_fold1_f64(mut a: Vec<f64>) -> TestResult {
+        fn collapse_adjacent<F>(x: Vec<f64>, mut f: F) -> Vec<f64>
+            where F: FnMut(f64, f64) -> f64
+        {
+            let mut out = Vec::new();
+            for i in (0..x.len()).step(2) {
+                if i == x.len()-1 {
+                    out.push(x[i])
+                } else {
+                    out.push(f(x[i], x[i+1]));
+                }
+            }
+            out
+        }
+
+        if a.iter().any(|x| x.is_nan()) {
+            return TestResult::discard();
+        }
+
+        let actual = a.iter().cloned().tree_fold1(f64::atan2);
+
+        while a.len() > 1 {
+            a = collapse_adjacent(a, f64::atan2);
+        }
+        let expected = a.pop();
+
+        TestResult::from_bool(actual == expected)
     }
 }

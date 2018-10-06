@@ -263,15 +263,20 @@ cfg_if! {
         use self::gimli::Symbol as SymbolImp;
     } else if #[cfg(all(feature = "libbacktrace",
                         unix,
+                        not(target_os = "fuchsia"),
                         not(target_os = "emscripten"),
                         not(target_os = "macos"),
                         not(target_os = "ios")))] {
         mod libbacktrace;
         use self::libbacktrace::resolve as resolve_imp;
         use self::libbacktrace::Symbol as SymbolImp;
+
+    // Note that we only enable coresymbolication on iOS when debug assertions
+    // are enabled because it's helpful in debug mode but it looks like apps get
+    // rejected from the app store if they use this API, see #92 for more info
     } else if #[cfg(all(feature = "coresymbolication",
                         any(target_os = "macos",
-                            target_os = "ios")))] {
+                            all(target_os = "ios", debug_assertions))))] {
         mod coresymbolication;
         use self::coresymbolication::resolve as resolve_imp;
         use self::coresymbolication::Symbol as SymbolImp;

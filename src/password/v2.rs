@@ -16,7 +16,7 @@ use ffi;
 use crypto::{scrypt, hmac, sha2};
 use crypto::mac::{Mac, MacResult};
 use aes;
-use rand::{Rng, OsRng};
+use rand::{RngCore, OsRng};
 use byteorder::{ReadBytesExt, WriteBytesExt, BigEndian};
 use serde_json;
 use safe_string::SafeString;

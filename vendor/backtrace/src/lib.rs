@@ -65,15 +65,13 @@
 //! }
 //! ```
 
-#![doc(html_root_url = "http://alexcrichton.com/backtrace-rs")]
+#![doc(html_root_url = "https://docs.rs/backtrace")]
 #![deny(missing_docs)]
 #![deny(warnings)]
 
 #[cfg(unix)]
 extern crate libc;
-#[cfg(all(windows, feature = "kernel32-sys"))] extern crate kernel32;
 #[cfg(all(windows, feature = "winapi"))] extern crate winapi;
-#[cfg(all(windows, feature = "dbghelp"))] extern crate dbghelp;
 
 #[cfg(feature = "serde_derive")]
 #[cfg_attr(feature = "serde_derive", macro_use)]
@@ -90,14 +88,15 @@ extern crate rustc_demangle;
 #[cfg(feature = "cpp_demangle")]
 extern crate cpp_demangle;
 
-#[cfg(all(feature = "gimli-symbolize",
-          unix,
-          target_os = "linux"))]
-extern crate addr2line;
-#[cfg(all(feature = "gimli-symbolize",
-          unix,
-          target_os = "linux"))]
-extern crate findshlibs;
+cfg_if! {
+    if #[cfg(all(feature = "gimli-symbolize", unix, target_os = "linux"))] {
+        extern crate addr2line;
+        extern crate findshlibs;
+        extern crate gimli;
+        extern crate memmap;
+        extern crate object;
+    }
+}
 
 #[allow(dead_code)] // not used everywhere
 #[cfg(unix)]
@@ -165,12 +164,15 @@ mod lock {
 // requires external synchronization
 #[cfg(all(windows, feature = "dbghelp"))]
 unsafe fn dbghelp_init() {
+    use winapi::shared::minwindef;
+    use winapi::um::{dbghelp, processthreadsapi};
+
     static mut INITIALIZED: bool = false;
 
     if !INITIALIZED {
-        dbghelp::SymInitializeW(kernel32::GetCurrentProcess(),
+        dbghelp::SymInitializeW(processthreadsapi::GetCurrentProcess(),
                                 0 as *mut _,
-                                winapi::TRUE);
+                                minwindef::TRUE);
         INITIALIZED = true;
     }
 }

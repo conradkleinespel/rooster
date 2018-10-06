@@ -26,6 +26,7 @@ extern crate serde_json;
 extern crate clipboard;
 extern crate shell_escape;
 extern crate zxcvbn;
+extern crate dirs;
 
 #[macro_use]
 extern crate serde_derive;
@@ -365,7 +366,7 @@ fn get_password_file_path() -> Result<(PathBuf, bool), i32> {
         Err(VarError::NotPresent) => {
             // If the environment variable is not there, we'll look in the default location:
             // ~/.passwords.rooster
-            let mut file_default = PathBuf::from(env::home_dir()
+            let mut file_default = PathBuf::from(dirs::home_dir()
                 .ok_or(1)?
                 .as_os_str()
                 .to_os_string()

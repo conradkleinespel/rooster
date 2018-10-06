@@ -64,11 +64,13 @@ fn main() {
 
         if ref_mtime > src_file_mtime || ref_mtime > ffi_file_mtime {
 
-            let status = try!(Command::new("python3")
+            let status = Command::new("python3")
                     .arg(&r_client)
                     .arg("-o").arg(&src_dir)
                     .arg(&xml_file)
-                    .status());
+                    .env("PYTHONHASHSEED", "0")
+                    .status()
+                    .expect("Unable to find build dependency python3");
             if !status.success() {
                 panic!("processing of {} returned non-zero ({})",
                     xml_file.display(), status.code().unwrap());

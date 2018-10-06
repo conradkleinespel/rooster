@@ -1,7 +1,6 @@
-#[macro_use] extern crate error_chain;
 pub extern crate xcb;
 
-#[macro_use] pub mod error;
+pub mod error;
 mod run;
 
 use std::thread;
@@ -10,7 +9,8 @@ use std::sync::{ Arc, RwLock };
 use std::sync::mpsc::{ Sender, channel };
 use std::collections::HashMap;
 use xcb::{ Connection, Window, Atom };
-
+use xcb::base::ConnError;
+use error::Error;
 
 pub const INCR_CHUNK_SIZE: usize = 4000;
 const POLL_DURATION: u64 = 50;
@@ -42,7 +42,7 @@ pub struct Context {
 }
 
 #[inline]
-fn get_atom(connection: &Connection, name: &str) -> error::Result<Atom> {
+fn get_atom(connection: &Connection, name: &str) -> Result<Atom, Error> {
     xcb::intern_atom(connection, false, name)
         .get_reply()
         .map(|reply| reply.atom())
@@ -50,13 +50,13 @@ fn get_atom(connection: &Connection, name: &str) -> error::Result<Atom> {
 }
 
 impl Context {
-    pub fn new(displayname: Option<&str>) -> error::Result<Self> {
+    pub fn new(displayname: Option<&str>) -> Result<Self, Error> {
         let (connection, screen) = Connection::connect(displayname)?;
         let window = connection.generate_id();
 
         {
             let screen = connection.get_setup().roots().nth(screen as usize)
-                .ok_or_else(|| err!(XcbConn, ::xcb::ConnError::ClosedInvalidScreen))?;
+                .ok_or(Error::XcbConn(ConnError::ClosedInvalidScreen))?;
             xcb::create_window(
                 &connection,
                 xcb::COPY_FROM_PARENT as u8,
@@ -89,14 +89,10 @@ impl Context {
             incr: intern_atom!("INCR")
         };
 
-        Ok(Context {
-            connection: connection,
-            window: window,
-            atoms: atoms
-        })
+        Ok(Context { connection, window, atoms })
     }
 
-    pub fn get_atom(&self, name: &str) -> error::Result<Atom> {
+    pub fn get_atom(&self, name: &str) -> Result<Atom, Error> {
         get_atom(&self.connection, name)
     }
 }
@@ -104,7 +100,7 @@ impl Context {
 
 impl Clipboard {
     /// Create Clipboard.
-    pub fn new() -> error::Result<Self> {
+    pub fn new() -> Result<Self, Error> {
         let getter = Context::new(None)?;
         let setter = Arc::new(Context::new(None)?);
         let setter2 = Arc::clone(&setter);
@@ -113,19 +109,14 @@ impl Clipboard {
 
         let (sender, receiver) = channel();
         let max_length = setter.connection.get_maximum_request_length() as usize * 4;
-        thread::spawn(move || run::run(setter2, setmap2, max_length, &receiver));
+        thread::spawn(move || run::run(&setter2, &setmap2, max_length, &receiver));
 
-        Ok(Clipboard {
-            getter: getter,
-            setter: setter,
-            setmap: setmap,
-            send: sender
-        })
+        Ok(Clipboard { getter, setter, setmap, send: sender })
     }
 
     /// load value.
     pub fn load<T>(&self, selection: Atom, target: Atom, property: Atom, timeout: T)
-        -> error::Result<Vec<u8>>
+        -> Result<Vec<u8>, Error>
         where T: Into<Option<Duration>>
     {
         let mut buff = Vec::new();
@@ -152,7 +143,7 @@ impl Clipboard {
                 .map(|(timeout, time)| (Instant::now() - time) >= timeout)
                 .unwrap_or(false)
             {
-                return Err(err!(Timeout));
+                return Err(Error::Timeout);
             }
 
             let event = match self.getter.connection.poll_for_event() {
@@ -227,11 +218,13 @@ impl Clipboard {
     }
 
     /// store value.
-    pub fn store<T: Into<Vec<u8>>>(&self, selection: Atom, target: Atom, value: T) -> error::Result<()> {
+    pub fn store<T: Into<Vec<u8>>>(&self, selection: Atom, target: Atom, value: T)
+        -> Result<(), Error>
+    {
         self.send.send(selection)?;
         self.setmap
             .write()
-            .map_err(|_| err!(Lock))?
+            .map_err(|_| Error::Lock)?
             .insert(selection, (target, value.into()));
 
         xcb::set_selection_owner(
@@ -239,6 +232,7 @@ impl Clipboard {
             self.setter.window, selection,
             xcb::CURRENT_TIME
         );
+
         self.setter.connection.flush();
 
         if xcb::get_selection_owner(&self.setter.connection, selection)
@@ -248,32 +242,7 @@ impl Clipboard {
         {
             Ok(())
         } else {
-            Err(err!(SetOwner))
+            Err(Error::Owner)
         }
     }
-}
-
-
-#[test]
-fn it_work() {
-    let data = format!("{:?}", Instant::now());
-    let clipboard = Clipboard::new().unwrap();
-
-    let atom_clipboard = clipboard.setter.atoms.clipboard;
-    let atom_utf8string = clipboard.setter.atoms.utf8_string;
-    let atom_property = clipboard.setter.atoms.property;
-
-    clipboard.store(atom_clipboard, atom_utf8string, data.as_bytes()).unwrap();
-
-    let output = clipboard.load(atom_clipboard, atom_utf8string, atom_property, None).unwrap();
-    assert_eq!(output, data.as_bytes());
-
-    let data = format!("{:?}", Instant::now());
-    clipboard.store(atom_clipboard, atom_utf8string, data.as_bytes()).unwrap();
-
-    let output = clipboard.load(atom_clipboard, atom_utf8string, atom_property, None).unwrap();
-    assert_eq!(output, data.as_bytes());
-
-    let output = clipboard.load(atom_clipboard, atom_utf8string, atom_property, None).unwrap();
-    assert_eq!(output, data.as_bytes());
 }

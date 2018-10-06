@@ -34,7 +34,6 @@ Usage: ./rs_client.py -o src xml/xproto.xml
 
 import sys
 import os
-import time
 import re
 
 
@@ -201,8 +200,8 @@ def rs_open(module):
 
     _r.section(0)
     _f.section(0)
-    _rf('// Generated automatically from %s by rs_client.py on %s.',
-            _ns.file, time.strftime('%c'))
+    _rf('// Generated automatically from %s by rs_client.py version %s.',
+            _ns.file, os.getenv('CARGO_PKG_VERSION', 'undefined'))
     _rf('// Do not edit!')
     _rf('')
 

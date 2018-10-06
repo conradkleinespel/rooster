@@ -1,10 +1,10 @@
 // Copyright 2017 The Rust Project Developers. See the COPYRIGHT
 // file at the top-level directory of this distribution and at
-// http://rust-lang.org/COPYRIGHT.
+// https://rust-lang.org/COPYRIGHT.
 //
 // Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
-// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
-// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or https://opensource.org/licenses/MIT>, at your
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
@@ -13,15 +13,15 @@
 use super::Rng;
 
 // This crate is only enabled when either std or alloc is available.
+#[cfg(all(feature="alloc", not(feature="std")))] use alloc::vec::Vec;
 // BTreeMap is not as fast in tests, but better than nothing.
 #[cfg(feature="std")] use std::collections::HashMap;
-#[cfg(not(feature="std"))] use alloc::btree_map::BTreeMap;
-
-#[cfg(not(feature="std"))] use alloc::Vec;
+#[cfg(all(feature="alloc", not(feature="std")))] use alloc::collections::BTreeMap;
 
 /// Randomly sample `amount` elements from a finite iterator.
 ///
 /// The following can be returned:
+///
 /// - `Ok`: `Vec` of `amount` non-repeating randomly sampled elements. The order is not random.
 /// - `Err`: `Vec` of all the elements from `iterable` in sequential order. This happens when the
 ///   length of `iterable` was less than `amount`. This is considered an error since exactly
@@ -31,7 +31,7 @@ use super::Rng;
 ///
 /// # Example
 ///
-/// ```rust
+/// ```
 /// use rand::{thread_rng, seq};
 ///
 /// let mut rng = thread_rng();
@@ -40,7 +40,7 @@ use super::Rng;
 /// ```
 pub fn sample_iter<T, I, R>(rng: &mut R, iterable: I, amount: usize) -> Result<Vec<T>, Vec<T>>
     where I: IntoIterator<Item=T>,
-          R: Rng,
+          R: Rng + ?Sized,
 {
     let mut iter = iterable.into_iter();
     let mut reservoir = Vec::with_capacity(amount);
@@ -76,7 +76,7 @@ pub fn sample_iter<T, I, R>(rng: &mut R, iterable: I, amount: usize) -> Result<V
 ///
 /// # Example
 ///
-/// ```rust
+/// ```
 /// use rand::{thread_rng, seq};
 ///
 /// let mut rng = thread_rng();
@@ -84,7 +84,7 @@ pub fn sample_iter<T, I, R>(rng: &mut R, iterable: I, amount: usize) -> Result<V
 /// println!("{:?}", seq::sample_slice(&mut rng, &values, 3));
 /// ```
 pub fn sample_slice<R, T>(rng: &mut R, slice: &[T], amount: usize) -> Vec<T>
-    where R: Rng,
+    where R: Rng + ?Sized,
           T: Clone
 {
     let indices = sample_indices(rng, slice.len(), amount);
@@ -104,7 +104,7 @@ pub fn sample_slice<R, T>(rng: &mut R, slice: &[T], amount: usize) -> Vec<T>
 ///
 /// # Example
 ///
-/// ```rust
+/// ```
 /// use rand::{thread_rng, seq};
 ///
 /// let mut rng = thread_rng();
@@ -112,7 +112,7 @@ pub fn sample_slice<R, T>(rng: &mut R, slice: &[T], amount: usize) -> Vec<T>
 /// println!("{:?}", seq::sample_slice_ref(&mut rng, &values, 3));
 /// ```
 pub fn sample_slice_ref<'a, R, T>(rng: &mut R, slice: &'a [T], amount: usize) -> Vec<&'a T>
-    where R: Rng
+    where R: Rng + ?Sized
 {
     let indices = sample_indices(rng, slice.len(), amount);
 
@@ -132,7 +132,7 @@ pub fn sample_slice_ref<'a, R, T>(rng: &mut R, slice: &'a [T], amount: usize) ->
 ///
 /// Panics if `amount > length`
 pub fn sample_indices<R>(rng: &mut R, length: usize, amount: usize) -> Vec<usize>
-    where R: Rng,
+    where R: Rng + ?Sized,
 {
     if amount > length {
         panic!("`amount` must be less than or equal to `slice.len()`");
@@ -162,19 +162,17 @@ pub fn sample_indices<R>(rng: &mut R, length: usize, amount: usize) -> Vec<usize
 /// This allocates the entire `length` of indices and randomizes only the first `amount`.
 /// It then truncates to `amount` and returns.
 ///
-/// This is better than using a HashMap "cache" when `amount >= length / 2` since it does not
-/// require allocating an extra cache and is much faster.
+/// This is better than using a `HashMap` "cache" when `amount >= length / 2`
+/// since it does not require allocating an extra cache and is much faster.
 fn sample_indices_inplace<R>(rng: &mut R, length: usize, amount: usize) -> Vec<usize>
-    where R: Rng,
+    where R: Rng + ?Sized,
 {
     debug_assert!(amount <= length);
     let mut indices: Vec<usize> = Vec::with_capacity(length);
     indices.extend(0..length);
     for i in 0..amount {
         let j: usize = rng.gen_range(i, length);
-        let tmp = indices[i];
-        indices[i] = indices[j];
-        indices[j] = tmp;
+        indices.swap(i, j);
     }
     indices.truncate(amount);
     debug_assert_eq!(indices.len(), amount);
@@ -182,17 +180,17 @@ fn sample_indices_inplace<R>(rng: &mut R, length: usize, amount: usize) -> Vec<u
 }
 
 
-/// This method performs a partial fisher-yates on a range of indices using a HashMap
-/// as a cache to record potential collisions.
+/// This method performs a partial fisher-yates on a range of indices using a
+/// `HashMap` as a cache to record potential collisions.
 ///
 /// The cache avoids allocating the entire `length` of values. This is especially useful when
-/// `amount <<< length`, i.e. select 3 non-repeating from 1_000_000
+/// `amount <<< length`, i.e. select 3 non-repeating from `1_000_000`
 fn sample_indices_cache<R>(
     rng: &mut R,
     length: usize,
     amount: usize,
 ) -> Vec<usize>
-    where R: Rng,
+    where R: Rng + ?Sized,
 {
     debug_assert!(amount <= length);
     #[cfg(feature="std")] let mut cache = HashMap::with_capacity(amount);
@@ -226,14 +224,16 @@ fn sample_indices_cache<R>(
 #[cfg(test)]
 mod test {
     use super::*;
-    use {thread_rng, XorShiftRng, SeedableRng};
+    use {XorShiftRng, Rng, SeedableRng};
+    #[cfg(not(feature="std"))]
+    use alloc::vec::Vec;
 
     #[test]
     fn test_sample_iter() {
         let min_val = 1;
         let max_val = 100;
 
-        let mut r = thread_rng();
+        let mut r = ::test::rng(401);
         let vals = (min_val..max_val).collect::<Vec<i32>>();
         let small_sample = sample_iter(&mut r, vals.iter(), 5).unwrap();
         let large_sample = sample_iter(&mut r, vals.iter(), vals.len() + 5).unwrap_err();
@@ -251,28 +251,28 @@ mod test {
     fn test_sample_slice_boundaries() {
         let empty: &[u8] = &[];
 
-        let mut r = thread_rng();
+        let mut r = ::test::rng(402);
 
         // sample 0 items
-        assert_eq!(sample_slice(&mut r, empty, 0), vec![]);
-        assert_eq!(sample_slice(&mut r, &[42, 2, 42], 0), vec![]);
+        assert_eq!(&sample_slice(&mut r, empty, 0)[..], [0u8; 0]);
+        assert_eq!(&sample_slice(&mut r, &[42, 2, 42], 0)[..], [0u8; 0]);
 
         // sample 1 item
-        assert_eq!(sample_slice(&mut r, &[42], 1), vec![42]);
+        assert_eq!(&sample_slice(&mut r, &[42], 1)[..], [42]);
         let v = sample_slice(&mut r, &[1, 42], 1)[0];
         assert!(v == 1 || v == 42);
 
         // sample "all" the items
         let v = sample_slice(&mut r, &[42, 133], 2);
-        assert!(v == vec![42, 133] || v == vec![133, 42]);
+        assert!(&v[..] == [42, 133] || v[..] == [133, 42]);
 
-        assert_eq!(sample_indices_inplace(&mut r, 0, 0), vec![]);
-        assert_eq!(sample_indices_inplace(&mut r, 1, 0), vec![]);
-        assert_eq!(sample_indices_inplace(&mut r, 1, 1), vec![0]);
+        assert_eq!(&sample_indices_inplace(&mut r, 0, 0)[..], [0usize; 0]);
+        assert_eq!(&sample_indices_inplace(&mut r, 1, 0)[..], [0usize; 0]);
+        assert_eq!(&sample_indices_inplace(&mut r, 1, 1)[..], [0]);
 
-        assert_eq!(sample_indices_cache(&mut r, 0, 0), vec![]);
-        assert_eq!(sample_indices_cache(&mut r, 1, 0), vec![]);
-        assert_eq!(sample_indices_cache(&mut r, 1, 1), vec![0]);
+        assert_eq!(&sample_indices_cache(&mut r, 0, 0)[..], [0usize; 0]);
+        assert_eq!(&sample_indices_cache(&mut r, 1, 0)[..], [0usize; 0]);
+        assert_eq!(&sample_indices_cache(&mut r, 1, 1)[..], [0]);
 
         // Make sure lucky 777's aren't lucky
         let slice = &[42, 777];
@@ -296,15 +296,12 @@ mod test {
         let xor_rng = XorShiftRng::from_seed;
 
         let max_range = 100;
-        let mut r = thread_rng();
+        let mut r = ::test::rng(403);
 
         for length in 1usize..max_range {
             let amount = r.gen_range(0, length);
-            let seed: [u32; 4] = [
-                r.next_u32(), r.next_u32(), r.next_u32(), r.next_u32()
-            ];
-
-            println!("Selecting indices: len={}, amount={}, seed={:?}", length, amount, seed);
+            let mut seed = [0u8; 16];
+            r.fill(&mut seed);
 
             // assert that the two index methods give exactly the same result
             let inplace = sample_indices_inplace(

@@ -68,7 +68,7 @@
 //!
 //! A string of JSON data can be parsed into a `serde_json::Value` by the
 //! [`serde_json::from_str`][from_str] function. There is also
-//! [`from_slice`][from_slice] for parsing from a byte slice &[u8] and
+//! [`from_slice`][from_slice] for parsing from a byte slice `&[u8]` and
 //! [`from_reader`][from_reader] for parsing from any `io::Read` like a File or
 //! a TCP stream.
 //!
@@ -107,15 +107,20 @@
 //! [from_slice]: https://docs.serde.rs/serde_json/de/fn.from_slice.html
 //! [from_reader]: https://docs.serde.rs/serde_json/de/fn.from_reader.html
 
-use std::i64;
+use std::fmt::{self, Debug};
+use std::io;
+use std::mem;
 use std::str;
 
-use serde::ser::Serialize;
 use serde::de::DeserializeOwned;
+use serde::ser::Serialize;
 
 use error::Error;
 pub use map::Map;
 pub use number::Number;
+
+#[cfg(feature = "raw_value")]
+pub use raw::RawValue;
 
 pub use self::index::Index;
 
@@ -124,7 +129,7 @@ use self::ser::Serializer;
 /// Represents any valid JSON value.
 ///
 /// See the `serde_json::value` module documentation for usage examples.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum Value {
     /// Represents a JSON null value.
     ///
@@ -189,7 +194,7 @@ pub enum Value {
     /// Represents a JSON object.
     ///
     /// By default the map is backed by a BTreeMap. Enable the `preserve_order`
-    /// feature of serde_json to use LinkedHashMap instead, which preserves
+    /// feature of serde_json to use IndexMap instead, which preserves
     /// entries in the order they are inserted into the map. In particular, this
     /// allows JSON data to be deserialized into a Value and serialized to a
     /// string while retaining the order of map keys in the input.
@@ -203,6 +208,81 @@ pub enum Value {
     /// # }
     /// ```
     Object(Map<String, Value>),
+}
+
+impl Debug for Value {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Value::Null => formatter.debug_tuple("Null").finish(),
+            Value::Bool(v) => formatter.debug_tuple("Bool").field(&v).finish(),
+            Value::Number(ref v) => Debug::fmt(v, formatter),
+            Value::String(ref v) => formatter.debug_tuple("String").field(v).finish(),
+            Value::Array(ref v) => formatter.debug_tuple("Array").field(v).finish(),
+            Value::Object(ref v) => formatter.debug_tuple("Object").field(v).finish(),
+        }
+    }
+}
+
+struct WriterFormatter<'a, 'b: 'a> {
+    inner: &'a mut fmt::Formatter<'b>,
+}
+
+impl<'a, 'b> io::Write for WriterFormatter<'a, 'b> {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        fn io_error<E>(_: E) -> io::Error {
+            // Error value does not matter because fmt::Display impl below just
+            // maps it to fmt::Error
+            io::Error::new(io::ErrorKind::Other, "fmt error")
+        }
+        let s = try!(str::from_utf8(buf).map_err(io_error));
+        try!(self.inner.write_str(s).map_err(io_error));
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
+    }
+}
+
+impl fmt::Display for Value {
+    /// Display a JSON value as a string.
+    ///
+    /// ```rust
+    /// # #[macro_use]
+    /// # extern crate serde_json;
+    /// #
+    /// # fn main() {
+    /// let json = json!({ "city": "London", "street": "10 Downing Street" });
+    ///
+    /// // Compact format:
+    /// //
+    /// // {"city":"London","street":"10 Downing Street"}
+    /// let compact = format!("{}", json);
+    /// assert_eq!(compact,
+    ///     "{\"city\":\"London\",\"street\":\"10 Downing Street\"}");
+    ///
+    /// // Pretty format:
+    /// //
+    /// // {
+    /// //   "city": "London",
+    /// //   "street": "10 Downing Street"
+    /// // }
+    /// let pretty = format!("{:#}", json);
+    /// assert_eq!(pretty,
+    ///     "{\n  \"city\": \"London\",\n  \"street\": \"10 Downing Street\"\n}");
+    /// # }
+    /// ```
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let alternate = f.alternate();
+        let mut wr = WriterFormatter { inner: f };
+        if alternate {
+            // {:#}
+            super::ser::to_writer_pretty(&mut wr, self).map_err(|_| fmt::Error)
+        } else {
+            // {}
+            super::ser::to_writer(&mut wr, self).map_err(|_| fmt::Error)
+        }
+    }
 }
 
 fn parse_index(s: &str) -> Option<usize> {
@@ -460,6 +540,16 @@ impl Value {
     ///
     /// // The boolean `false` is not a string.
     /// assert_eq!(v["b"].as_str(), None);
+    ///
+    /// // JSON values are printed in JSON representation, so strings are in quotes.
+    /// //
+    /// //    The value is: "some string"
+    /// println!("The value is: {}", v["a"]);
+    ///
+    /// // Rust strings are printed without quotes.
+    /// //
+    /// //    The value is: some string
+    /// println!("The value is: {}", v["a"].as_str().unwrap());
     /// # }
     /// ```
     pub fn as_str(&self) -> Option<&str> {
@@ -501,10 +591,8 @@ impl Value {
     /// # #[macro_use]
     /// # extern crate serde_json;
     /// #
-    /// # use std::i64;
-    /// #
     /// # fn main() {
-    /// let big = i64::MAX as u64 + 10;
+    /// let big = i64::max_value() as u64 + 10;
     /// let v = json!({ "a": 64, "b": big, "c": 256.0 });
     ///
     /// assert!(v["a"].is_i64());
@@ -587,10 +675,8 @@ impl Value {
     /// # #[macro_use]
     /// # extern crate serde_json;
     /// #
-    /// # use std::i64;
-    /// #
     /// # fn main() {
-    /// let big = i64::MAX as u64 + 10;
+    /// let big = i64::max_value() as u64 + 10;
     /// let v = json!({ "a": 64, "b": big, "c": 256.0 });
     ///
     /// assert_eq!(v["a"].as_i64(), Some(64));
@@ -814,7 +900,6 @@ impl Value {
     /// extern crate serde_json;
     ///
     /// use serde_json::Value;
-    /// use std::mem;
     ///
     /// fn main() {
     ///     let s = r#"{"x": 1.0, "y": 2.0}"#;
@@ -828,7 +913,7 @@ impl Value {
     ///     assert_eq!(value.pointer("/x"), Some(&1.5.into()));
     ///
     ///     // "Steal" ownership of a value. Can replace with any valid Value.
-    ///     let old_x = value.pointer_mut("/x").map(|x| mem::replace(x, Value::Null)).unwrap();
+    ///     let old_x = value.pointer_mut("/x").map(Value::take).unwrap();
     ///     assert_eq!(old_x, 1.5);
     ///     assert_eq!(value.pointer("/x").unwrap(), &Value::Null);
     /// }
@@ -864,6 +949,22 @@ impl Value {
             }
         }
         Some(target)
+    }
+
+    /// Takes the value out of the `Value`, leaving a `Null` in its place.
+    ///
+    /// ```rust
+    /// # #[macro_use]
+    /// # extern crate serde_json;
+    /// #
+    /// # fn main() {
+    /// let mut v = json!({ "x": "y" });
+    /// assert_eq!(v["x"].take(), json!("y"));
+    /// assert_eq!(v, json!({ "x": null }));
+    /// # }
+    /// ```
+    pub fn take(&mut self) -> Value {
+        mem::replace(self, Value::Null)
     }
 }
 
@@ -908,11 +1009,11 @@ impl Default for Value {
     }
 }
 
+mod de;
+mod from;
 mod index;
 mod partial_eq;
-mod from;
 mod ser;
-mod de;
 
 /// Convert a `T` into `serde_json::Value` which is an enum that can represent
 /// any valid JSON data.
@@ -975,7 +1076,6 @@ mod de;
 ///     println!("{}", serde_json::to_value(map).unwrap_err());
 /// }
 /// ```
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 // Taking by value is more friendly to iterator adapters, option and result
 // consumers, etc. See https://github.com/serde-rs/json/pull/149.
 pub fn to_value<T>(value: T) -> Result<Value, Error>

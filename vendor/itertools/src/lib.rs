@@ -31,6 +31,8 @@ extern crate core as std;
 
 pub use either::Either;
 
+#[cfg(feature = "use_std")]
+use std::collections::HashMap;
 use std::iter::{IntoIterator};
 use std::cmp::Ordering;
 use std::fmt;
@@ -101,6 +103,7 @@ pub mod structs {
     pub use ziptuple::Zip;
 }
 pub use structs::*;
+pub use adaptors::flatten;
 pub use concat_impl::concat;
 pub use cons_tuples_impl::cons_tuples;
 pub use diff::diff_with;
@@ -127,6 +130,8 @@ mod cons_tuples_impl;
 mod combinations;
 mod diff;
 mod format;
+#[cfg(feature = "use_std")]
+mod group_map;
 #[cfg(feature = "use_std")]
 mod groupbylazy;
 mod intersperse;
@@ -1084,12 +1089,15 @@ pub trait Itertools : Iterator {
         pad_tail::pad_using(self, min, f)
     }
 
-    /// Unravel a nested iterator.
+    /// Flatten an iterator of iterables into a single combined sequence of all
+    /// the elements in the iterables.
     ///
     /// This is more or less equivalent to `.flat_map` with an identity
     /// function.
     ///
-    /// ```
+    /// See also the [`flatten`](fn.flatten.html) function.
+    ///
+    /// ```ignore
     /// use itertools::Itertools;
     ///
     /// let data = vec![vec![1, 2, 3], vec![4, 5, 6]];
@@ -1593,6 +1601,114 @@ pub trait Itertools : Iterator {
         self.next().map(move |x| self.fold(x, f))
     }
 
+    /// Accumulate the elements in the iterator in a tree-like manner.
+    ///
+    /// You can think of it as, while there's more than one item, repeatedly
+    /// combining adjacent items.  It does so in bottom-up-merge-sort order,
+    /// however, so that it needs only logarithmic stack space.
+    ///
+    /// This produces a call tree like the following (where the calls under
+    /// an item are done after reading that item):
+    ///
+    /// ```text
+    /// 1 2 3 4 5 6 7
+    /// │ │ │ │ │ │ │
+    /// └─f └─f └─f │
+    ///   │   │   │ │
+    ///   └───f   └─f
+    ///       │     │
+    ///       └─────f
+    /// ```
+    ///
+    /// Which, for non-associative functions, will typically produce a different
+    /// result than the linear call tree used by `fold1`:
+    ///
+    /// ```text
+    /// 1 2 3 4 5 6 7
+    /// │ │ │ │ │ │ │
+    /// └─f─f─f─f─f─f
+    /// ```
+    ///
+    /// If `f` is associative, prefer the normal `fold1` instead.
+    ///
+    /// ```
+    /// use itertools::Itertools;
+    ///
+    /// // The same tree as above
+    /// let num_strings = (1..8).map(|x| x.to_string());
+    /// assert_eq!(num_strings.tree_fold1(|x, y| format!("f({}, {})", x, y)),
+    ///     Some(String::from("f(f(f(1, 2), f(3, 4)), f(f(5, 6), 7))")));
+    ///
+    /// // Like fold1, an empty iterator produces None
+    /// assert_eq!((0..0).tree_fold1(|x, y| x * y), None);
+    ///
+    /// // tree_fold1 matches fold1 for associative operations...
+    /// assert_eq!((0..10).tree_fold1(|x, y| x + y),
+    ///     (0..10).fold1(|x, y| x + y));
+    /// // ...but not for non-associative ones
+    /// assert!((0..10).tree_fold1(|x, y| x - y)
+    ///     != (0..10).fold1(|x, y| x - y));
+    /// ```
+    // FIXME: If minver changes to >= 1.13, use `assert_ne!` in the doctest.
+    fn tree_fold1<F>(mut self, mut f: F) -> Option<Self::Item>
+        where F: FnMut(Self::Item, Self::Item) -> Self::Item,
+              Self: Sized,
+    {
+        type State<T> = Result<T, Option<T>>;
+
+        fn inner0<T, II, FF>(it: &mut II, f: &mut FF) -> State<T>
+            where
+                II: Iterator<Item = T>,
+                FF: FnMut(T, T) -> T
+        {
+            // This function could be replaced with `it.next().ok_or(None)`,
+            // but half the useful tree_fold1 work is combining adjacent items,
+            // so put that in a form that LLVM is more likely to optimize well.
+
+            let a =
+                if let Some(v) = it.next() { v }
+                else { return Err(None) };
+            let b =
+                if let Some(v) = it.next() { v }
+                else { return Err(Some(a)) };
+            Ok(f(a, b))
+        }
+
+        fn inner<T, II, FF>(stop: usize, it: &mut II, f: &mut FF) -> State<T>
+            where
+                II: Iterator<Item = T>,
+                FF: FnMut(T, T) -> T
+        {
+            let mut x = try!(inner0(it, f));
+            for height in 0..stop {
+                // Try to get another tree the same size with which to combine it,
+                // creating a new tree that's twice as big for next time around.
+                let next =
+                    if height == 0 {
+                        inner0(it, f)
+                    } else {
+                        inner(height, it, f)
+                    };
+                match next {
+                    Ok(y) => x = f(x, y),
+
+                    // If we ran out of items, combine whatever we did manage
+                    // to get.  It's better combined with the current value
+                    // than something in a parent frame, because the tree in
+                    // the parent is always as least as big as this one.
+                    Err(None) => return Err(Some(x)),
+                    Err(Some(y)) => return Err(Some(f(x, y))),
+                }
+            }
+            Ok(x)
+        }
+
+        match inner(usize::max_value(), &mut self, &mut f) {
+            Err(x) => x,
+            _ => unreachable!(),
+        }
+    }
+
     /// An iterator method that applies a function, producing a single, final value.
     ///
     /// `fold_while()` is basically equivalent to `fold()` but with additional support for
@@ -1768,6 +1884,28 @@ pub trait Itertools : Iterator {
         }
 
         (left, right)
+    }
+
+    /// Return a `HashMap` of keys mapped to `Vec`s of values. Keys and values
+    /// are taken from `(Key, Value)` tuple pairs yielded by the input iterator.
+    /// 
+    /// ```
+    /// use itertools::Itertools;
+    /// 
+    /// let data = vec![(0, 10), (2, 12), (3, 13), (0, 20), (3, 33), (2, 42)];
+    /// let lookup = data.into_iter().into_group_map();
+    /// 
+    /// assert_eq!(lookup[&0], vec![10, 20]);
+    /// assert_eq!(lookup.get(&1), None);
+    /// assert_eq!(lookup[&2], vec![12, 42]);
+    /// assert_eq!(lookup[&3], vec![13, 33]);
+    /// ```
+    #[cfg(feature = "use_std")]
+    fn into_group_map<K, V>(self) -> HashMap<K, Vec<V>>
+        where Self: Iterator<Item=(K, V)> + Sized,
+              K: Hash + Eq,
+    {
+        group_map::into_group_map(self)
     }
 
     /// Return the minimum and maximum elements in the iterator.

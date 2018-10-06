@@ -1,7 +1,7 @@
 //! A Rust interface for the functionality of the Objective-C runtime.
 //!
 //! For more information on foreign functions, see Apple's documentation:
-//! https://developer.apple.com/library/mac/documentation/Cocoa/Reference/ObjCRuntimeRef/index.html
+//! <https://developer.apple.com/library/mac/documentation/Cocoa/Reference/ObjCRuntimeRef/index.html>
 
 use std::ffi::{CStr, CString};
 use std::fmt;
@@ -40,7 +40,7 @@ pub struct Sel {
 
 /// A marker type to be embedded into other types just so that they cannot be
 /// constructed externally.
-enum PrivateMarker { }
+type PrivateMarker = [u8; 0];
 
 /// A type that represents an instance variable.
 #[repr(C)]
@@ -109,6 +109,9 @@ extern {
     pub fn objc_allocateProtocol(name: *const c_char) -> *mut Protocol;
     pub fn objc_registerProtocol(proto: *mut Protocol);
 
+    pub fn objc_autoreleasePoolPush() -> *mut c_void;
+    pub fn objc_autoreleasePoolPop(context: *mut c_void);
+
     pub fn protocol_addMethodDescription(proto: *mut Protocol, name: Sel, types: *const c_char, isRequiredMethod: BOOL,
                                          isInstanceMethod: BOOL);
     pub fn protocol_addProtocol(proto: *mut Protocol, addition: *const Protocol);
@@ -128,6 +131,15 @@ extern {
     pub fn method_getNumberOfArguments(method: *const Method) -> c_uint;
     pub fn method_setImplementation(method: *mut Method, imp: Imp) -> Imp;
     pub fn method_exchangeImplementations(m1: *mut Method, m2: *mut Method);
+
+    pub fn objc_retain(obj: *mut Object) -> *mut Object;
+    pub fn objc_release(obj: *mut Object);
+    pub fn objc_autorelease(obj: *mut Object);
+
+    pub fn objc_loadWeakRetained(location: *mut *mut Object) -> *mut Object;
+    pub fn objc_initWeak(location: *mut *mut Object, obj: *mut Object) -> *mut Object;
+    pub fn objc_destroyWeak(location: *mut *mut Object);
+    pub fn objc_copyWeak(to: *mut *mut Object, from: *mut *mut Object);
 }
 
 impl Sel {
@@ -146,6 +158,22 @@ impl Sel {
             CStr::from_ptr(sel_getName(*self))
         };
         str::from_utf8(name.to_bytes()).unwrap()
+    }
+
+    /// Wraps a raw pointer to a selector into a `Sel` object.
+    ///
+    /// This is almost never what you want; use `Sel::register()` instead.
+    #[inline]
+    pub unsafe fn from_ptr(ptr: *const c_void) -> Sel {
+        Sel {
+            ptr: ptr,
+        }
+    }
+
+    /// Returns a pointer to the raw selector.
+    #[inline]
+    pub fn as_ptr(&self) -> *const c_void {
+        self.ptr
     }
 }
 
@@ -536,6 +564,8 @@ mod tests {
         assert!(cls.name() == "CustomObject");
         assert!(cls.instance_size() > 0);
         assert!(cls.superclass().is_none());
+
+        assert!(Class::get(cls.name()) == Some(cls));
 
         let metaclass = cls.metaclass();
         // The metaclass of a root class is a subclass of the root class

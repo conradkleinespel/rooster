@@ -65,10 +65,11 @@
 //! }
 //! ```
 //!
-
-extern crate winapi;
-extern crate user32;
-extern crate kernel32;
+//! # Feature list
+//!
+//! * `utf16error` - Uses non-lossy conversion from UTF-16 to UTF-8. On error returns `io::error`
+//! with kind `InvalidData`
+//!
 
 use std::io;
 use std::slice;

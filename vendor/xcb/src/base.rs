@@ -494,6 +494,13 @@ impl Connection {
         self.c
     }
 
+    /// Consumes this object, returning the inner ffi `xcb_connection_t` pointer
+    pub fn into_raw_conn(self) -> *mut xcb_connection_t {
+        let c = self.c;
+        mem::forget(self);
+        c
+    }
+
     /// Returns the inner ffi `xlib::Display` pointer.
     #[cfg(feature="xlib_xcb")]
     pub fn get_raw_dpy(&self) -> *mut xlib::Display {

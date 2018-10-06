@@ -8,7 +8,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 //! Escape characters that may have special meaning in a shell.
-#![doc(html_root_url="https://docs.rs/shell-escape/0.1.3")]
+#![doc(html_root_url="https://docs.rs/shell-escape/0.1")]
 
 use std::borrow::Cow;
 use std::env;
@@ -91,7 +91,7 @@ pub mod unix {
 
     fn non_whitelisted(ch: char) -> bool {
         match ch {
-            'a'...'z' | 'A'...'Z' | '0'...'9' | '-' | '_' | '=' | '/' | ',' | '.' => false,
+            'a'...'z' | 'A'...'Z' | '0'...'9' | '-' | '_' | '=' | '/' | ',' | '.' | '+' => false,
             _ => true,
         }
     }
@@ -121,8 +121,9 @@ pub mod unix {
     #[test]
     fn test_escape() {
         assert_eq!(
-            escape("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_=/,.".into()),
-            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_=/,.");
+            escape("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_=/,.+".into()),
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_=/,.+"
+        );
         assert_eq!(escape("--aaa=bbb-ccc".into()), "--aaa=bbb-ccc");
         assert_eq!(escape("linker=gcc -L/foo -Wl,bar".into()), r#"'linker=gcc -L/foo -Wl,bar'"#);
         assert_eq!(escape(r#"--features="default""#.into()), r#"'--features="default"'"#);

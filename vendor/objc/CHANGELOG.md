@@ -1,3 +1,39 @@
+## 0.2.5
+
+### Added
+
+* `autoreleasepool` returns the value returned by its body closure.
+
+## 0.2.4
+
+### Added
+
+* Added an `rc` module with reference counting utilities:
+  `StrongPtr`, `WeakPtr`, and `autoreleasepool`.
+
+* Added some reference counting ABI foreign functions to the `runtime` module.
+
+### Fixed
+
+* Messaging nil under GNUstep now correctly returns zeroed results for all
+  return types.
+
+## 0.2.3
+
+### Added
+
+* Added a `class!` macro for getting statically-known classes. The result is
+  non-optional (avoiding a need to unwrap) and cached so each usage will only
+  look up the class once.
+
+* Added caching to the `sel!` macro so that each usage will only register the
+  selector once.
+
+### Fixed
+
+* Fixed the implementation of `objc::runtime` structs so there can't be unsound
+  references to uninhabited types.
+
 ## 0.2.2
 
 ### Added

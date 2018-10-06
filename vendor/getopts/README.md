@@ -13,7 +13,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-getopts = "0.2.4"
+getopts = "0.2"
 ```
 
 and this to your crate root:
@@ -21,3 +21,7 @@ and this to your crate root:
 ```rust
 extern crate getopts;
 ```
+
+## Rust Version Support
+
+The minimum supported Rust version is 1.18.

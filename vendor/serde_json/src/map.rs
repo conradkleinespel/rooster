@@ -9,24 +9,24 @@
 //! A map of String to serde_json::Value.
 //!
 //! By default the map is backed by a [`BTreeMap`]. Enable the `preserve_order`
-//! feature of serde_json to use [`LinkedHashMap`] instead.
+//! feature of serde_json to use [`IndexMap`] instead.
 //!
 //! [`BTreeMap`]: https://doc.rust-lang.org/std/collections/struct.BTreeMap.html
-//! [`LinkedHashMap`]: https://docs.rs/linked-hash-map/*/linked_hash_map/struct.LinkedHashMap.html
+//! [`IndexMap`]: https://docs.rs/indexmap/*/indexmap/map/struct.IndexMap.html
 
-use serde::{ser, de};
+use serde::{de, ser};
+use std::borrow::Borrow;
 use std::fmt::{self, Debug};
-use value::Value;
 use std::hash::Hash;
 use std::iter::FromIterator;
-use std::borrow::Borrow;
 use std::ops;
+use value::Value;
 
 #[cfg(not(feature = "preserve_order"))]
-use std::collections::{BTreeMap, btree_map};
+use std::collections::{btree_map, BTreeMap};
 
 #[cfg(feature = "preserve_order")]
-use linked_hash_map::{self, LinkedHashMap};
+use indexmap::{self, IndexMap};
 
 /// Represents a JSON key/value type.
 pub struct Map<K, V> {
@@ -36,13 +36,15 @@ pub struct Map<K, V> {
 #[cfg(not(feature = "preserve_order"))]
 type MapImpl<K, V> = BTreeMap<K, V>;
 #[cfg(feature = "preserve_order")]
-type MapImpl<K, V> = LinkedHashMap<K, V>;
+type MapImpl<K, V> = IndexMap<K, V>;
 
 impl Map<String, Value> {
     /// Makes a new empty Map.
     #[inline]
     pub fn new() -> Self {
-        Map { map: MapImpl::new() }
+        Map {
+            map: MapImpl::new(),
+        }
     }
 
     #[cfg(not(feature = "preserve_order"))]
@@ -51,14 +53,18 @@ impl Map<String, Value> {
     pub fn with_capacity(capacity: usize) -> Self {
         // does not support with_capacity
         let _ = capacity;
-        Map { map: BTreeMap::new() }
+        Map {
+            map: BTreeMap::new(),
+        }
     }
 
     #[cfg(feature = "preserve_order")]
     /// Makes a new empty Map with the given initial capacity.
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
-        Map { map: LinkedHashMap::with_capacity(capacity) }
+        Map {
+            map: IndexMap::with_capacity(capacity),
+        }
     }
 
     /// Clears the map, removing all values.
@@ -111,8 +117,7 @@ impl Map<String, Value> {
     /// If the map did not have this key present, `None` is returned.
     ///
     /// If the map did have this key present, the value is updated, and the old
-    /// value is returned. The key is not updated, though; this matters for
-    /// types that can be `==` without being identical.
+    /// value is returned.
     #[inline]
     pub fn insert(&mut self, k: String, v: Value) -> Option<Value> {
         self.map.insert(k, v)
@@ -138,10 +143,10 @@ impl Map<String, Value> {
     where
         S: Into<String>,
     {
+        #[cfg(feature = "preserve_order")]
+        use indexmap::map::Entry as EntryImpl;
         #[cfg(not(feature = "preserve_order"))]
         use std::collections::btree_map::Entry as EntryImpl;
-        #[cfg(feature = "preserve_order")]
-        use linked_hash_map::Entry as EntryImpl;
 
         match self.map.entry(key.into()) {
             EntryImpl::Vacant(vacant) => Entry::Vacant(VacantEntry { vacant: vacant }),
@@ -164,46 +169,75 @@ impl Map<String, Value> {
     /// Gets an iterator over the entries of the map.
     #[inline]
     pub fn iter(&self) -> Iter {
-        Iter { iter: self.map.iter() }
+        Iter {
+            iter: self.map.iter(),
+        }
     }
 
     /// Gets a mutable iterator over the entries of the map.
     #[inline]
     pub fn iter_mut(&mut self) -> IterMut {
-        IterMut { iter: self.map.iter_mut() }
+        IterMut {
+            iter: self.map.iter_mut(),
+        }
     }
 
     /// Gets an iterator over the keys of the map.
     #[inline]
     pub fn keys(&self) -> Keys {
-        Keys { iter: self.map.keys() }
+        Keys {
+            iter: self.map.keys(),
+        }
     }
 
     /// Gets an iterator over the values of the map.
     #[inline]
     pub fn values(&self) -> Values {
-        Values { iter: self.map.values() }
+        Values {
+            iter: self.map.values(),
+        }
+    }
+
+    /// Gets an iterator over mutable values of the map.
+    #[inline]
+    pub fn values_mut(&mut self) -> ValuesMut {
+        ValuesMut {
+            iter: self.map.values_mut(),
+        }
     }
 }
 
 impl Default for Map<String, Value> {
     #[inline]
     fn default() -> Self {
-        Map { map: MapImpl::new() }
+        Map {
+            map: MapImpl::new(),
+        }
     }
 }
 
 impl Clone for Map<String, Value> {
     #[inline]
     fn clone(&self) -> Self {
-        Map { map: self.map.clone() }
+        Map {
+            map: self.map.clone(),
+        }
     }
 }
 
 impl PartialEq for Map<String, Value> {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
-        self.map.eq(&other.map)
+        if cfg!(feature = "preserve_order") {
+            if self.len() != other.len() {
+                return false;
+            }
+
+            self.iter()
+                .all(|(key, value)| other.get(key).map_or(false, |v| *value == *v))
+        } else {
+            self.map.eq(&other.map)
+        }
     }
 }
 
@@ -329,7 +363,9 @@ impl FromIterator<(String, Value)> for Map<String, Value> {
     where
         T: IntoIterator<Item = (String, Value)>,
     {
-        Map { map: FromIterator::from_iter(iter) }
+        Map {
+            map: FromIterator::from_iter(iter),
+        }
     }
 }
 
@@ -403,12 +439,12 @@ pub struct OccupiedEntry<'a> {
 #[cfg(not(feature = "preserve_order"))]
 type VacantEntryImpl<'a> = btree_map::VacantEntry<'a, String, Value>;
 #[cfg(feature = "preserve_order")]
-type VacantEntryImpl<'a> = linked_hash_map::VacantEntry<'a, String, Value>;
+type VacantEntryImpl<'a> = indexmap::map::VacantEntry<'a, String, Value>;
 
 #[cfg(not(feature = "preserve_order"))]
 type OccupiedEntryImpl<'a> = btree_map::OccupiedEntry<'a, String, Value>;
 #[cfg(feature = "preserve_order")]
-type OccupiedEntryImpl<'a> = linked_hash_map::OccupiedEntry<'a, String, Value>;
+type OccupiedEntryImpl<'a> = indexmap::map::OccupiedEntry<'a, String, Value>;
 
 impl<'a> Entry<'a> {
     /// Returns a reference to this entry's key.
@@ -444,7 +480,7 @@ impl<'a> Entry<'a> {
     /// ```
     pub fn or_insert(self, default: Value) -> &'a mut Value {
         match self {
-            Entry::Vacant(entry) => entry.insert(default.into()),
+            Entry::Vacant(entry) => entry.insert(default),
             Entry::Occupied(entry) => entry.into_mut(),
         }
     }
@@ -524,7 +560,7 @@ impl<'a> VacantEntry<'a> {
     /// ```
     #[inline]
     pub fn insert(self, value: Value) -> &'a mut Value {
-        self.vacant.insert(value.into())
+        self.vacant.insert(value)
     }
 }
 
@@ -667,7 +703,7 @@ impl<'a> OccupiedEntry<'a> {
     /// ```
     #[inline]
     pub fn insert(&mut self, value: Value) -> Value {
-        self.occupied.insert(value.into())
+        self.occupied.insert(value)
     }
 
     /// Takes the value of the entry out of the map, and returns it.
@@ -705,7 +741,9 @@ impl<'a> IntoIterator for &'a Map<String, Value> {
     type IntoIter = Iter<'a>;
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
-        Iter { iter: self.map.iter() }
+        Iter {
+            iter: self.map.iter(),
+        }
     }
 }
 
@@ -717,7 +755,7 @@ pub struct Iter<'a> {
 #[cfg(not(feature = "preserve_order"))]
 type IterImpl<'a> = btree_map::Iter<'a, String, Value>;
 #[cfg(feature = "preserve_order")]
-type IterImpl<'a> = linked_hash_map::Iter<'a, String, Value>;
+type IterImpl<'a> = indexmap::map::Iter<'a, String, Value>;
 
 delegate_iterator!((Iter<'a>) => (&'a String, &'a Value));
 
@@ -728,7 +766,9 @@ impl<'a> IntoIterator for &'a mut Map<String, Value> {
     type IntoIter = IterMut<'a>;
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
-        IterMut { iter: self.map.iter_mut() }
+        IterMut {
+            iter: self.map.iter_mut(),
+        }
     }
 }
 
@@ -740,7 +780,7 @@ pub struct IterMut<'a> {
 #[cfg(not(feature = "preserve_order"))]
 type IterMutImpl<'a> = btree_map::IterMut<'a, String, Value>;
 #[cfg(feature = "preserve_order")]
-type IterMutImpl<'a> = linked_hash_map::IterMut<'a, String, Value>;
+type IterMutImpl<'a> = indexmap::map::IterMut<'a, String, Value>;
 
 delegate_iterator!((IterMut<'a>) => (&'a String, &'a mut Value));
 
@@ -751,7 +791,9 @@ impl IntoIterator for Map<String, Value> {
     type IntoIter = IntoIter;
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
-        IntoIter { iter: self.map.into_iter() }
+        IntoIter {
+            iter: self.map.into_iter(),
+        }
     }
 }
 
@@ -763,7 +805,7 @@ pub struct IntoIter {
 #[cfg(not(feature = "preserve_order"))]
 type IntoIterImpl = btree_map::IntoIter<String, Value>;
 #[cfg(feature = "preserve_order")]
-type IntoIterImpl = linked_hash_map::IntoIter<String, Value>;
+type IntoIterImpl = indexmap::map::IntoIter<String, Value>;
 
 delegate_iterator!((IntoIter) => (String, Value));
 
@@ -777,7 +819,7 @@ pub struct Keys<'a> {
 #[cfg(not(feature = "preserve_order"))]
 type KeysImpl<'a> = btree_map::Keys<'a, String, Value>;
 #[cfg(feature = "preserve_order")]
-type KeysImpl<'a> = linked_hash_map::Keys<'a, String, Value>;
+type KeysImpl<'a> = indexmap::map::Keys<'a, String, Value>;
 
 delegate_iterator!((Keys<'a>) => &'a String);
 
@@ -791,6 +833,20 @@ pub struct Values<'a> {
 #[cfg(not(feature = "preserve_order"))]
 type ValuesImpl<'a> = btree_map::Values<'a, String, Value>;
 #[cfg(feature = "preserve_order")]
-type ValuesImpl<'a> = linked_hash_map::Values<'a, String, Value>;
+type ValuesImpl<'a> = indexmap::map::Values<'a, String, Value>;
 
 delegate_iterator!((Values<'a>) => &'a Value);
+
+//////////////////////////////////////////////////////////////////////////////
+
+/// A mutable iterator over a serde_json::Map's values.
+pub struct ValuesMut<'a> {
+    iter: ValuesMutImpl<'a>,
+}
+
+#[cfg(not(feature = "preserve_order"))]
+type ValuesMutImpl<'a> = btree_map::ValuesMut<'a, String, Value>;
+#[cfg(feature = "preserve_order")]
+type ValuesMutImpl<'a> = indexmap::map::ValuesMut<'a, String, Value>;
+
+delegate_iterator!((ValuesMut<'a>) => &'a mut Value);

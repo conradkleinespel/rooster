@@ -32,7 +32,8 @@ install:
 build: false
 
 test_script:
-  - cargo test --benches
-  - cargo test
-  - cargo test --features nightly
-  - cargo test --manifest-path rand-derive/Cargo.toml
+  - cargo test --all # cannot use --all and --features together
+  - cargo test --all --benches
+  - cargo test --features serde1,log,nightly
+  - cargo test --tests --no-default-features --features=alloc,serde1
+  - cargo test --package rand_core --no-default-features --features=alloc,serde1

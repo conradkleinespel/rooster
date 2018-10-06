@@ -25,11 +25,20 @@ __ https://docs.rs/either/
 How to use with cargo::
 
     [dependencies]
-    either = "1.3"
+    either = "1.4"
 
 
 Recent Changes
 --------------
+
+- 1.5.0
+
+  - Add new methods ``.factor_first()``, ``.factor_second()`` and ``.into_inner()``
+    by @mathstuf (#19)
+
+- 1.4.0
+
+  - Add inherent method ``.into_iter()`` by @cuviper (#12)
 
 - 1.3.0
 

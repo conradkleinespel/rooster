@@ -12,7 +12,7 @@
 
 [package]
 name = "getopts"
-version = "0.2.15"
+version = "0.2.18"
 authors = ["The Rust Project Developers"]
 description = "getopts-like option parsing.\n"
 homepage = "https://github.com/rust-lang/getopts"
@@ -21,5 +21,7 @@ readme = "README.md"
 categories = ["command-line-interface"]
 license = "MIT/Apache-2.0"
 repository = "https://github.com/rust-lang/getopts"
+[dependencies.unicode-width]
+version = "0.1.5"
 [dev-dependencies.log]
-version = "0.3"
+version = "0.4"

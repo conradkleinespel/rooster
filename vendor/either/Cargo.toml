@@ -12,9 +12,9 @@
 
 [package]
 name = "either"
-version = "1.3.0"
+version = "1.5.0"
 authors = ["bluss"]
-description = "The enum [`Either`] with variants `Left` and `Right` is a general purpose sum type with two cases.\n"
+description = "The enum `Either` with variants `Left` and `Right` is a general purpose sum type with two cases.\n"
 documentation = "https://docs.rs/either/1/"
 readme = "README-crates.io.md"
 keywords = ["data-structure", "no_std"]
@@ -32,5 +32,5 @@ features = ["derive"]
 optional = true
 
 [features]
-use_std = []
 default = ["use_std"]
+use_std = []

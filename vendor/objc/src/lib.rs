@@ -10,7 +10,7 @@ Objective-C objects can be messaged using the [`msg_send!`](macro.msg_send!.html
 # use objc::runtime::{BOOL, Class, Object};
 # fn main() {
 # unsafe {
-let cls = Class::get("NSObject").unwrap();
+let cls = class!(NSObject);
 let obj: *mut Object = msg_send![cls, new];
 let hash: usize = msg_send![obj, hash];
 let is_kind: BOOL = msg_send![obj, isKindOfClass:cls];
@@ -19,6 +19,11 @@ let _: () = msg_send![obj, release];
 # }
 # }
 ```
+
+# Reference counting
+
+Utilities for reference counting Objective-C objects are provided in the
+[`rc`](rc/index.html) module.
 
 # Declaring classes
 
@@ -75,11 +80,10 @@ mod macros;
 
 pub mod runtime;
 pub mod declare;
+pub mod rc;
 mod encode;
 #[cfg(feature = "exception")]
 mod exception;
-#[cfg(feature = "exception")]
-mod id;
 mod message;
 
 #[cfg(test)]

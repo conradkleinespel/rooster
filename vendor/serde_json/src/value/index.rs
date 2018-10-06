@@ -12,11 +12,38 @@ use std::ops;
 use super::Value;
 use map::Map;
 
-/// A type that can be used to index into a `serde_json::Value`. See the `get`
-/// and `get_mut` methods of `Value`.
+/// A type that can be used to index into a `serde_json::Value`.
+///
+/// The [`get`] and [`get_mut`] methods of `Value` accept any type that
+/// implements `Index`, as does the [square-bracket indexing operator]. This
+/// trait is implemented for strings which are used as the index into a JSON
+/// map, and for `usize` which is used as the index into a JSON array.
+///
+/// [`get`]: ../enum.Value.html#method.get
+/// [`get_mut`]: ../enum.Value.html#method.get_mut
+/// [square-bracket indexing operator]: ../enum.Value.html#impl-Index%3CI%3E
 ///
 /// This trait is sealed and cannot be implemented for types outside of
 /// `serde_json`.
+///
+/// # Examples
+///
+/// ```rust
+/// # #[macro_use]
+/// # extern crate serde_json;
+/// #
+/// # fn main() {
+/// let data = json!({ "inner": [1, 2, 3] });
+///
+/// // Data is a JSON map so it can be indexed with a string.
+/// let inner = &data["inner"];
+///
+/// // Inner is a JSON array so it can be indexed with an integer.
+/// let first = &inner[0];
+///
+/// assert_eq!(first, 1);
+/// # }
+/// ```
 pub trait Index: private::Sealed {
     /// Return None if the key is not already in the array or object.
     #[doc(hidden)]
@@ -51,16 +78,12 @@ impl Index for usize {
         match *v {
             Value::Array(ref mut vec) => {
                 let len = vec.len();
-                vec.get_mut(*self)
-                    .unwrap_or_else(
-                        || {
-                            panic!(
-                                "cannot access index {} of JSON array of length {}",
-                                self,
-                                len
-                            )
-                        },
+                vec.get_mut(*self).unwrap_or_else(|| {
+                    panic!(
+                        "cannot access index {} of JSON array of length {}",
+                        self, len
                     )
+                })
             }
             _ => panic!("cannot access index {} of JSON {}", self, Type(v)),
         }
@@ -82,14 +105,10 @@ impl Index for str {
     }
     fn index_or_insert<'v>(&self, v: &'v mut Value) -> &'v mut Value {
         if let Value::Null = *v {
-            let mut map = Map::new();
-            map.insert(self.to_owned(), Value::Null);
-            *v = Value::Object(map);
+            *v = Value::Object(Map::new());
         }
         match *v {
-            Value::Object(ref mut map) => {
-                map.entry(self.to_owned()).or_insert(Value::Null)
-            }
+            Value::Object(ref mut map) => map.entry(self.to_owned()).or_insert(Value::Null),
             _ => panic!("cannot access key {:?} in JSON {}", self, Type(v)),
         }
     }
@@ -128,11 +147,7 @@ mod private {
     impl Sealed for usize {}
     impl Sealed for str {}
     impl Sealed for String {}
-    impl<'a, T: ?Sized> Sealed for &'a T
-    where
-        T: Sealed,
-    {
-    }
+    impl<'a, T: ?Sized> Sealed for &'a T where T: Sealed {}
 }
 
 /// Used in panic messages.

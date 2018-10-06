@@ -1,3 +1,4 @@
+#![cfg_attr(feature = "cargo-clippy", allow(useless_let_if_seq))]
 use quote::{Tokens, ToTokens};
 use syn;
 use BuilderPattern;
@@ -23,6 +24,7 @@ use Bindings;
 /// #     setter.pattern = BuilderPattern::Mutable;
 /// #
 /// #     assert_eq!(quote!(#setter), quote!(
+/// # #[allow(unused_mut)]
 /// pub fn foo(&mut self, value: Foo) -> &mut Self {
 ///     let mut new = self;
 ///     new.foo = ::std::option::Option::Some(value);
@@ -112,6 +114,7 @@ impl<'a> ToTokens for Setter<'a> {
 
             tokens.append(quote!(
                 #(#attrs)*
+                #[allow(unused_mut)]
                 #vis fn #ident #ty_params (#self_param, value: #param_ty)
                     -> #return_ty
                 {
@@ -178,13 +181,17 @@ mod tests {
         let mut setter = default_setter!();
         setter.pattern = BuilderPattern::Immutable;
 
-        assert_eq!(quote!(#setter), quote!(
+        assert_eq!(
+            quote!(#setter),
+            quote!(
+            #[allow(unused_mut)]
             pub fn foo(&self, value: Foo) -> Self {
                 let mut new = ::std::clone::Clone::clone(self);
                 new.foo = ::std::option::Option::Some(value);
                 new
             }
-        ));
+        )
+        );
     }
 
     #[test]
@@ -192,13 +199,17 @@ mod tests {
         let mut setter = default_setter!();
         setter.pattern = BuilderPattern::Mutable;
 
-        assert_eq!(quote!(#setter), quote!(
+        assert_eq!(
+            quote!(#setter),
+            quote!(
+            #[allow(unused_mut)]
             pub fn foo(&mut self, value: Foo) -> &mut Self {
                 let mut new = self;
                 new.foo = ::std::option::Option::Some(value);
                 new
             }
-        ));
+        )
+        );
     }
 
     #[test]
@@ -206,13 +217,17 @@ mod tests {
         let mut setter = default_setter!();
         setter.pattern = BuilderPattern::Owned;
 
-        assert_eq!(quote!(#setter), quote!(
+        assert_eq!(
+            quote!(#setter),
+            quote!(
+            #[allow(unused_mut)]
             pub fn foo(self, value: Foo) -> Self {
                 let mut new = self;
                 new.foo = ::std::option::Option::Some(value);
                 new
             }
-        ));
+        )
+        );
     }
 
     #[test]
@@ -222,13 +237,17 @@ mod tests {
         let mut setter = default_setter!();
         setter.visibility = &vis;
 
-        assert_eq!(quote!(#setter), quote!(
+        assert_eq!(
+            quote!(#setter),
+            quote!(
+            #[allow(unused_mut)]
             fn foo(&mut self, value: Foo) -> &mut Self {
                 let mut new = self;
                 new.foo = ::std::option::Option::Some(value);
                 new
             }
-        ));
+        )
+        );
     }
 
     #[test]
@@ -236,13 +255,17 @@ mod tests {
         let mut setter = default_setter!();
         setter.generic_into = true;
 
-        assert_eq!(quote!(#setter), quote!(
+        assert_eq!(
+            quote!(#setter),
+            quote!(
+            #[allow(unused_mut)]
             pub fn foo <VALUE: ::std::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
                 let mut new = self;
                 new.foo = ::std::option::Option::Some(value.into());
                 new
             }
-        ));
+        )
+        );
     }
 
     // including try_setter
@@ -259,8 +282,11 @@ mod tests {
         setter.deprecation_notes = &deprecated;
         setter.try_setter = true;
 
-        assert_eq!(quote!(#setter), quote!(
+        assert_eq!(
+            quote!(#setter),
+            quote!(
             #[some_attr]
+            #[allow(unused_mut)]
             pub fn foo <VALUE: ::std::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
                 #deprecated
                 let mut new = self;
@@ -276,7 +302,8 @@ mod tests {
                 new.foo = ::std::option::Option::Some(converted);
                 Ok(new)
             }
-        ));
+        )
+        );
     }
 
     #[test]
@@ -285,13 +312,17 @@ mod tests {
         setter.bindings.no_std = true;
         setter.pattern = BuilderPattern::Immutable;
 
-        assert_eq!(quote!(#setter), quote!(
+        assert_eq!(
+            quote!(#setter),
+            quote!(
+            #[allow(unused_mut)]
             pub fn foo(&self, value: Foo) -> Self {
                 let mut new = ::core::clone::Clone::clone(self);
                 new.foo = ::core::option::Option::Some(value);
                 new
             }
-        ));
+        )
+        );
     }
 
     #[test]
@@ -300,13 +331,17 @@ mod tests {
         setter.bindings.no_std = true;
         setter.generic_into = true;
 
-        assert_eq!(quote!(#setter), quote!(
+        assert_eq!(
+            quote!(#setter),
+            quote!(
+            #[allow(unused_mut)]
             pub fn foo <VALUE: ::core::convert::Into<Foo>>(&mut self, value: VALUE) -> &mut Self {
                 let mut new = self;
                 new.foo = ::core::option::Option::Some(value.into());
                 new
             }
-        ));
+        )
+        );
     }
 
     #[test]
@@ -323,7 +358,10 @@ mod tests {
         setter.pattern = BuilderPattern::Mutable;
         setter.try_setter = true;
 
-        assert_eq!(quote!(#setter), quote!(
+        assert_eq!(
+            quote!(#setter),
+            quote!(
+            #[allow(unused_mut)]
             pub fn foo(&mut self, value: Foo) -> &mut Self {
                 let mut new = self;
                 new.foo = ::std::option::Option::Some(value);
@@ -337,6 +375,7 @@ mod tests {
                 new.foo = ::std::option::Option::Some(converted);
                 Ok(new)
             }
-        ));
+        )
+        );
     }
 }

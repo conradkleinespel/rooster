@@ -12,7 +12,7 @@
 
 [package]
 name = "serde_json"
-version = "1.0.3"
+version = "1.0.32"
 authors = ["Erick Tryzelaar <erick.tryzelaar@gmail.com>", "David Tolnay <dtolnay@gmail.com>"]
 include = ["Cargo.toml", "src/**/*.rs", "README.md", "LICENSE-APACHE", "LICENSE-MIT"]
 description = "A JSON serialization file format"
@@ -22,33 +22,37 @@ keywords = ["json", "serde", "serialization"]
 categories = ["encoding"]
 license = "MIT/Apache-2.0"
 repository = "https://github.com/serde-rs/json"
-[dependencies.num-traits]
-version = "0.1.32"
+[package.metadata.docs.rs]
+features = ["raw_value"]
 
-[dependencies.serde]
+[package.metadata.playground]
+features = ["raw_value"]
+[dependencies.indexmap]
 version = "1.0"
-
-[dependencies.linked-hash-map]
-version = "0.4.1"
 optional = true
 
 [dependencies.itoa]
-version = "0.3"
+version = "0.4.3"
 
-[dependencies.dtoa]
-version = "0.4"
-[dev-dependencies.serde_derive]
-version = "1.0"
-
-[dev-dependencies.compiletest_rs]
+[dependencies.ryu]
 version = "0.2"
+
+[dependencies.serde]
+version = "1.0.60"
+[dev-dependencies.compiletest_rs]
+version = "0.3"
 
 [dev-dependencies.serde_bytes]
 version = "0.10"
 
+[dev-dependencies.serde_derive]
+version = "1.0"
+
 [features]
+arbitrary_precision = []
 default = []
-preserve_order = ["linked-hash-map"]
+preserve_order = ["indexmap"]
+raw_value = []
 [badges.appveyor]
 repository = "serde-rs/json"
 

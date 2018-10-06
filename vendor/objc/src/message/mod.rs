@@ -6,29 +6,34 @@ use std::mem;
 use runtime::{Class, Imp, Object, Sel};
 use {Encode, EncodeArguments};
 
+#[cfg(feature = "exception")]
+macro_rules! objc_try {
+    ($b:block) => (
+        $crate::exception::try(|| $b).map_err(|exception|
+            if exception.is_null() {
+                MessageError("Uncaught exception nil".to_owned())
+            } else {
+                MessageError(format!("Uncaught exception {:?}", &**exception))
+            }
+        )
+    )
+}
+
+#[cfg(not(feature = "exception"))]
+macro_rules! objc_try {
+    ($b:block) => (Ok($b))
+}
+
 mod verify;
 
-#[cfg(all(any(target_os = "macos", target_os = "ios"),
-          target_arch = "x86"))]
-#[path = "x86.rs"]
-mod platform;
-#[cfg(all(any(target_os = "macos", target_os = "ios"),
-          target_arch = "x86_64"))]
-#[path = "x86_64.rs"]
-mod platform;
-#[cfg(all(any(target_os = "macos", target_os = "ios"),
-          target_arch = "arm"))]
-#[path = "arm.rs"]
-mod platform;
-#[cfg(all(any(target_os = "macos", target_os = "ios"),
-          target_arch = "aarch64"))]
-#[path = "arm64.rs"]
+#[cfg(any(target_os = "macos", target_os = "ios"))]
+#[path = "apple/mod.rs"]
 mod platform;
 #[cfg(not(any(target_os = "macos", target_os = "ios")))]
 #[path = "gnustep.rs"]
 mod platform;
 
-use self::platform::{msg_send_fn, msg_send_super_fn};
+use self::platform::{send_unverified, send_super_unverified};
 use self::verify::verify_message_signature;
 
 /// Specifies the superclass of an instance.
@@ -47,8 +52,8 @@ pub unsafe trait Message {
     Sends a message to self with the given selector and arguments.
 
     The correct version of `objc_msgSend` will be chosen based on the
-    return type. For more information, see Apple's documenation:
-    https://developer.apple.com/library/mac/documentation/Cocoa/Reference/ObjCRuntimeRef/index.html#//apple_ref/doc/uid/TP40001418-CH1g-88778
+    return type. For more information, see Apple's documentation:
+    <https://developer.apple.com/library/mac/documentation/Cocoa/Reference/ObjCRuntimeRef/index.html#//apple_ref/doc/uid/TP40001418-CH1g-88778>
 
     If the selector is known at compile-time, it is recommended to use the
     `msg_send!` macro rather than this method.
@@ -83,7 +88,7 @@ pub unsafe trait Message {
     # use objc::Message;
     # fn main() {
     let obj: &Object;
-    # obj = unsafe { msg_send![Class::get("NSObject").unwrap(), new] };
+    # obj = unsafe { msg_send![class!(NSObject), new] };
     let sel = sel!(isKindOfClass:);
     // Verify isKindOfClass: takes one Class and returns a BOOL
     let result = obj.verify_message::<(&Class,), BOOL>(sel);
@@ -164,30 +169,6 @@ impl Error for MessageError {
     }
 }
 
-#[cfg(feature = "exception")]
-macro_rules! objc_try {
-    ($b:block) => (
-        $crate::exception::try(|| $b).map_err(|exception| match exception {
-            Some(exception) => MessageError(format!("Uncaught exception {:?}", &*exception)),
-            None => MessageError("Uncaught exception nil".to_owned()),
-        })
-    )
-}
-
-#[cfg(not(feature = "exception"))]
-macro_rules! objc_try {
-    ($b:block) => (Ok($b))
-}
-
-unsafe fn send_unverified<T, A, R>(obj: *const T, sel: Sel, args: A)
-        -> Result<R, MessageError>
-        where T: Message, A: MessageArguments, R: Any {
-    let (msg_send_fn, receiver) = msg_send_fn::<R>(obj as *mut T as *mut Object, sel);
-    objc_try!({
-        A::invoke(msg_send_fn, receiver, sel, args)
-    })
-}
-
 #[doc(hidden)]
 #[inline(always)]
 #[cfg(not(feature = "verify_message"))]
@@ -212,16 +193,6 @@ pub unsafe fn send_message<T, A, R>(obj: *const T, sel: Sel, args: A)
 
     verify_message_signature::<A, R>(cls, sel).and_then(|_| {
         send_unverified(obj, sel, args)
-    })
-}
-
-unsafe fn send_super_unverified<T, A, R>(obj: *const T, superclass: &Class,
-        sel: Sel, args: A) -> Result<R, MessageError>
-        where T: Message, A: MessageArguments, R: Any {
-    let sup = Super { receiver: obj as *mut T as *mut Object, superclass: superclass };
-    let (msg_send_fn, receiver) = msg_send_super_fn::<R>(&sup, sel);
-    objc_try!({
-        A::invoke(msg_send_fn, receiver, sel, args)
     })
 }
 

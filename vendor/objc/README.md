@@ -8,12 +8,40 @@ Objective-C Runtime bindings and wrapper for Rust.
 Objective-C objects can be messaged using the `msg_send!` macro:
 
 ``` rust
-let cls = Class::get("NSObject").unwrap();
+let cls = class!(NSObject);
 let obj: *mut Object = msg_send![cls, new];
 let hash: usize = msg_send![obj, hash];
 let is_kind: BOOL = msg_send![obj, isKindOfClass:cls];
 // Even void methods must have their return type annotated
 let _: () = msg_send![obj, release];
+```
+
+## Reference counting
+
+The utilities of the `rc` module provide ARC-like semantics for working with
+Objective-C's reference counted objects in Rust.
+A `StrongPtr` retains an object and releases the object when dropped.
+A `WeakPtr` will not retain the object, but can be upgraded to a `StrongPtr`
+and safely fails if the object has been deallocated.
+
+``` rust
+// StrongPtr will release the object when dropped
+let obj = unsafe {
+    StrongPtr::new(msg_send![class!(NSObject), new])
+};
+
+// Cloning retains the object an additional time
+let cloned = obj.clone();
+autoreleasepool(|| {
+    // Autorelease consumes the StrongPtr, but won't
+    // actually release until the end of an autoreleasepool
+    cloned.autorelease();
+});
+
+// Weak references won't retain the object
+let weak = obj.weak();
+drop(obj);
+assert!(weak.load().is_null());
 ```
 
 ## Declaring classes
@@ -25,7 +53,7 @@ The following example demonstrates declaring a class named `MyNumber` that has
 one ivar, a `u32` named `_number` and a `number` method that returns it:
 
 ``` rust
-let superclass = Class::get("NSObject").unwrap();
+let superclass = class!(NSObject);
 let mut decl = ClassDecl::new("MyNumber", superclass).unwrap();
 
 // Add an instance variable

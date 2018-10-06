@@ -36,6 +36,7 @@ use core::fmt;
 pub struct Demangle<'a> {
     original: &'a str,
     inner: &'a str,
+    suffix: &'a str,
     valid: bool,
     /// The number of ::-separated elements in the original name.
     elements: usize,
@@ -43,15 +44,14 @@ pub struct Demangle<'a> {
 
 /// De-mangles a Rust symbol into a more readable version
 ///
-/// All rust symbols by default are mangled as they contain characters that
+/// All Rust symbols by default are mangled as they contain characters that
 /// cannot be represented in all object files. The mangling mechanism is similar
 /// to C++'s, but Rust has a few specifics to handle items like lifetimes in
 /// symbols.
 ///
-/// This function will take a **mangled** symbol (typically acquired from a
-/// `Symbol` which is in turn resolved from a `Frame`) and then writes the
-/// de-mangled version into the given `writer`. If the symbol does not look like
-/// a mangled symbol, it is still written to `writer`.
+/// This function will take a **mangled** symbol and return a value. When printed,
+/// the de-mangled version will be written. If the symbol does not look like
+/// a mangled symbol, the original value will be written instead.
 ///
 /// # Examples
 ///
@@ -63,7 +63,7 @@ pub struct Demangle<'a> {
 /// assert_eq!(demangle("foo").to_string(), "foo");
 /// ```
 
-// All rust symbols are in theory lists of "::"-separated identifiers. Some
+// All Rust symbols are in theory lists of "::"-separated identifiers. Some
 // assemblers, however, can't handle these characters in symbol names. To get
 // around this, we use C++-style mangling. The mangling method is:
 //
@@ -80,9 +80,39 @@ pub struct Demangle<'a> {
 // Note that this demangler isn't quite as fancy as it could be. We have lots
 // of other information in our symbols like hashes, version, type information,
 // etc. Additionally, this doesn't handle glue symbols at all.
-pub fn demangle(s: &str) -> Demangle {
+pub fn demangle(mut s: &str) -> Demangle {
+    // During ThinLTO LLVM may import and rename internal symbols, so strip out
+    // those endings first as they're one of the last manglings applied to symbol
+    // names.
+    let llvm = ".llvm.";
+    if let Some(i) = s.find(llvm) {
+        let candidate = &s[i + llvm.len()..];
+        let all_hex = candidate.chars().all(|c| {
+            match c {
+                'A' ... 'F' | '0' ... '9' | '@' => true,
+                _ => false,
+            }
+        });
+
+        if all_hex {
+            s = &s[..i];
+        }
+    }
+
+    // Output like LLVM IR adds extra period-delimited words. See if
+    // we are in that case and save the trailing words if so.
+    let mut suffix = "";
+    if let Some(i) = s.rfind("E.") {
+        let (head, tail) = s.split_at(i + 1); // After the E, before the period
+
+        if is_symbol_like(tail) {
+            s = head;
+            suffix = tail;
+        }
+    }
+
     // First validate the symbol. If it doesn't look like anything we're
-    // expecting, we just print it literally. Note that we must handle non-rust
+    // expecting, we just print it literally. Note that we must handle non-Rust
     // symbols because we could have any function in the backtrace.
     let mut valid = true;
     let mut inner = s;
@@ -99,22 +129,36 @@ pub fn demangle(s: &str) -> Demangle {
         valid = false;
     }
 
+    // only work with ascii text
+    if inner.bytes().any(|c| c & 0x80 != 0) {
+        valid = false;
+    }
+
     let mut elements = 0;
     if valid {
-        let mut chars = inner.chars();
+        let mut chars = inner.chars().peekable();
         while valid {
-            let mut i = 0;
-            for c in chars.by_ref() {
-                if c.is_digit(10) {
-                    i = i * 10 + c as usize - '0' as usize;
-                } else {
-                    break;
+            let mut i = 0usize;
+            while let Some(&c) = chars.peek() {
+                if !c.is_digit(10) {
+                    break
                 }
+                chars.next();
+                let next = i.checked_mul(10)
+                    .and_then(|i| i.checked_add(c as usize - '0' as usize));
+                i = match next {
+                    Some(i) => i,
+                    None => {
+                        valid = false;
+                        break
+                    }
+                };
             }
+
             if i == 0 {
                 valid = chars.next().is_none();
                 break;
-            } else if chars.by_ref().take(i - 1).count() != i - 1 {
+            } else if chars.by_ref().take(i).count() != i {
                 valid = false;
             } else {
                 elements += 1;
@@ -124,6 +168,7 @@ pub fn demangle(s: &str) -> Demangle {
 
     Demangle {
         inner: inner,
+        suffix: suffix,
         valid: valid,
         elements: elements,
         original: s,
@@ -171,11 +216,40 @@ fn is_rust_hash(s: &str) -> bool {
     s.starts_with('h') && s[1..].chars().all(|c| c.is_digit(16))
 }
 
+fn is_symbol_like(s: &str) -> bool {
+    s.chars().all(|c| {
+        // Once `char::is_ascii_punctuation` and `char::is_ascii_alphanumeric`
+        // have been stable for long enough, use those instead for clarity
+        is_ascii_alphanumeric(c) || is_ascii_punctuation(c)
+    })
+}
+
+// Copied from the documentation of `char::is_ascii_alphanumeric`
+fn is_ascii_alphanumeric(c: char) -> bool {
+    match c {
+        '\u{0041}' ... '\u{005A}' |
+        '\u{0061}' ... '\u{007A}' |
+        '\u{0030}' ... '\u{0039}' => true,
+        _ => false,
+    }
+}
+
+// Copied from the documentation of `char::is_ascii_punctuation`
+fn is_ascii_punctuation(c: char) -> bool {
+    match c {
+        '\u{0021}' ... '\u{002F}' |
+        '\u{003A}' ... '\u{0040}' |
+        '\u{005B}' ... '\u{0060}' |
+        '\u{007B}' ... '\u{007E}' => true,
+        _ => false,
+    }
+}
+
 impl<'a> fmt::Display for Demangle<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // Alright, let's do this.
         if !self.valid {
-            return f.write_str(self.inner);
+            return f.write_str(self.original);
         }
 
         let mut inner = self.inner;
@@ -238,6 +312,7 @@ impl<'a> fmt::Display for Demangle<'a> {
                         "$u7e$" => "~",
                         "$u20$" => " ",
                         "$u27$" => "'",
+                        "$u3d$" => "=",
                         "$u5b$" => "[",
                         "$u5d$" => "]",
                         "$u7b$" => "{",
@@ -257,6 +332,8 @@ impl<'a> fmt::Display for Demangle<'a> {
             }
         }
 
+        try!(f.write_str(self.suffix));
+
         Ok(())
     }
 }
@@ -272,9 +349,11 @@ mod tests {
     use std::prelude::v1::*;
 
     macro_rules! t {
-        ($a:expr, $b:expr) => ({
-            assert_eq!(super::demangle($a).to_string(), $b);
-        })
+        ($a:expr, $b:expr) => (assert!(ok($a, $b)))
+    }
+
+    macro_rules! t_err {
+        ($a:expr) => (assert!(ok_err($a)))
     }
 
     macro_rules! t_nohash {
@@ -283,11 +362,31 @@ mod tests {
         })
     }
 
+    fn ok(sym: &str, expected: &str) -> bool {
+        match super::try_demangle(sym) {
+            Ok(s) => s.to_string() == expected,
+            Err(_) => {
+                println!("error demangling");
+                false
+            }
+        }
+    }
+
+    fn ok_err(sym: &str) -> bool {
+        match super::try_demangle(sym) {
+            Ok(_) => {
+                println!("succeeded in demangling");
+                false
+            }
+            Err(_) => super::demangle(sym).to_string() == sym,
+        }
+    }
+
     #[test]
     fn demangle() {
-        t!("test", "test");
+        t_err!("test");
         t!("_ZN4testE", "test");
-        t!("_ZN4test", "_ZN4test");
+        t_err!("_ZN4test");
         t!("_ZN4test1a2bcE", "test::a::bc");
     }
 
@@ -357,5 +456,46 @@ mod tests {
         t_nohash!("_ZN3foo16ffaf221e174051e9E", "foo::ffaf221e174051e9");
         // Not a valid hash, has a non-hex-digit.
         t_nohash!("_ZN3foo17hg5af221e174051e9E", "foo::hg5af221e174051e9");
+    }
+
+    #[test]
+    fn demangle_thinlto() {
+        // One element, no hash.
+        t!("_ZN3fooE.llvm.9D1C9369", "foo");
+        t!("_ZN3fooE.llvm.9D1C9369@@16", "foo");
+        t_nohash!("_ZN9backtrace3foo17hbb467fcdaea5d79bE.llvm.A5310EB9", "backtrace::foo");
+    }
+
+    #[test]
+    fn demangle_llvm_ir_branch_labels() {
+        t!("_ZN4core5slice77_$LT$impl$u20$core..ops..index..IndexMut$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$9index_mut17haf9727c2edfbc47bE.exit.i.i", "core::slice::<impl core::ops::index::IndexMut<I> for [T]>::index_mut::haf9727c2edfbc47b.exit.i.i");
+        t_nohash!("_ZN4core5slice77_$LT$impl$u20$core..ops..index..IndexMut$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$9index_mut17haf9727c2edfbc47bE.exit.i.i", "core::slice::<impl core::ops::index::IndexMut<I> for [T]>::index_mut.exit.i.i");
+    }
+
+    #[test]
+    fn demangle_ignores_suffix_that_doesnt_look_like_a_symbol() {
+        t_err!("_ZN3fooE.llvm moocow");
+    }
+
+    #[test]
+    fn dont_panic() {
+        super::demangle("_ZN2222222222222222222222EE").to_string();
+        super::demangle("_ZN5*70527e27.ll34csaғE").to_string();
+        super::demangle("_ZN5*70527a54.ll34_$b.1E").to_string();
+        super::demangle("\
+            _ZN5~saäb4e\n\
+            2734cOsbE\n\
+            5usage20h)3\0\0\0\0\0\0\07e2734cOsbE\
+        ").to_string();
+    }
+
+    #[test]
+    fn invalid_no_chop() {
+        t_err!("_ZNfooE");
+    }
+
+    #[test]
+    fn handle_assoc_types() {
+        t!("_ZN151_$LT$alloc..boxed..Box$LT$alloc..boxed..FnBox$LT$A$C$$u20$Output$u3d$R$GT$$u20$$u2b$$u20$$u27$a$GT$$u20$as$u20$core..ops..function..FnOnce$LT$A$GT$$GT$9call_once17h69e8f44b3723e1caE", "<alloc::boxed::Box<alloc::boxed::FnBox<A, Output=R> + 'a> as core::ops::function::FnOnce<A>>::call_once::h69e8f44b3723e1ca");
     }
 }

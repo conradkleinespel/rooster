@@ -94,7 +94,7 @@
 
 #![doc(html_logo_url = "https://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png",
        html_favicon_url = "https://www.rust-lang.org/favicon.ico",
-       html_root_url = "https://doc.rust-lang.org/getopts/")]
+       html_root_url = "https://docs.rs/getopts/0.2.18")]
 #![deny(missing_docs)]
 #![cfg_attr(test, deny(warnings))]
 #![cfg_attr(rust_build, feature(staged_api))]
@@ -104,21 +104,23 @@
                      reason = "use the crates.io `getopts` library instead"))]
 
 #[cfg(test)] #[macro_use] extern crate log;
+extern crate unicode_width;
+
 
 use self::Name::*;
 use self::HasArg::*;
 use self::Occur::*;
 use self::Fail::*;
 use self::Optval::*;
-use self::SplitWithinState::*;
-use self::Whitespace::*;
-use self::LengthLimit::*;
 
 use std::error::Error;
 use std::ffi::OsStr;
 use std::fmt;
 use std::iter::{repeat, IntoIterator};
 use std::result;
+use std::str::FromStr;
+
+use unicode_width::UnicodeWidthStr;
 
 /// A description of the options that a program can handle.
 pub struct Options {
@@ -307,36 +309,27 @@ impl Options {
         where C::Item: AsRef<OsStr>
     {
         let opts: Vec<Opt> = self.grps.iter().map(|x| x.long_to_short()).collect();
-        let n_opts = opts.len();
 
-        fn f(_x: usize) -> Vec<Optval> { return Vec::new(); }
-
-        let mut vals = (0 .. n_opts).map(f).collect::<Vec<_>>();
+        let mut vals = (0 .. opts.len()).map(|_| Vec::new()).collect::<Vec<Vec<Optval>>>();
         let mut free: Vec<String> = Vec::new();
-        let args = try!(args.into_iter().map(|i| {
+        let args = args.into_iter().map(|i| {
             i.as_ref().to_str().ok_or_else(|| {
                 Fail::UnrecognizedOption(format!("{:?}", i.as_ref()))
             }).map(|s| s.to_owned())
-        }).collect::<::std::result::Result<Vec<_>, _>>());
-        let l = args.len();
-        let mut i = 0;
-        while i < l {
-            let cur = args[i].clone();
-            let curlen = cur.len();
+        }).collect::<::std::result::Result<Vec<_>,_>>()?;
+        let mut args = args.into_iter().peekable();
+        while let Some(cur) = args.next() {
             if !is_arg(&cur) {
+                free.push(cur);
                 match self.parsing_style {
-                    ParsingStyle::FloatingFrees => free.push(cur),
+                    ParsingStyle::FloatingFrees => {},
                     ParsingStyle::StopAtFirstFree => {
-                        while i < l {
-                            free.push(args[i].clone());
-                            i += 1;
-                        }
+                        free.extend(args);
                         break;
                     }
                 }
             } else if cur == "--" {
-                let mut j = i + 1;
-                while j < l { free.push(args[j].clone()); j += 1; }
+                free.extend(args);
                 break;
             } else {
                 let mut names;
@@ -344,18 +337,15 @@ impl Options {
                 let mut was_long = true;
                 if cur.as_bytes()[1] == b'-' || self.long_only {
                     let tail = if cur.as_bytes()[1] == b'-' {
-                        &cur[2..curlen]
+                        &cur[2..]
                     } else {
                         assert!(self.long_only);
-                        &cur[1..curlen]
+                        &cur[1..]
                     };
-                    let tail_eq: Vec<&str> = tail.splitn(2, '=').collect();
-                    if tail_eq.len() <= 1 {
-                        names = vec!(Name::from_str(tail));
-                    } else {
-                        names =
-                            vec!(Name::from_str(tail_eq[0]));
-                        i_arg = Some(tail_eq[1].to_string());
+                    let mut parts = tail.splitn(2, '=');
+                    names = vec![Name::from_str(parts.next().unwrap())];
+                    if let Some(rest) = parts.next() {
+                        i_arg = Some(rest.to_string());
                     }
                 } else {
                     was_long = false;
@@ -370,7 +360,7 @@ impl Options {
                            interpreted correctly
                         */
 
-                        let opt_id = match find_opt(&opts, opt.clone()) {
+                        let opt_id = match find_opt(&opts, &opt) {
                           Some(id) => id,
                           None => return Err(UnrecognizedOption(opt.to_string()))
                         };
@@ -384,8 +374,8 @@ impl Options {
 
                         if arg_follows {
                             let next = j + ch.len_utf8();
-                            if next < curlen {
-                                i_arg = Some(cur[next..curlen].to_string());
+                            if next < cur.len() {
+                                i_arg = Some(cur[next..].to_string());
                                 break;
                             }
                         }
@@ -394,7 +384,7 @@ impl Options {
                 let mut name_pos = 0;
                 for nm in names.iter() {
                     name_pos += 1;
-                    let optid = match find_opt(&opts, (*nm).clone()) {
+                    let optid = match find_opt(&opts, &nm) {
                       Some(id) => id,
                       None => return Err(UnrecognizedOption(nm.to_string()))
                     };
@@ -412,41 +402,34 @@ impl Options {
                         // then users could only write a "Maybe" long
                         // option at the end of the arguments when
                         // FloatingFrees is in use.
-                        if !i_arg.is_none() {
-                            vals[optid]
-                                .push(Val((i_arg.clone())
-                                .unwrap()));
-                        } else if was_long || name_pos < names.len() || i + 1 == l ||
-                                is_arg(&args[i + 1]) {
+                        if let Some(i_arg) = i_arg.take() {
+                            vals[optid].push(Val(i_arg));
+                        } else if was_long || name_pos < names.len() || args.peek().map_or(true, |n| is_arg(&n)) {
                             vals[optid].push(Given);
                         } else {
-                            i += 1;
-                            vals[optid].push(Val(args[i].clone()));
+                            vals[optid].push(Val(args.next().unwrap()));
                         }
                       }
                       Yes => {
-                        if !i_arg.is_none() {
-                            vals[optid].push(Val(i_arg.clone().unwrap()));
-                        } else if i + 1 == l {
-                            return Err(ArgumentMissing(nm.to_string()));
+                        if let Some(i_arg) = i_arg.take() {
+                            vals[optid].push(Val(i_arg));
+                        } else if let Some(n) = args.next() {
+                            vals[optid].push(Val(n));
                         } else {
-                            i += 1;
-                            vals[optid].push(Val(args[i].clone()));
+                            return Err(ArgumentMissing(nm.to_string()));
                         }
                       }
                     }
                 }
             }
-            i += 1;
         }
-        for i in 0 .. n_opts {
-            let n = vals[i].len();
-            let occ = opts[i].occur;
-            if occ == Req && n == 0 {
-                return Err(OptionMissing(opts[i].name.to_string()));
+        debug_assert_eq!(vals.len(), opts.len());
+        for (vals, opt) in vals.iter().zip(opts.iter()) {
+            if opt.occur == Req && vals.is_empty() {
+                return Err(OptionMissing(opt.name.to_string()));
             }
-            if occ != Multi && n > 1 {
-                return Err(OptionDuplicated(opts[i].name.to_string()));
+            if opt.occur != Multi && vals.len() > 1 {
+                return Err(OptionDuplicated(opt.name.to_string()));
             }
         }
         Ok(Matches {
@@ -466,15 +449,28 @@ impl Options {
         line
     }
 
-    /// Derive a usage message from a set of options.
+
+    /// Derive a formatted message from a set of options.
     pub fn usage(&self, brief: &str) -> String {
+        self.usage_with_format(|opts|
+            format!("{}\n\nOptions:\n{}\n", brief, opts.collect::<Vec<String>>().join("\n")))
+    }
+
+    /// Derive a custom formatted message from a set of options. The formatted options provided to
+    /// a closure as an iterator.
+    pub fn usage_with_format<F: FnMut(&mut Iterator<Item=String>) -> String>(&self, mut formatter: F) -> String {
+        formatter(&mut self.usage_items())
+    }
+
+    /// Derive usage items from a set of options.
+    fn usage_items<'a>(&'a self) -> Box<Iterator<Item=String> + 'a> {
         let desc_sep = format!("\n{}", repeat(" ").take(24).collect::<String>());
 
         let any_short = self.grps.iter().any(|optref| {
             optref.short_name.len() > 0
         });
 
-        let rows = self.grps.iter().map(|optref| {
+        let rows = self.grps.iter().map(move |optref| {
             let OptGroup{short_name,
                          long_name,
                          hint,
@@ -485,7 +481,7 @@ impl Options {
             let mut row = "    ".to_string();
 
             // short option
-            match short_name.len() {
+            match short_name.width() {
                 0 => {
                     if any_short {
                         row.push_str("    ");
@@ -494,7 +490,7 @@ impl Options {
                 1 => {
                     row.push('-');
                     row.push_str(&short_name);
-                    if long_name.len() > 0 {
+                    if long_name.width() > 0 {
                         row.push_str(", ");
                     } else {
                         // Only a single space here, so that any
@@ -502,18 +498,15 @@ impl Options {
                         row.push(' ');
                     }
                 }
+                // FIXME: refer issue #7.
                 _ => panic!("the short name should only be 1 ascii char long"),
             }
 
             // long option
-            match long_name.len() {
+            match long_name.width() {
                 0 => {}
                 _ => {
-                    if self.long_only {
-                        row.push('-');
-                    } else {
-                        row.push_str("--");
-                    }
+                    row.push_str(if self.long_only { "-" } else { "--" });
                     row.push_str(&long_name);
                     row.push(' ');
                 }
@@ -530,9 +523,7 @@ impl Options {
                 }
             }
 
-            // FIXME: #5516 should be graphemes not codepoints
-            // here we just need to indent the start of the description
-            let rowlen = row.chars().count();
+            let rowlen = row.width();
             if rowlen < 24 {
                 for _ in 0 .. 24 - rowlen {
                     row.push(' ');
@@ -541,32 +532,13 @@ impl Options {
                 row.push_str(&desc_sep)
             }
 
-            // Normalize desc to contain words separated by one space character
-            let mut desc_normalized_whitespace = String::new();
-            for word in desc.split(|c: char| c.is_whitespace())
-                            .filter(|s| !s.is_empty()) {
-                desc_normalized_whitespace.push_str(word);
-                desc_normalized_whitespace.push(' ');
-            }
-
-            // FIXME: #5516 should be graphemes not codepoints
-            let mut desc_rows = Vec::new();
-            each_split_within(&desc_normalized_whitespace,
-                              54,
-                              |substr| {
-                desc_rows.push(substr.to_string());
-                true
-            });
-
-            // FIXME: #5516 should be graphemes not codepoints
-            // wrapped description
+            let desc_rows = each_split_within(&desc, 54);
             row.push_str(&desc_rows.join(&desc_sep));
 
             row
         });
 
-        format!("{}\n\nOptions:\n{}\n", brief,
-                rows.collect::<Vec<String>>().join("\n"))
+       Box::new(rows)
     }
 }
 
@@ -738,7 +710,7 @@ impl OptGroup {
         match (short_name.len(), long_name.len()) {
             (0,0) => panic!("this long-format option was given no name"),
             (0,_) => Opt {
-                name: Long((long_name)),
+                name: Long(long_name),
                 hasarg: hasarg,
                 occur: occur,
                 aliases: Vec::new()
@@ -750,7 +722,7 @@ impl OptGroup {
                 aliases: Vec::new()
             },
             (1,_) => Opt {
-                name: Long((long_name)),
+                name: Long(long_name),
                 hasarg: hasarg,
                 occur: occur,
                 aliases: vec!(
@@ -769,7 +741,7 @@ impl OptGroup {
 
 impl Matches {
     fn opt_vals(&self, nm: &str) -> Vec<Optval> {
-        match find_opt(&self.opts, Name::from_str(nm)) {
+        match find_opt(&self.opts, &Name::from_str(nm)) {
             Some(id) => self.vals[id].clone(),
             None => panic!("No option '{}' defined", nm)
         }
@@ -780,7 +752,7 @@ impl Matches {
     }
     /// Returns true if an option was defined
     pub fn opt_defined(&self, nm: &str) -> bool {
-        find_opt(&self.opts, Name::from_str(nm)).is_some()
+        find_opt(&self.opts, &Name::from_str(nm)).is_some()
     }
 
     /// Returns true if an option was matched.
@@ -796,7 +768,7 @@ impl Matches {
     /// Returns true if any of several options were matched.
     pub fn opts_present(&self, names: &[String]) -> bool {
         names.iter().any(|nm| {
-            match find_opt(&self.opts, Name::from_str(&nm)) {
+            match find_opt(&self.opts, &Name::from_str(&nm)) {
                 Some(id) if !self.vals[id].is_empty() => true,
                 _ => false,
             }
@@ -848,22 +820,49 @@ impl Matches {
         }
     }
 
+    /// Returns some matching value or `None`.
+    ///
+    /// Similar to opt_str, also converts matching argument using FromStr.
+    pub fn opt_get<T>(&self, nm: &str) -> result::Result<Option<T>, T::Err>
+        where T: FromStr
+    {
+        match self.opt_val(nm) {
+            Some(Val(s)) => Ok(Some(s.parse()?)),
+            Some(Given) => Ok(None),
+            None => Ok(None),
+        }
+    }
+
+    /// Returns a matching value or default.
+    ///
+    /// Similar to opt_default, except the two differences.
+    /// Instead of returning None when argument was not present, return `def`.
+    /// Instead of returning &str return type T, parsed using str::parse().
+    pub fn opt_get_default<T>(&self, nm: &str, def: T)
+        -> result::Result<T, T::Err> where T: FromStr
+    {
+        match self.opt_val(nm) {
+            Some(Val(s)) => s.parse(),
+            Some(Given) => Ok(def),
+            None => Ok(def),
+        }
+    }
 }
 
 fn is_arg(arg: &str) -> bool {
     arg.as_bytes().get(0) == Some(&b'-') && arg.len() > 1
 }
 
-fn find_opt(opts: &[Opt], nm: Name) -> Option<usize> {
+fn find_opt(opts: &[Opt], nm: &Name) -> Option<usize> {
     // Search main options.
-    let pos = opts.iter().position(|opt| opt.name == nm);
+    let pos = opts.iter().position(|opt| &opt.name == nm);
     if pos.is_some() {
         return pos
     }
 
     // Search in aliases.
     for candidate in opts.iter() {
-        if candidate.aliases.iter().position(|opt| opt.name == nm).is_some() {
+        if candidate.aliases.iter().position(|opt| &opt.name == nm).is_some() {
             return opts.iter().position(|opt| opt.name == candidate.name);
         }
     }
@@ -930,118 +929,59 @@ fn format_option(opt: &OptGroup) -> String {
     line
 }
 
-#[derive(Clone, Copy)]
-enum SplitWithinState {
-    A,  // leading whitespace, initial state
-    B,  // words
-    C,  // internal and trailing whitespace
-}
-
-#[derive(Clone, Copy)]
-enum Whitespace {
-    Ws, // current char is whitespace
-    Cr  // current char is not whitespace
-}
-
-#[derive(Clone, Copy)]
-enum LengthLimit {
-    UnderLim, // current char makes current substring still fit in limit
-    OverLim   // current char makes current substring no longer fit in limit
-}
-
-
 /// Splits a string into substrings with possibly internal whitespace,
 /// each of them at most `lim` bytes long, if possible. The substrings
 /// have leading and trailing whitespace removed, and are only cut at
 /// whitespace boundaries.
-///
-/// Note: Function was moved here from `std::str` because this module is the only place that
-/// uses it, and because it was too specific for a general string function.
-fn each_split_within<'a, F>(ss: &'a str, lim: usize, mut it: F)
-                            -> bool where F: FnMut(&'a str) -> bool {
-    // Just for fun, let's write this as a state machine:
+fn each_split_within(desc: &str, lim: usize) -> Vec<String> {
+    let mut rows = Vec::new();
+    for line in desc.trim().lines() {
+        let line_chars = line.chars().chain(Some(' '));
+        let words = line_chars.fold( (Vec::new(), 0, 0), |(mut words, a, z), c | {
+            let idx = z + c.len_utf8(); // Get the current byte offset
 
-    let mut slice_start = 0;
-    let mut last_start = 0;
-    let mut last_end = 0;
-    let mut state = A;
-    let mut fake_i = ss.len();
-    let mut lim = lim;
+            // If the char is whitespace, advance the word start and maybe push a word
+            if c.is_whitespace() {
+                if a != z {
+                    words.push(&line[a..z]);
+                }
+                (words, idx, idx)
+            }
+            // If the char is not whitespace, continue, retaining the current
+            else {
+                (words, a, idx)
+            }
+        }).0;
 
-    let mut cont = true;
+        let mut row = String::new();
+        for word in words.iter() {
+            let sep = if row.len() > 0 { Some(" ") } else { None };
+            let width = row.width()
+                + word.width()
+                + sep.map(UnicodeWidthStr::width).unwrap_or(0);
 
-    // if the limit is larger than the string, lower it to save cycles
-    if lim >= fake_i {
-        lim = fake_i;
+            if width <= lim {
+                if let Some(sep) = sep { row.push_str(sep) }
+                row.push_str(word);
+                continue
+            }
+            if row.len() > 0 {
+                rows.push(row.clone());
+                row.clear();
+            }
+            row.push_str(word);
+        }
+        if row.len() > 0 {
+            rows.push(row);
+        }
     }
-
-    let mut machine = |cont: &mut bool, (i, c): (usize, char)| {
-        let whitespace = if c.is_whitespace() { Ws }       else { Cr };
-        let limit      = if (i - slice_start + 1) <= lim  { UnderLim } else { OverLim };
-
-        state = match (state, whitespace, limit) {
-            (A, Ws, _)        => { A }
-            (A, Cr, _)        => { slice_start = i; last_start = i; B }
-
-            (B, Cr, UnderLim) => { B }
-            (B, Cr, OverLim)  if (i - last_start + 1) > lim => {
-                // A single word has gone over the limit.  In this
-                // case we just accept that the word will be too long.
-                B
-            }
-            (B, Cr, OverLim)  => {
-                *cont = it(&ss[slice_start..last_end]);
-                slice_start = last_start;
-                B
-            }
-            (B, Ws, UnderLim) => {
-                last_end = i;
-                C
-            }
-            (B, Ws, OverLim)  => {
-                last_end = i;
-                *cont = it(&ss[slice_start..last_end]);
-                A
-            }
-
-            (C, Cr, UnderLim) => {
-                last_start = i;
-                B
-            }
-            (C, Cr, OverLim)  => {
-                *cont = it(&ss[slice_start..last_end]);
-                slice_start = i;
-                last_start = i;
-                last_end = i;
-                B
-            }
-            (C, Ws, OverLim)  => {
-                *cont = it(&ss[slice_start..last_end]);
-                A
-            }
-            (C, Ws, UnderLim) => {
-                C
-            }
-        };
-
-        *cont
-    };
-
-    ss.char_indices().all(|x| machine(&mut cont, x));
-
-    // Let the automaton 'run out' by supplying trailing whitespace
-    while cont && match state { B | C => true, A => false } {
-        machine(&mut cont, (fake_i, ' '));
-        fake_i += 1;
-    }
-    return cont;
+    rows
 }
 
 #[test]
 fn test_split_within() {
     fn t(s: &str, i: usize, u: &[String]) {
-        let mut v = Vec::new();
-        each_split_within(s, i, |s| { v.push(s.to_string()); true });
+        let v = each_split_within(&(s.to_string()), i);
         assert!(v.iter().zip(u.iter()).all(|(a,b)| a == b));
     }
     t("", 0, &[]);
@@ -1053,7 +993,9 @@ fn test_split_within() {
         "Little lamb".to_string()
     ]);
     t("\nMary had a little lamb\nLittle lamb\n", ::std::usize::MAX,
-        &["Mary had a little lamb\nLittle lamb".to_string()]);
+        &["Mary had a little lamb".to_string(),
+        "Little lamb".to_string()
+    ]);
 }
 
 #[cfg(test)]
@@ -1226,6 +1168,37 @@ mod tests {
           Ok(ref m) => {
             assert!(!m.opt_present("test"));
             assert!(!m.opt_present("t"));
+          }
+          _ => panic!()
+        }
+    }
+
+    #[test]
+    fn test_opt_end() {
+        let args = vec!["--".to_owned(), "-t".to_owned()];
+        match Options::new()
+                      .optflag("t", "test", "testing")
+                      .parse(&args) {
+          Ok(ref m) => {
+            assert!(!m.opt_present("test"));
+            assert!(!m.opt_present("t"));
+            assert_eq!(m.free.len(), 1);
+            assert_eq!(m.free[0], "-t");
+          }
+          _ => panic!()
+        }
+    }
+
+    #[test]
+    fn test_opt_only_end() {
+        let args = vec!["--".to_owned()];
+        match Options::new()
+                      .optflag("t", "test", "testing")
+                      .parse(&args) {
+          Ok(ref m) => {
+            assert!(!m.opt_present("test"));
+            assert!(!m.opt_present("t"));
+            assert_eq!(m.free.len(), 0);
           }
           _ => panic!()
         }
@@ -1804,6 +1777,69 @@ Options:
     }
 
     #[test]
+    fn test_usage_description_newline_handling() {
+        let mut opts = Options::new();
+        opts.optflag("k", "k\u{2013}w\u{2013}",
+            "The word kiwi is normally spelled with two i's");
+        opts.optflag("a", "apple",
+            "This description forces a new line.\n Here is a premature\n\
+            newline");
+
+        let expected =
+"Usage: fruits
+
+Options:
+    -k, --k–w–          The word kiwi is normally spelled with two i's
+    -a, --apple         This description forces a new line.
+                        Here is a premature
+                        newline
+";
+
+        let usage = opts.usage("Usage: fruits");
+
+        debug!("expected: <<{}>>", expected);
+        debug!("generated: <<{}>>", usage);
+        assert!(usage == expected)
+    }
+
+    #[test]
+    fn test_usage_multiwidth() {
+        let mut opts = Options::new();
+        opts.optflag("a", "apple",        "apple description");
+        opts.optflag("b", "banana\u{00AB}", "banana description");
+        opts.optflag("c", "brûlée", "brûlée quite long description");
+        opts.optflag("k", "kiwi\u{20AC}",   "kiwi description");
+        opts.optflag("o", "orange\u{2039}", "orange description");
+        opts.optflag("r", "raspberry-but-making-this-option-way-too-long",
+            "raspberry description is also quite long indeed longer than \
+            every other piece of text we might encounter here and thus will \
+            be automatically broken up"
+        );
+
+        let expected =
+"Usage: fruits
+
+Options:
+    -a, --apple         apple description
+    -b, --banana«       banana description
+    -c, --brûlée        brûlée quite long description
+    -k, --kiwi€         kiwi description
+    -o, --orange‹       orange description
+    -r, --raspberry-but-making-this-option-way-too-long 
+                        raspberry description is also quite long indeed longer
+                        than every other piece of text we might encounter here
+                        and thus will be automatically broken up
+";
+
+        let usage = opts.usage("Usage: fruits");
+
+        debug!("expected: <<{}>>", expected);
+        debug!("generated: <<{}>>", usage);
+        assert!(usage == expected)
+    }
+
+
+    #[test]
     fn test_usage_short_only() {
         let mut opts = Options::new();
         opts.optopt("k", "", "Kiwi", "VAL");
@@ -1981,5 +2017,83 @@ Options:
     fn test_long_name_too_short() {
         let mut opts = Options::new();
         opts.optflag("", "a", "Oops, long option too short");
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_undefined_opt_present() {
+        let mut opts = Options::new();
+        opts.optflag("h", "help", "Description");
+        let args = vec!["-h"];
+        match opts.parse(args) {
+            Ok(matches) => assert!(!matches.opt_present("undefined")),
+            Err(e) => panic!("{}", e)
+        }
+    }
+
+    #[test]
+    fn test_opt_default() {
+        let mut opts = Options::new();
+        opts.optflag("h", "help", "Description");
+        opts.optflag("i", "ignore", "Description");
+        opts.optflag("r", "run", "Description");
+        opts.long_only(false);
+
+        let args: Vec<String> = ["-i", "-r", "10"]
+            .iter().map(|x| x.to_string()).collect();
+        let matches = &match opts.parse(&args) {
+            Ok(m) => m,
+            Err(e) => panic!("{}", e)
+        };
+        assert_eq!(matches.opt_default("help", ""), None);
+        assert_eq!(matches.opt_default("i", "def"), Some("def".to_string()));
+    }
+
+    #[test]
+    fn test_opt_get() {
+        let mut opts = Options::new();
+        opts.optflag("h", "help", "Description");
+        opts.optflagopt("i", "ignore", "Description", "true | false");
+        opts.optflagopt("r", "run", "Description", "0 .. 10");
+        opts.optflagopt("p", "percent", "Description", "0.0 .. 10.0");
+        opts.long_only(false);
+
+        let args: Vec<String> = [
+            "-i", "true", "-p", "1.1"
+        ].iter().map(|x| x.to_string()).collect();
+        let matches = &match opts.parse(&args) {
+            Ok(m) => m,
+            Err(e) => panic!("{}", e)
+        };
+        let h_arg = matches.opt_get::<i32>("help");
+        assert_eq!(h_arg, Ok(None));
+        let i_arg = matches.opt_get("i");
+        assert_eq!(i_arg, Ok(Some(true)));
+        let p_arg = matches.opt_get("p");
+        assert_eq!(p_arg, Ok(Some(1.1)));
+    }
+
+    #[test]
+    fn test_opt_get_default() {
+        let mut opts = Options::new();
+        opts.optflag("h", "help", "Description");
+        opts.optflagopt("i", "ignore", "Description", "true | false");
+        opts.optflagopt("r", "run", "Description", "0 .. 10");
+        opts.optflagopt("p", "percent", "Description", "0.0 .. 10.0");
+        opts.long_only(false);
+
+        let args: Vec<String> = [
+            "-i", "true", "-p", "1.1"
+        ].iter().map(|x| x.to_string()).collect();
+        let matches = &match opts.parse(&args) {
+            Ok(m) => m,
+            Err(e) => panic!("{}", e)
+        };
+        let h_arg =matches.opt_get_default("help", 10);
+        assert_eq!(h_arg, Ok(10));
+        let i_arg = matches.opt_get_default("i", false);
+        assert_eq!(i_arg, Ok(true));
+        let p_arg = matches.opt_get_default("p", 10.2);
+        assert_eq!(p_arg, Ok(1.1));
     }
 }

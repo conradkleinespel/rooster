@@ -6,55 +6,139 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#![doc(html_root_url = "https://docs.rs/itoa/0.3.4")]
-
-#![cfg_attr(feature = "i128", feature(i128_type, i128))]
-
-#![cfg_attr(feature = "cargo-clippy", allow(cast_lossless, unreadable_literal))]
+#![doc(html_root_url = "https://docs.rs/itoa/0.4.3")]
+#![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(
+    feature = "cargo-clippy",
+    allow(cast_lossless, unreadable_literal)
+)]
 
 #[cfg(feature = "i128")]
 mod udiv128;
 
-use std::{io, mem, ptr, slice};
+#[cfg(feature = "std")]
+use std::{fmt, io, mem, ptr, slice, str};
 
+#[cfg(not(feature = "std"))]
+use core::{fmt, mem, ptr, slice, str};
+
+/// Write integer to an `io::Write`.
+#[cfg(feature = "std")]
 #[inline]
-pub fn write<W: io::Write, V: Integer>(wr: W, value: V) -> io::Result<usize> {
-    value.write(wr)
+pub fn write<W: io::Write, V: Integer>(mut wr: W, value: V) -> io::Result<usize> {
+    let mut buf = Buffer::new();
+    let s = buf.format(value);
+    try!(wr.write_all(s.as_bytes()));
+    Ok(s.len())
 }
 
-pub trait Integer {
-    fn write<W: io::Write>(self, W) -> io::Result<usize>;
+/// Write integer to an `fmt::Write`.
+#[inline]
+pub fn fmt<W: fmt::Write, V: Integer>(mut wr: W, value: V) -> fmt::Result {
+    let mut buf = Buffer::new();
+    wr.write_str(buf.format(value))
 }
 
-trait IntegerPrivate {
-    fn write_to(self, buf: &mut [u8; MAX_LEN]) -> &[u8];
+/// A safe API for formatting integers to text.
+///
+/// # Example
+///
+/// ```rust
+/// let mut buffer = itoa::Buffer::new();
+/// let printed = buffer.format(1234);
+/// assert_eq!(printed, "1234");
+/// ```
+#[derive(Copy)]
+pub struct Buffer {
+    bytes: [u8; I128_MAX_LEN],
 }
 
-const DEC_DIGITS_LUT: &'static[u8] =
-    b"0001020304050607080910111213141516171819\
+impl Default for Buffer {
+    #[inline]
+    fn default() -> Buffer {
+        Buffer::new()
+    }
+}
+
+impl Clone for Buffer {
+    #[inline]
+    fn clone(&self) -> Self {
+        Buffer::new()
+    }
+}
+
+impl Buffer {
+    /// This is a cheap operation; you don't need to worry about reusing buffers
+    /// for efficiency.
+    #[inline]
+    pub fn new() -> Buffer {
+        Buffer {
+            bytes: unsafe { mem::uninitialized() },
+        }
+    }
+
+    /// Print an integer into this buffer and return a reference to its string representation
+    /// within the buffer.
+    pub fn format<I: Integer>(&mut self, i: I) -> &str {
+        i.write(self)
+    }
+}
+
+// Seal to prevent downstream implementations of the Integer trait.
+mod private {
+    pub trait Sealed {}
+}
+
+/// An integer that can be formatted by `itoa::write` and `itoa::fmt`.
+///
+/// This trait is sealed and cannot be implemented for types outside of itoa.
+pub trait Integer: private::Sealed {
+    // Not public API.
+    #[doc(hidden)]
+    fn write<'a>(self, buf: &'a mut Buffer) -> &'a str;
+}
+
+trait IntegerPrivate<B> {
+    fn write_to(self, buf: &mut B) -> &[u8];
+}
+
+const DEC_DIGITS_LUT: &'static [u8] = b"\
+      0001020304050607080910111213141516171819\
       2021222324252627282930313233343536373839\
       4041424344454647484950515253545556575859\
       6061626364656667686970717273747576777879\
       8081828384858687888990919293949596979899";
 
-const MAX_LEN: usize = 40; // i128::MIN (including minus sign)
-
 // Adaptation of the original implementation at
 // https://github.com/rust-lang/rust/blob/b8214dc6c6fc20d0a660fb5700dca9ebf51ebe89/src/libcore/fmt/num.rs#L188-L266
-macro_rules! impl_Integer {
-    ($($t:ident),* as $conv_fn:ident) => {$(
+macro_rules! impl_IntegerCommon {
+    ($max_len:expr, $t:ident) => {
         impl Integer for $t {
-            fn write<W: io::Write>(self, mut wr: W) -> io::Result<usize> {
-                let mut buf = unsafe { mem::uninitialized() };
-                let bytes = self.write_to(&mut buf);
-                try!(wr.write_all(bytes));
-                Ok(bytes.len())
+            #[inline]
+            fn write<'a>(self, buf: &'a mut Buffer) -> &'a str {
+                unsafe {
+                    debug_assert!($max_len <= I128_MAX_LEN);
+                    let buf = mem::transmute::<&mut [u8; I128_MAX_LEN], &mut [u8; $max_len]>(
+                        &mut buf.bytes,
+                    );
+                    let bytes = self.write_to(buf);
+                    str::from_utf8_unchecked(bytes)
+                }
             }
         }
 
-        impl IntegerPrivate for $t {
+        impl private::Sealed for $t {}
+    };
+}
+
+macro_rules! impl_Integer {
+    ($($max_len:expr => $t:ident),* as $conv_fn:ident) => {$(
+        impl_IntegerCommon!($max_len, $t);
+
+        impl IntegerPrivate<[u8; $max_len]> for $t {
             #[allow(unused_comparisons)]
-            fn write_to(self, buf: &mut [u8; MAX_LEN]) -> &[u8] {
+            #[inline]
+            fn write_to(self, buf: &mut [u8; $max_len]) -> &[u8] {
                 let is_nonnegative = self >= 0;
                 let mut n = if is_nonnegative {
                     self as $conv_fn
@@ -116,30 +200,44 @@ macro_rules! impl_Integer {
     )*};
 }
 
-impl_Integer!(i8, u8, i16, u16, i32, u32 as u32);
-impl_Integer!(i64, u64 as u64);
+const I8_MAX_LEN: usize = 4;
+const U8_MAX_LEN: usize = 3;
+const I16_MAX_LEN: usize = 6;
+const U16_MAX_LEN: usize = 5;
+const I32_MAX_LEN: usize = 11;
+const U32_MAX_LEN: usize = 10;
+const I64_MAX_LEN: usize = 20;
+const U64_MAX_LEN: usize = 20;
+
+impl_Integer!(
+    I8_MAX_LEN => i8,
+    U8_MAX_LEN => u8,
+    I16_MAX_LEN => i16,
+    U16_MAX_LEN => u16,
+    I32_MAX_LEN => i32,
+    U32_MAX_LEN => u32
+    as u32);
+
+impl_Integer!(I64_MAX_LEN => i64, U64_MAX_LEN => u64 as u64);
+
 #[cfg(target_pointer_width = "16")]
-impl_Integer!(isize, usize as u16);
+impl_Integer!(I16_MAX_LEN => isize, U16_MAX_LEN => usize as u16);
+
 #[cfg(target_pointer_width = "32")]
-impl_Integer!(isize, usize as u32);
+impl_Integer!(I32_MAX_LEN => isize, U32_MAX_LEN => usize as u32);
+
 #[cfg(target_pointer_width = "64")]
-impl_Integer!(isize, usize as u64);
+impl_Integer!(I64_MAX_LEN => isize, U64_MAX_LEN => usize as u64);
 
 #[cfg(all(feature = "i128"))]
 macro_rules! impl_Integer128 {
-    ($($t:ident),*) => {$(
-        impl Integer for $t {
-            fn write<W: io::Write>(self, mut wr: W) -> io::Result<usize> {
-                let mut buf = unsafe { mem::uninitialized() };
-                let bytes = self.write_to(&mut buf);
-                try!(wr.write_all(bytes));
-                Ok(bytes.len())
-            }
-        }
+    ($($max_len:expr => $t:ident),*) => {$(
+        impl_IntegerCommon!($max_len, $t);
 
-        impl IntegerPrivate for $t {
+        impl IntegerPrivate<[u8; $max_len]> for $t {
             #[allow(unused_comparisons)]
-            fn write_to(self, buf: &mut [u8; MAX_LEN]) -> &[u8] {
+            #[inline]
+            fn write_to(self, buf: &mut [u8; $max_len]) -> &[u8] {
                 let is_nonnegative = self >= 0;
                 let n = if is_nonnegative {
                     self as u128
@@ -153,7 +251,8 @@ macro_rules! impl_Integer128 {
                 unsafe {
                     // Divide by 10^19 which is the highest power less than 2^64.
                     let (n, rem) = udiv128::udivmod_1e19(n);
-                    curr -= rem.write_to(buf).len() as isize;
+                    let buf1 = buf_ptr.offset(curr - U64_MAX_LEN as isize) as *mut [u8; U64_MAX_LEN];
+                    curr -= rem.write_to(&mut *buf1).len() as isize;
 
                     if n != 0 {
                         // Memset the base10 leading zeros of rem.
@@ -163,7 +262,7 @@ macro_rules! impl_Integer128 {
 
                         // Divide by 10^19 again.
                         let (n, rem) = udiv128::udivmod_1e19(n);
-                        let buf2 = buf_ptr.offset(curr - buf.len() as isize) as *mut _;
+                        let buf2 = buf_ptr.offset(curr - U64_MAX_LEN as isize) as *mut [u8; U64_MAX_LEN];
                         curr -= rem.write_to(&mut *buf2).len() as isize;
 
                         if n != 0 {
@@ -193,4 +292,8 @@ macro_rules! impl_Integer128 {
 }
 
 #[cfg(all(feature = "i128"))]
-impl_Integer128!(i128, u128);
+const U128_MAX_LEN: usize = 39;
+const I128_MAX_LEN: usize = 40;
+
+#[cfg(all(feature = "i128"))]
+impl_Integer128!(I128_MAX_LEN => i128, U128_MAX_LEN => u128);

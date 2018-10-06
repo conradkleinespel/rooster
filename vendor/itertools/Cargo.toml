@@ -12,7 +12,7 @@
 
 [package]
 name = "itertools"
-version = "0.7.6"
+version = "0.7.8"
 authors = ["bluss"]
 description = "Extra iterator adaptors, iterator methods, free functions, and macros."
 documentation = "https://docs.rs/itertools/"

@@ -7,7 +7,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 cd $DIR
 
-docker build --pull --no-cache -t rooster .
+docker build --pull --no-cache -t rooster -f Dockerfile.alpine .
 
 chmod +x tests/*.sh
 

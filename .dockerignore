@@ -1,7 +1,9 @@
-/Dockerfile
 /target
 /rooster-banner.png
 /README.md
 /LICENSE-APACHE
-/install.sh
 /integration-tests.sh
+/Dockerfile.*
+/.dockerignore
+/.git
+/.idea

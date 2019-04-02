@@ -20,11 +20,9 @@ extern crate crypto;
 extern crate rpassword;
 extern crate rand;
 extern crate byteorder;
-extern crate quale;
 extern crate serde;
 extern crate serde_json;
 extern crate clipboard;
-extern crate shell_escape;
 extern crate zxcvbn;
 extern crate dirs;
 
@@ -54,6 +52,8 @@ mod safe_vec;
 mod generate;
 mod clip;
 mod list;
+mod quale;
+mod shell_escape;
 
 const ROOSTER_FILE_ENV_VAR: &'static str = "ROOSTER_FILE";
 const ROOSTER_FILE_DEFAULT: &'static str = ".passwords.rooster";

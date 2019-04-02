@@ -16,7 +16,6 @@
 
 extern crate libc;
 extern crate getopts;
-extern crate crypto;
 extern crate rpassword;
 extern crate rand;
 extern crate byteorder;
@@ -25,6 +24,7 @@ extern crate serde_json;
 extern crate clipboard;
 extern crate zxcvbn;
 extern crate dirs;
+extern crate openssl;
 
 #[macro_use]
 extern crate serde_derive;

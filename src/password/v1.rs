@@ -13,8 +13,6 @@
 // limitations under the License.
 
 use ffi;
-use crypto;
-use crypto::digest::Digest;
 use aes;
 use safe_string::SafeString;
 use safe_vec::SafeVec;
@@ -24,6 +22,15 @@ use super::PasswordError;
 use serde_json::Error;
 use std::ops::DerefMut;
 use std::ops::Deref;
+use std::os::raw::{c_uchar, c_ulonglong};
+
+extern "C" {
+    pub fn crypto_hash_sha256(
+        out: *mut libc::c_uchar,
+        in_: *const libc::c_uchar,
+        inlen: libc::c_ulonglong,
+    ) -> libc::c_int;
+}
 
 /// The Rooster file format
 ///
@@ -78,9 +85,18 @@ fn generate_encryption_key(master_password: &str) -> SafeVec {
         vec.push(0u8);
     }
     let mut key = SafeVec::new(vec);
-    let mut hash = crypto::sha2::Sha256::new();
-    hash.input(master_password.as_bytes());
-    hash.result(key.deref_mut());
+
+    let result = unsafe {
+        crypto_hash_sha256(
+            key.deref_mut().as_mut_ptr() as *mut c_uchar,
+            master_password.as_ptr() as *const c_uchar,
+            master_password.len() as c_ulonglong
+        )
+    };
+
+    if result != 0 {
+        panic!("Deriving sha256 key failed: {:?}", result);
+    }
 
     key
 }

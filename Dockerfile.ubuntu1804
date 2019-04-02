@@ -1,0 +1,24 @@
+FROM ubuntu:18.04
+
+# install runtime dependencies
+RUN apt-get update -y
+RUN apt install -y curl unzip pkg-config libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libx11-dev libxmu-dev python3 libssl-dev libsodium-dev xsel
+
+# install rustup-init
+ENV CARGO_HOME /usr
+ENV RUSTUP_HOME /usr
+ADD https://sh.rustup.rs /usr/bin/rustup-init
+RUN chmod 555 /usr/bin/rustup-init
+RUN /usr/bin/rustup-init -y
+
+# prepare to run as non-root
+RUN adduser --system --home=/home/rooster -u 1000 rooster
+WORKDIR /home/rooster
+ENTRYPOINT ["/usr/bin/rooster"]
+
+# make files findable by non-root
+ADD . /home/rooster/src
+RUN cargo install --path /home/rooster/src --root /usr
+
+# run as non-root
+USER rooster

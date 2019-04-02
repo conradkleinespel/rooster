@@ -11,34 +11,58 @@ There are a lot of password managers out there. Rooster has some unique goals:
 Rooster protects your passwords with state-of-the-art cryptography algorithms:
 
 - scrypt for key derivation
-- aes256-cbc for encryption
-- hmac-sha256 for authentication
+- aes-256-cbc for encryption
+- hmac-sha512 for authentication
 
 To top it off, it works Linux, BSD and OSX.
 
 ## Installation
 
+To install Rooster, run the following commands as `root`.
+
 On **Arch Linux**, install [Rooster from AUR](https://aur.archlinux.org/packages/rooster).
 
 On **Void Linux**, install [Rooster from XBPS](https://github.com/void-linux/void-packages/blob/master/srcpkgs/rooster/template). 
 
-On **Fedora/CentOS/Ubuntu/OSX**:
+On **Fedora**:
 
 ```shell
-curl -sSL 'https://raw.githubusercontent.com/conradkdotcom/rooster/master/install.sh' | sh
+dnf update -y
+dnf install -y curl gcc unzip pkgconfig libX11-devel libXmu-devel python3 openssl-devel libsodium-devel
+curl https://sh.rustup.rs -sSf | sh -s -- -y
+source $HOME/.cargo/env
+cargo install --root /usr rooster
 ```
 
-For **BSD and other Linux distributions**:
+On **Debian**:
 
-- make sure you have `gcc`, `pkg-config`, `python3`, `libxmu-dev`, `libx11-dev` and one of `xsel`/`xclip`
-- install Rust and Cargo with:
-    ```bash
-    curl https://sh.rustup.rs -sSf | sh -s -- -y
-    ```
-- install Rooster with:
-    ```bash
-    cargo install --root /usr rooster
-    ```
+```shell
+apt-get update -y
+apt-get install -y curl gcc unzip pkg-config libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libx11-dev libxmu-dev python3 libssl-dev libsodium-dev xsel
+curl https://sh.rustup.rs -sSf | sh -s -- -y
+source $HOME/.cargo/env
+cargo install --root /usr rooster
+```
+
+On **Ubuntu 16.04/18.04**:
+
+```shell
+apt update -y
+apt install -y curl unzip pkg-config libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libx11-dev libxmu-dev python3 libssl-dev libsodium-dev xsel
+curl https://sh.rustup.rs -sSf | sh -s -- -y
+source $HOME/.cargo/env
+cargo install --root /usr rooster
+```
+
+On **OSX**:
+
+```shell
+brew install curl libsodium openssl
+curl https://sh.rustup.rs -sSf | sh -s -- -y
+cargo install --root /usr rooster
+```
+
+For other distributions, the various Docker files can help you find which dependencies you need.
 
 Once you have installed Rooster (see instructions below), you can view documentation with:
 

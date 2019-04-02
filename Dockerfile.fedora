@@ -1,0 +1,24 @@
+FROM fedora:latest
+
+# install runtime dependencies
+RUN dnf update -y
+RUN dnf install -y curl gcc unzip pkgconfig libX11-devel libXmu-devel python3 openssl-devel libsodium-devel
+
+# install rustup-init
+ENV CARGO_HOME /usr
+ENV RUSTUP_HOME /usr
+ADD https://sh.rustup.rs /usr/bin/rustup-init
+RUN chmod 555 /usr/bin/rustup-init
+RUN /usr/bin/rustup-init -y
+
+# prepare to run as non-root
+RUN adduser --system --home=/home/rooster -u 1000 rooster
+WORKDIR /home/rooster
+ENTRYPOINT ["/usr/bin/rooster"]
+
+# make files findable by non-root
+ADD . /home/rooster/src
+RUN cargo install --path /home/rooster/src --root /usr
+
+# run as non-root
+USER rooster

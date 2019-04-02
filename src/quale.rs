@@ -67,7 +67,7 @@ mod tests {
     ///        filesystem being in a certain state.
     #[test]
     fn test_sh() {
-        let expected = path::PathBuf::from("/bin/sh");
+        let expected = path::PathBuf::from("/usr/bin/sh");
         let actual = which("sh");
         assert_eq!(Some(expected), actual);
     }

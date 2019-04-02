@@ -13,8 +13,6 @@
 // limitations under the License.
 
 use ffi;
-use crypto::{scrypt, hmac, sha2};
-use crypto::mac::{Mac, MacResult};
 use aes;
 use rand::{RngCore, OsRng};
 use byteorder::{ReadBytesExt, WriteBytesExt, BigEndian};
@@ -26,8 +24,36 @@ use serde_json::Error;
 use std::io::{Seek, SeekFrom, Result as IoResult, Error as IoError, ErrorKind as IoErrorKind,
               Read, Write, Cursor};
 use std::fs::File;
-use std::ops::DerefMut;
 use std::ops::Deref;
+use std::os::raw::{c_uchar, c_ulonglong};
+
+extern "C" {
+    pub fn crypto_pwhash_scryptsalsa208sha256_ll(
+        passwd: *const u8,
+        passwdlen: usize,
+        salt: *const u8,
+        saltlen: usize,
+        N: u64,
+        r: u32,
+        p: u32,
+        buf: *mut u8,
+        buflen: usize,
+    ) -> libc::c_int;
+
+    pub fn crypto_auth_hmacsha512(
+        out: *mut libc::c_uchar,
+        in_: *const libc::c_uchar,
+        inlen: libc::c_ulonglong,
+        k: *const libc::c_uchar,
+    ) -> libc::c_int;
+
+    pub fn crypto_auth_hmacsha512_verify(
+        h: *const libc::c_uchar,
+        in_: *const libc::c_uchar,
+        inlen: libc::c_ulonglong,
+        k: *const libc::c_uchar,
+    ) -> libc::c_int;
+}
 
 /// The schema of the JSON content in the password file.
 ///
@@ -51,24 +77,20 @@ use std::ops::Deref;
 /// compare with.
 const IV_LEN: usize = 16;
 
-/// Length of the key derived ffrom the user password.
+/// Length of the key derived ffrom the user password, in bytes
 const KEY_LEN: usize = 32;
 
-/// Length of the salt passed to the key derivation function.
+/// Length of the salt passed to the key derivation function, in bytes
 const SALT_LEN: usize = 32;
 
 /// Length of the HMAC signature
 const SIGNATURE_LEN: usize = 64;
 
 /// Scrypt parameters
+/// TODO: increase parameter strength by putting the parameters inside the Rooster file
 const SCRYPT_PARAM_LOG2_N: u8 = 12;
 const SCRYPT_PARAM_R: u32 = 8;
 const SCRYPT_PARAM_P: u32 = 1;
-
-/// Returns the current default scrypt parameters
-fn get_default_scrypt_params() -> scrypt::ScryptParams {
-    scrypt::ScryptParams::new(SCRYPT_PARAM_LOG2_N, SCRYPT_PARAM_R, SCRYPT_PARAM_P)
-}
 
 /// The version of this lib
 const VERSION: u32 = 2;
@@ -91,7 +113,6 @@ fn generate_random_salt() -> IoResult<[u8; SALT_LEN]> {
 
 /// Derives a 256 bits encryption key from the password.
 fn generate_encryption_key(
-    scrypt_params: scrypt::ScryptParams,
     master_password: &str,
     salt: [u8; SALT_LEN],
 ) -> SafeVec {
@@ -101,17 +122,35 @@ fn generate_encryption_key(
     }
     let mut output = SafeVec::new(vec);
 
-    scrypt::scrypt(
-        master_password.as_bytes(),
-        &salt,
-        &scrypt_params,
-        output.deref_mut(),
-    );
+    let result = unsafe {
+        // We use the low-level API because previous code was based off the unmaintained
+        // crate rust-crypto, which used custom N, R and P parameters. These parameters are
+        // only available in the low level libsodium API.
+        crypto_pwhash_scryptsalsa208sha256_ll(
+            master_password.as_ptr(),
+            master_password.len(),
+            salt.as_ptr(),
+            salt.len(),
+            1 << SCRYPT_PARAM_LOG2_N as u64,
+            SCRYPT_PARAM_R,
+            SCRYPT_PARAM_P,
+            output.as_mut_ptr(),
+            KEY_LEN
+        )
+    };
+
+    if result != 0 {
+        panic!("Deriving scrypt key failed: {:?}", result);
+    }
+
+    unsafe {
+        output.inner.set_len(KEY_LEN);
+    }
 
     output
 }
 
-/// Creates a HMAC struct
+/// Creates a HMAC signature
 fn digest(
     key: &[u8],
     version: u32,
@@ -121,28 +160,46 @@ fn digest(
     iv: &[u8],
     salt: &[u8],
     blob: &[u8],
-) -> Result<hmac::Hmac<sha2::Sha512>, PasswordError> {
-    let mut digest = hmac::Hmac::new(sha2::Sha512::new(), key);
+) -> Result<Vec<u8>, PasswordError> {
+    let blob_with_metadata = digest_blob_with_metadata(version, scrypt_log2_n, scrypt_r, scrypt_p, iv, salt, blob)?;
 
-    let mut version_bytes_cursor: Cursor<Vec<u8>> = Cursor::new(Vec::new());
+    let mut digest: Vec<u8> = Vec::with_capacity(512 / 8);
+
+    let result = unsafe {
+        crypto_auth_hmacsha512(
+            digest.as_mut_ptr() as *mut c_uchar,
+            blob_with_metadata.as_ptr() as *const c_uchar,
+            blob_with_metadata.len() as c_ulonglong,
+            key.as_ptr() as *const c_uchar
+        )
+    };
+
+    if result != 0 {
+        panic!("Creating HMAC-SHA512 signature failed: {:?}", result);
+    }
+
+    unsafe {
+        digest.set_len(512 / 8);
+    }
+
+    Ok(digest)
+}
+
+/// Creates the data that is signed with HMAC
+fn digest_blob_with_metadata(version: u32, scrypt_log2_n: u8, scrypt_r: u32, scrypt_p: u32, iv: &[u8], salt: &[u8], blob: &[u8]) -> Result<Vec<u8>, PasswordError> {
+    let mut version_bytes_cursor: Vec<u8> = Vec::new();
     version_bytes_cursor.write_u32::<BigEndian>(version)?;
-
-    let mut scrypt_bytes_cursor: Cursor<Vec<u8>> = Cursor::new(Vec::new());
+    let mut scrypt_bytes_cursor: Vec<u8> = Vec::new();
     scrypt_bytes_cursor.write_u8(scrypt_log2_n)?;
     scrypt_bytes_cursor.write_u32::<BigEndian>(scrypt_r)?;
     scrypt_bytes_cursor.write_u32::<BigEndian>(scrypt_p)?;
-
-    let version_bytes = version_bytes_cursor.into_inner();
-    digest.input(version_bytes.deref());
-
-    let scrypt_bytes = scrypt_bytes_cursor.into_inner();
-    digest.input(scrypt_bytes.deref());
-
-    digest.input(iv);
-    digest.input(salt);
-    digest.input(blob.deref());
-
-    Ok(digest)
+    let mut blob_with_metadata: Vec<u8> = Vec::new();
+    blob_with_metadata.write_all(version_bytes_cursor.deref())?;
+    blob_with_metadata.write_all(scrypt_bytes_cursor.deref())?;
+    blob_with_metadata.write_all(iv)?;
+    blob_with_metadata.write_all(salt)?;
+    blob_with_metadata.write_all(blob.deref())?;
+    Ok(blob_with_metadata)
 }
 
 /// The format of the encrypted JSON content in the password file v1.
@@ -206,8 +263,7 @@ pub struct PasswordStore {
 impl PasswordStore {
     pub fn new<D: Deref<Target = str>>(master_password: D) -> IoResult<PasswordStore> {
         let salt = generate_random_salt()?;
-        let scrypt_params = get_default_scrypt_params();
-        let key = generate_encryption_key(scrypt_params, master_password.deref(), salt);
+        let key = generate_encryption_key(master_password.deref(), salt);
 
         Ok(PasswordStore {
             key: key,
@@ -261,8 +317,8 @@ impl PasswordStore {
         )?;
 
         // Read the HMAC signature.
-        let mut signature: [u8; SIGNATURE_LEN] = [0u8; SIGNATURE_LEN];
-        reader.read(&mut signature).and_then(
+        let mut old_signature_mac: [u8; SIGNATURE_LEN] = [0u8; SIGNATURE_LEN];
+        reader.read(&mut old_signature_mac).and_then(
             |num_bytes| if num_bytes ==
                 SIGNATURE_LEN
             {
@@ -277,8 +333,7 @@ impl PasswordStore {
         reader.read_to_end(&mut blob)?;
 
         // Derive a 256 bits encryption key from the password.
-        let scrypt_params = scrypt::ScryptParams::new(scrypt_log2_n, scrypt_r, scrypt_p);
-        let key = generate_encryption_key(scrypt_params, master_password.deref(), salt);
+        let key = generate_encryption_key(master_password.deref(), salt);
 
         // Decrypt the data.
         let passwords = match aes::decrypt(blob.deref(), key.as_ref(), iv.as_ref()) {
@@ -299,8 +354,7 @@ impl PasswordStore {
         };
 
         // Check the signature against what it should be.
-        let new_signature_mac = digest(
-            key.deref(),
+        let blob = digest_blob_with_metadata(
             version,
             scrypt_log2_n,
             scrypt_r,
@@ -308,10 +362,17 @@ impl PasswordStore {
             &iv,
             &salt,
             blob.deref(),
-        )?
-            .result();
-        let old_signature_mac = MacResult::new(&signature);
-        if new_signature_mac != old_signature_mac {
+        )?;
+
+        let verification = unsafe {
+            crypto_auth_hmacsha512_verify(
+                old_signature_mac.as_ptr() as *const c_uchar,
+                blob.as_ptr() as *const c_uchar,
+                blob.len() as c_ulonglong,
+                key.as_ptr() as *const c_uchar,
+            )
+        };
+        if verification != 0 {
             return Err(PasswordError::CorruptionError);
         }
 
@@ -373,9 +434,8 @@ impl PasswordStore {
             &iv,
             &self.salt,
             encrypted.as_ref(),
-        )?
-            .result();
-        file.write_all(signature.code())?;
+        )?;
+        file.write_all(signature.deref())?;
 
         // Write the encrypted password data.
         file.write_all(&encrypted.as_ref())?;
@@ -509,15 +569,12 @@ impl PasswordStore {
     }
 
     pub fn change_master_password(&mut self, master_password: &str) {
-        let scrypt_params =
-            scrypt::ScryptParams::new(self.scrypt_log2_n, self.scrypt_r, self.scrypt_p);
-        self.key = generate_encryption_key(scrypt_params, master_password, self.salt);
+        self.key = generate_encryption_key(master_password, self.salt);
     }
 }
 
 #[cfg(test)]
 mod test {
-    use super::get_default_scrypt_params;
     use password::PasswordError;
     use password::v2::{PasswordStore, Password, generate_encryption_key, generate_random_iv,
                        generate_random_salt};
@@ -536,7 +593,6 @@ mod test {
     fn test_generate_encryption_key_returns_256_bits_key() {
         assert_eq!(
             generate_encryption_key(
-                get_default_scrypt_params(),
                 "hello world",
                 generate_random_salt().unwrap(),
             ).len(),

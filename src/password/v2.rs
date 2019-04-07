@@ -115,6 +115,9 @@ fn generate_random_salt() -> IoResult<[u8; SALT_LEN]> {
 fn generate_encryption_key(
     master_password: &str,
     salt: [u8; SALT_LEN],
+    scrypt_log2_n: u8,
+    scrypt_r: u32,
+    scrypt_p: u32
 ) -> SafeVec {
     let mut vec = Vec::<u8>::with_capacity(KEY_LEN);
     for _ in 0..KEY_LEN {
@@ -131,9 +134,9 @@ fn generate_encryption_key(
             master_password.len(),
             salt.as_ptr(),
             salt.len(),
-            1 << SCRYPT_PARAM_LOG2_N as u64,
-            SCRYPT_PARAM_R,
-            SCRYPT_PARAM_P,
+            1 << scrypt_log2_n as u64,
+            scrypt_r,
+            scrypt_p,
             output.as_mut_ptr(),
             KEY_LEN
         )
@@ -247,6 +250,7 @@ pub struct PasswordStore {
     scrypt_p: u32,
     salt: [u8; SALT_LEN],
     schema: Schema,
+    master_password: String,
 }
 
 /// Read and writes to a Rooster file
@@ -263,7 +267,7 @@ pub struct PasswordStore {
 impl PasswordStore {
     pub fn new<D: Deref<Target = str>>(master_password: D) -> IoResult<PasswordStore> {
         let salt = generate_random_salt()?;
-        let key = generate_encryption_key(master_password.deref(), salt);
+        let key = generate_encryption_key(master_password.deref(), salt, SCRYPT_PARAM_LOG2_N, SCRYPT_PARAM_R, SCRYPT_PARAM_P);
 
         Ok(PasswordStore {
             key: key,
@@ -272,6 +276,7 @@ impl PasswordStore {
             scrypt_p: SCRYPT_PARAM_P,
             salt: salt,
             schema: Schema::new(),
+            master_password: master_password.deref().into(),
         })
     }
 
@@ -333,7 +338,7 @@ impl PasswordStore {
         reader.read_to_end(&mut blob)?;
 
         // Derive a 256 bits encryption key from the password.
-        let key = generate_encryption_key(master_password.deref(), salt);
+        let key = generate_encryption_key(master_password.deref(), salt, scrypt_log2_n, scrypt_r, scrypt_p);
 
         // Decrypt the data.
         let passwords = match aes::decrypt(blob.deref(), key.as_ref(), iv.as_ref()) {
@@ -383,6 +388,7 @@ impl PasswordStore {
             scrypt_p: scrypt_p,
             salt: salt,
             schema: Schema { passwords: passwords },
+            master_password: master_password.deref().into(),
         })
     }
 
@@ -569,15 +575,22 @@ impl PasswordStore {
     }
 
     pub fn change_master_password(&mut self, master_password: &str) {
-        self.key = generate_encryption_key(master_password, self.salt);
+        self.key = generate_encryption_key(master_password, self.salt, self.scrypt_log2_n, self.scrypt_r, self.scrypt_p);
+    }
+
+    pub fn change_scrypt_params(&mut self, scrypt_log2_n: u8, scrypt_r: u32, scrypt_p: u32) {
+        self.scrypt_log2_n = scrypt_log2_n;
+        self.scrypt_r = scrypt_r;
+        self.scrypt_p = scrypt_p;
+
+        self.key = generate_encryption_key(self.master_password.deref(), self.salt, self.scrypt_log2_n, self.scrypt_r, self.scrypt_p);
     }
 }
 
 #[cfg(test)]
 mod test {
     use password::PasswordError;
-    use password::v2::{PasswordStore, Password, generate_encryption_key, generate_random_iv,
-                       generate_random_salt};
+    use password::v2::{PasswordStore, Password, generate_encryption_key, generate_random_iv, generate_random_salt, SCRYPT_PARAM_LOG2_N, SCRYPT_PARAM_R, SCRYPT_PARAM_P};
 
     #[test]
     fn test_generate_random_iv_has_right_length() {
@@ -595,6 +608,9 @@ mod test {
             generate_encryption_key(
                 "hello world",
                 generate_random_salt().unwrap(),
+                SCRYPT_PARAM_LOG2_N,
+                SCRYPT_PARAM_R,
+                SCRYPT_PARAM_P
             ).len(),
             32
         );

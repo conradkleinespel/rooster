@@ -21,6 +21,7 @@ pub mod regenerate;
 pub mod import;
 pub mod export;
 pub mod set_master_password;
+pub mod set_scrypt_params;
 pub mod rename;
 pub mod transfer;
 pub mod change;

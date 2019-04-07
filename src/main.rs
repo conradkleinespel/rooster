@@ -122,6 +122,12 @@ static COMMANDS: &'static [Command] = &[
         callback_without_store: None,
     },
     Command {
+        name: "set-scrypt-params",
+        callback_exec: Some(commands::set_scrypt_params::callback_exec),
+        callback_help: commands::set_scrypt_params::callback_help,
+        callback_without_store: Some(commands::set_scrypt_params::check_args),
+    },
+    Command {
         name: "rename",
         callback_exec: Some(commands::rename::callback_exec),
         callback_help: commands::rename::callback_help,
@@ -410,6 +416,7 @@ fn usage() {
     println!("    import                     Load all your raw password data from JSON file");
     println!("    export                     Dump all your raw password data in JSON");
     println!("    set-master-password        Set your master password");
+    println!("    set-scrypt-params          Set the key derivation parameters");
     println!("    uninstall                  Show instructions to uninstall Rooster");
     println!("    weak                       List apps that have weak passwords");
 }

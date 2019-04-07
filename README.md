@@ -91,7 +91,7 @@ Other operating systems have similar protections.
 
 ## Automated tests
 
-Rooster has 2 sets of tests:
+Rooster has 3 sets of tests:
 
 - code level tests which you can run with `cargo test`
 - integration tests which you can run with `./tests-integration.sh`

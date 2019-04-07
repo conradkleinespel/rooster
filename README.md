@@ -10,11 +10,11 @@ There are a lot of password managers out there. Rooster has some unique goals:
 
 Rooster protects your passwords with state-of-the-art cryptography algorithms:
 
-- scrypt for key derivation
+- scrypt for key derivation (`n = 2^12, r = 8, p = 1`)
 - aes-256-cbc for encryption
 - hmac-sha512 for authentication
 
-To top it off, it works Linux, BSD and OSX.
+Supported operating systems include Linux, BSD and OSX. Windows is not supported at this time.
 
 ## Installation
 
@@ -33,6 +33,9 @@ curl https://sh.rustup.rs -sSf | sh -s -- -y
 source $HOME/.cargo/env
 cargo install --root /usr rooster
 ```
+
+On **CentOS**: instructions should be similar to Fedora, but it seems like `libsodium` is not available on CentOS and I
+haven't been able to figure out how to install it. If you know, please let me know.
 
 On **Debian**:
 
@@ -91,9 +94,10 @@ Other operating systems have similar protections.
 Rooster has 2 sets of tests:
 
 - code level tests which you can run with `cargo test`
-- integration tests which you can run with `./integration-tests.sh`
+- integration tests which you can run with `./tests-integration.sh`
+- build tests for various Linux distributions which you can run with `./tests-build.sh`
 
-You'll need to install [Docker](https://www.docker.com/) to run integration tests.
+You'll need to install [Docker](https://www.docker.com/) to run build and integration tests.
 
 ## Contributors
 

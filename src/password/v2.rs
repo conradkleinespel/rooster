@@ -14,7 +14,7 @@
 
 use ffi;
 use aes;
-use rand::{RngCore, OsRng};
+use rand::{RngCore, rngs::OsRng};
 use byteorder::{ReadBytesExt, WriteBytesExt, BigEndian};
 use serde_json;
 use safe_string::SafeString;

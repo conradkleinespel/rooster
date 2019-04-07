@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use rand::{Rng, OsRng};
+use rand::{Rng, rngs::OsRng};
 use std::io::{Write, Result as IoResult};
 use safe_string::SafeString;
 

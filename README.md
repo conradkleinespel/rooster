@@ -103,8 +103,6 @@ You'll need to install [Docker](https://www.docker.com/) to run build and integr
 
 We welcome contribution from everyone. Feel free to open an issue or a pull request at any time.
 
-Check out the [unassigned issues](https://github.com/conradkdotcom/rooster/issues?q=is%3Aissue+is%3Aopen+label%3Aunassigned) to get started. If you have any questions, just let us know and we'll jump in to help.
-
 Here's a list of existing Rooster contributors:
 
 - [@conradkleinespel](https://github.com/conradkleinespel)

@@ -15,6 +15,7 @@
 use std::ops::Drop;
 use std::ops::Deref;
 use std::ops::DerefMut;
+use std::{ptr, sync::atomic};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SafeVec {
@@ -33,10 +34,14 @@ impl SafeVec {
 
 impl Drop for SafeVec {
     fn drop(&mut self) {
-        self.inner.clear();
-        for _ in 0..self.inner.capacity() {
-            self.inner.push(0u8);
+        let default = u8::default();
+
+        for c in self.inner.as_mut_slice() {
+            unsafe { ptr::write_volatile(c, default) };
         }
+
+        atomic::fence(atomic::Ordering::SeqCst);
+        atomic::compiler_fence(atomic::Ordering::SeqCst);
     }
 }
 

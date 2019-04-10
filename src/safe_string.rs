@@ -18,6 +18,7 @@ use std::ops::Deref;
 use serde::ser::{Serialize, Serializer};
 use serde::de::{Deserialize, Deserializer, Visitor, Error};
 use std::convert::Into;
+use std::{ptr, sync::atomic};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SafeString {
@@ -47,10 +48,14 @@ impl SafeString {
 
 impl Drop for SafeString {
     fn drop(&mut self) {
-        self.inner.clear();
-        for _ in 0..self.inner.capacity() {
-            self.inner.push('0');
+        let default = u8::default();
+
+        for c in unsafe { self.inner.as_bytes_mut() } {
+            unsafe { ptr::write_volatile(c, default) };
         }
+
+        atomic::fence(atomic::Ordering::SeqCst);
+        atomic::compiler_fence(atomic::Ordering::SeqCst);
     }
 }
 

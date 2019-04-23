@@ -10,7 +10,7 @@ There are a lot of password managers out there. Rooster has some unique goals:
 
 Rooster protects your passwords with state-of-the-art cryptography algorithms:
 
-- scrypt for key derivation (`n = 2^12, r = 8, p = 1`)
+- scrypt for key derivation (`n = 2^12, r = 8, p = 1` by default, customizable)
 - aes-256-cbc for encryption
 - hmac-sha512 for authentication
 

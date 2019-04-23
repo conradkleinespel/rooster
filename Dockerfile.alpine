@@ -1,7 +1,7 @@
 FROM alpine:latest
 
 # install compile dependencies
-RUN apk add --no-cache libxmu-dev libx11-dev pkgconf rust cargo python3 make openssl-dev libsodium-dev xclip
+RUN apk add --no-cache libxmu-dev libx11-dev pkgconf rust cargo python3 make openssl-dev libsodium-dev xclip jq
 
 # run as non-root
 RUN adduser --system -u 1000 rooster

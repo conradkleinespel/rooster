@@ -1,4 +1,4 @@
-![Rooster Banner](rooster-banner.png)
+Rooster is a simple password manager for geeks (it works in the terminal).
 
 ## Why another password manager
 
@@ -15,6 +15,14 @@ Rooster protects your passwords with state-of-the-art cryptography algorithms:
 - hmac-sha512 for authentication
 
 Supported operating systems include Linux, BSD and OSX. Windows is not supported at this time.
+
+## Demo
+
+Click the image below to view a short demo of how Rooster works when you first set it up.
+
+[![asciicast](https://asciinema.org/a/GMNgrde8cMRvn7gx8yl7Gk5kS.svg)](https://asciinema.org/a/GMNgrde8cMRvn7gx8yl7Gk5kS)
+
+For more, type `rooster --help` after installation.
 
 ## Installation
 

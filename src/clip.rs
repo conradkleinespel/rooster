@@ -93,8 +93,9 @@ pub fn paste_keys() -> String {
 pub fn confirm_password_retrieved(show: bool, password: &password::v2::Password) {
     if show {
         println_ok!(
-            "Alright! Here is your password for {}: {}",
+            "Alright! Here is your password for {} ({}): {}",
             password.name,
+            password.username,
             password.password.deref()
         );
     } else {
@@ -106,8 +107,9 @@ pub fn confirm_password_retrieved(show: bool, password: &password::v2::Password)
             );
         } else {
             println_ok!(
-                "Alright! You can paste your {} password anywhere with {}.",
+                "Alright! You can paste your {} ({}) password anywhere with {}.",
                 password.name,
+                password.username,
                 paste_keys()
             );
         }

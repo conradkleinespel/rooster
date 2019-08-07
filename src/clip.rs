@@ -93,11 +93,11 @@ pub fn paste_keys() -> String {
 pub fn confirm_password_retrieved(show: bool, password: &password::v2::Password) {
     if show {
         println_ok!(
-            "Alright! Here is your password for {} ({}): {}",
-            password.name,
-            password.username,
-            password.password.deref()
+            "Alright! Here is your password for {}:",
+            password.name
         );
+        println_ok!("Username: {}", password.username);
+        println_ok!("Password: {}", password.password.deref());
     } else {
         if copy_to_clipboard(&password.password).is_err() {
             println_ok!(
@@ -107,11 +107,11 @@ pub fn confirm_password_retrieved(show: bool, password: &password::v2::Password)
             );
         } else {
             println_ok!(
-                "Alright! You can paste your {} ({}) password anywhere with {}.",
-                password.name,
-                password.username,
-                paste_keys()
+                "Alright! Here is your password for {}:",
+                password.name
             );
+            println_ok!("Username: {}", password.username);
+            println_ok!("Password: ******** (copied to clipboard, paste with {})", paste_keys());
         }
     }
 }

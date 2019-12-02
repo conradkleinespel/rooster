@@ -13,11 +13,11 @@
 // limitations under the License.
 
 use getopts;
+use macros::{show_error, show_ok};
 use password;
 use rpassword::prompt_password_stderr;
 use safe_string::SafeString;
 use std::ops::Deref;
-use macros::{show_error, show_ok};
 
 pub fn callback_help() {
     println!("Usage:");
@@ -38,14 +38,17 @@ pub fn callback_exec(
 
             let master_password_confirmation = match prompt_password_stderr(
                 "Type your new \
-                                                                             master password \
-                                                                             once more: ",
+                 master password \
+                 once more: ",
             ) {
                 Ok(master_password_confirmation) => SafeString::new(master_password_confirmation),
                 Err(err) => {
-                    show_error(format!(
-                        "I could not read your new master password (reason: {:?}).",
-                        err).as_str()
+                    show_error(
+                        format!(
+                            "I could not read your new master password (reason: {:?}).",
+                            err
+                        )
+                        .as_str(),
                     );
                     return Err(1);
                 }
@@ -59,9 +62,12 @@ pub fn callback_exec(
             store.change_master_password(master_password.deref());
         }
         Err(err) => {
-            show_error(format!(
-                "I could not read your new master password (reason: {:?}).",
-                err).as_str()
+            show_error(
+                format!(
+                    "I could not read your new master password (reason: {:?}).",
+                    err
+                )
+                .as_str(),
             );
             return Err(1);
         }

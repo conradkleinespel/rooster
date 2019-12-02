@@ -14,8 +14,8 @@
 
 use getopts;
 use list;
-use password;
 use macros::{show_error, show_ok};
+use password;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -50,13 +50,17 @@ pub fn callback_exec(
         query,
         list::WITH_NUMBERS,
         "Which password would you like me to delete?",
-    ).ok_or(1)?
-        .clone();
+    )
+    .ok_or(1)?
+    .clone();
 
     if let Err(err) = store.delete_password(&password.name) {
-        show_error(format!(
-            "Woops, I couldn't delete this password (reason: {:?}).",
-            err).as_str()
+        show_error(
+            format!(
+                "Woops, I couldn't delete this password (reason: {:?}).",
+                err
+            )
+            .as_str(),
         );
         return Err(1);
     }

@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use getopts;
-use password;
-use generate::{PasswordSpec, check_password_len};
 use clip::{copy_to_clipboard, paste_keys};
-use std::ops::Deref;
+use generate::{check_password_len, PasswordSpec};
+use getopts;
 use macros::{show_error, show_ok};
+use password;
+use std::ops::Deref;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -37,7 +37,7 @@ pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
     if matches.free.len() < 3 {
         show_error(
             "Woops, seems like the app name or the username is missing here. For help, \
-        try:"
+             try:",
         );
         show_error("    rooster generate -h");
         return Err(1);
@@ -62,17 +62,20 @@ pub fn callback_exec(
 
     let pwspec = PasswordSpec::new(
         matches.opt_present("alnum"),
-        matches.opt_str("length").and_then(|len| {
-            check_password_len(len.parse::<usize>().ok())
-        }),
+        matches
+            .opt_str("length")
+            .and_then(|len| check_password_len(len.parse::<usize>().ok())),
     );
 
     let password_as_string = match pwspec.generate_hard_password() {
         Ok(password_as_string) => password_as_string,
         Err(io_err) => {
-            show_error(format!(
-                "Woops, I could not generate the password (reason: {:?}).",
-                io_err).as_str()
+            show_error(
+                format!(
+                    "Woops, I could not generate the password (reason: {:?}).",
+                    io_err
+                )
+                .as_str(),
             );
             return Err(1);
         }
@@ -85,25 +88,34 @@ pub fn callback_exec(
     match store.add_password(password) {
         Ok(_) => {
             if matches.opt_present("show") {
-                show_ok(format!(
-                    "Alright! Here is your password: {}",
-                    password_as_string_clipboard.deref()).as_str()
+                show_ok(
+                    format!(
+                        "Alright! Here is your password: {}",
+                        password_as_string_clipboard.deref()
+                    )
+                    .as_str(),
                 );
                 return Ok(());
             }
 
             if copy_to_clipboard(&password_as_string_clipboard).is_err() {
-                show_ok(format!(
-                    "Hmm, I tried to copy your new password to your clipboard, but \
-                             something went wrong. Don't worry, it's saved, and you can see it \
-                             with `rooster get {} --show`",
-                    app_name).as_str()
+                show_ok(
+                    format!(
+                        "Hmm, I tried to copy your new password to your clipboard, but \
+                         something went wrong. Don't worry, it's saved, and you can see it \
+                         with `rooster get {} --show`",
+                        app_name
+                    )
+                    .as_str(),
                 );
             } else {
-                show_ok(format!(
-                    "Alright! I've saved your new password. You can paste it anywhere \
-                             with {}.",
-                    paste_keys()).as_str()
+                show_ok(
+                    format!(
+                        "Alright! I've saved your new password. You can paste it anywhere \
+                         with {}.",
+                        paste_keys()
+                    )
+                    .as_str(),
                 );
             }
 

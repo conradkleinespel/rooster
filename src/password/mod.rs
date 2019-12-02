@@ -15,11 +15,11 @@
 pub mod v1;
 pub mod v2;
 
-use std::io::Error as IoError;
-use std::ops::Deref;
-use std::convert::From;
 use safe_string::SafeString;
 use safe_vec::SafeVec;
+use std::convert::From;
+use std::io::Error as IoError;
+use std::ops::Deref;
 
 #[derive(Debug)]
 pub enum PasswordError {

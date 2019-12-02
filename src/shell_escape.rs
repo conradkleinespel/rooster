@@ -41,7 +41,7 @@ pub mod windows {
             }
         }
         if !needs_escape {
-            return s
+            return s;
         }
         let mut es = String::with_capacity(s.len());
         es.push('"');
@@ -67,7 +67,6 @@ pub mod windows {
                     break;
                 }
             }
-
         }
         es.push('"');
         es.into()
@@ -76,12 +75,18 @@ pub mod windows {
     #[test]
     fn test_escape() {
         assert_eq!(escape("--aaa=bbb-ccc".into()), "--aaa=bbb-ccc");
-        assert_eq!(escape("linker=gcc -L/foo -Wl,bar".into()),
-                   r#""linker=gcc -L/foo -Wl,bar""#);
-        assert_eq!(escape(r#"--features="default""#.into()),
-                   r#""--features=\"default\"""#);
-        assert_eq!(escape(r#"\path\to\my documents\"#.into()),
-                   r#""\path\to\my documents\\""#);
+        assert_eq!(
+            escape("linker=gcc -L/foo -Wl,bar".into()),
+            r#""linker=gcc -L/foo -Wl,bar""#
+        );
+        assert_eq!(
+            escape(r#"--features="default""#.into()),
+            r#""--features=\"default\"""#
+        );
+        assert_eq!(
+            escape(r#"\path\to\my documents\"#.into()),
+            r#""\path\to\my documents\\""#
+        );
     }
 }
 
@@ -91,7 +96,7 @@ pub mod unix {
 
     fn non_whitelisted(ch: char) -> bool {
         match ch {
-            'a'...'z' | 'A'...'Z' | '0'...'9' | '-' | '_' | '=' | '/' | ',' | '.' | '+' => false,
+            'a'..='z' | 'A'..='Z' | '0'..='9' | '-' | '_' | '=' | '/' | ',' | '.' | '+' => false,
             _ => true,
         }
     }
@@ -125,9 +130,14 @@ pub mod unix {
             "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_=/,.+"
         );
         assert_eq!(escape("--aaa=bbb-ccc".into()), "--aaa=bbb-ccc");
-        assert_eq!(escape("linker=gcc -L/foo -Wl,bar".into()), r#"'linker=gcc -L/foo -Wl,bar'"#);
-        assert_eq!(escape(r#"--features="default""#.into()), r#"'--features="default"'"#);
+        assert_eq!(
+            escape("linker=gcc -L/foo -Wl,bar".into()),
+            r#"'linker=gcc -L/foo -Wl,bar'"#
+        );
+        assert_eq!(
+            escape(r#"--features="default""#.into()),
+            r#"'--features="default"'"#
+        );
         assert_eq!(escape(r#"'!\$`\\\n "#.into()), r#"''\'''\!'\$`\\\n '"#);
     }
 }
-

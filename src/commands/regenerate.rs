@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use getopts;
-use ffi;
-use list;
-use password;
-use generate::{PasswordSpec, check_password_len};
 use clip;
+use ffi;
+use generate::{check_password_len, PasswordSpec};
+use getopts;
+use list;
 use macros::show_error;
+use password;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -58,22 +58,26 @@ pub fn callback_exec(
         query,
         list::WITH_NUMBERS,
         "Which password would you like to regenerate?",
-    ).ok_or(1)?
-        .clone();
+    )
+    .ok_or(1)?
+    .clone();
 
     let pwspec = PasswordSpec::new(
         matches.opt_present("alnum"),
-        matches.opt_str("length").and_then(|len| {
-            check_password_len(len.parse::<usize>().ok())
-        }),
+        matches
+            .opt_str("length")
+            .and_then(|len| check_password_len(len.parse::<usize>().ok())),
     );
 
     let password_as_string = match pwspec.generate_hard_password() {
         Ok(password_as_string) => password_as_string,
         Err(io_err) => {
-            show_error(format!(
-                "Woops, I could not generate the password (reason: {:?}).",
-                io_err).as_str()
+            show_error(
+                format!(
+                    "Woops, I could not generate the password (reason: {:?}).",
+                    io_err
+                )
+                .as_str(),
             );
             return Err(1);
         }
@@ -97,9 +101,12 @@ pub fn callback_exec(
             Ok(())
         }
         Err(err) => {
-            show_error(format!(
-                "Woops, I couldn't save the new password (reason: {:?}).",
-                err).as_str()
+            show_error(
+                format!(
+                    "Woops, I couldn't save the new password (reason: {:?}).",
+                    err
+                )
+                .as_str(),
             );
             Err(1)
         }

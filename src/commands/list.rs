@@ -13,8 +13,8 @@
 // limitations under the License.
 
 use getopts;
-use password;
 use list;
+use password;
 
 pub fn callback_help() {
     println!("Usage:");

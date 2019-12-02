@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use clip::{copy_to_clipboard, paste_keys};
 use getopts;
+use macros::{show_error, show_ok};
 use password;
 use rpassword::prompt_password_stderr;
 use safe_string::SafeString;
-use clip::{copy_to_clipboard, paste_keys};
 use std::ops::Deref;
-use macros::{show_error, show_ok};
 
 pub fn callback_help() {
     println!("Usage:");
@@ -36,7 +36,7 @@ pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
     if matches.free.len() < 3 {
         show_error(
             "Woops, seems like the app name or the username is missing here. For help, \
-                      try:"
+             try:",
         );
         show_error("    rooster add -h");
         return Err(1);
@@ -72,30 +72,41 @@ pub fn callback_exec(
             match store.add_password(password) {
                 Ok(_) => {
                     if matches.opt_present("show") {
-                        show_ok(format!(
-                            "Alright! Here is your password: {}",
-                            password_as_string_clipboard.deref()
-                        ).as_str());
+                        show_ok(
+                            format!(
+                                "Alright! Here is your password: {}",
+                                password_as_string_clipboard.deref()
+                            )
+                            .as_str(),
+                        );
                         return Ok(());
                     }
 
                     if copy_to_clipboard(&password_as_string_clipboard).is_err() {
                         show_ok(
-                            format!("Hmm, I tried to copy your new password to your clipboard, \
-                                     but something went wrong. Don't worry, it's saved, and you \
-                                     can see it with `rooster get {} --show`",
-                            app_name).as_str()
+                            format!(
+                                "Hmm, I tried to copy your new password to your clipboard, \
+                                 but something went wrong. Don't worry, it's saved, and you \
+                                 can see it with `rooster get {} --show`",
+                                app_name
+                            )
+                            .as_str(),
                         );
                     } else {
                         show_ok(
-                            format!("Alright! I've saved your new password. You can paste it \
-                                     anywhere with {}.",
-                            paste_keys()).as_str()
+                            format!(
+                                "Alright! I've saved your new password. You can paste it \
+                                 anywhere with {}.",
+                                paste_keys()
+                            )
+                            .as_str(),
                         );
                     }
                 }
                 Err(err) => {
-                    show_error(format!("Woops, I couldn't add the password (reason: {:?}).", err).as_str());
+                    show_error(
+                        format!("Woops, I couldn't add the password (reason: {:?}).", err).as_str(),
+                    );
                     return Err(1);
                 }
             }
@@ -103,7 +114,9 @@ pub fn callback_exec(
             Ok(())
         }
         Err(err) => {
-            show_error(format!("\nI couldn't read the app's password (reason: {:?}).", err).as_str());
+            show_error(
+                format!("\nI couldn't read the app's password (reason: {:?}).", err).as_str(),
+            );
             Err(1)
         }
     }

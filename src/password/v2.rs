@@ -12,18 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use ffi;
 use aes;
-use rand::{RngCore, rngs::OsRng};
-use byteorder::{ReadBytesExt, WriteBytesExt, BigEndian};
-use serde_json;
+use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use ffi;
+use password::PasswordError;
+use rand::{rngs::OsRng, RngCore};
 use safe_string::SafeString;
 use safe_vec::SafeVec;
-use password::PasswordError;
+use serde_json;
 use serde_json::Error;
-use std::io::{Seek, SeekFrom, Result as IoResult, Error as IoError, ErrorKind as IoErrorKind,
-              Read, Write, Cursor};
 use std::fs::File;
+use std::io::{
+    Cursor, Error as IoError, ErrorKind as IoErrorKind, Read, Result as IoResult, Seek, SeekFrom,
+    Write,
+};
 use std::ops::Deref;
 use std::os::raw::{c_uchar, c_ulonglong};
 
@@ -117,7 +119,7 @@ fn generate_encryption_key(
     salt: [u8; SALT_LEN],
     scrypt_log2_n: u8,
     scrypt_r: u32,
-    scrypt_p: u32
+    scrypt_p: u32,
 ) -> SafeVec {
     let mut vec = Vec::<u8>::with_capacity(KEY_LEN);
     for _ in 0..KEY_LEN {
@@ -138,7 +140,7 @@ fn generate_encryption_key(
             scrypt_r,
             scrypt_p,
             output.as_mut_ptr(),
-            KEY_LEN
+            KEY_LEN,
         )
     };
 
@@ -164,7 +166,8 @@ fn digest(
     salt: &[u8],
     blob: &[u8],
 ) -> Result<Vec<u8>, PasswordError> {
-    let blob_with_metadata = digest_blob_with_metadata(version, scrypt_log2_n, scrypt_r, scrypt_p, iv, salt, blob)?;
+    let blob_with_metadata =
+        digest_blob_with_metadata(version, scrypt_log2_n, scrypt_r, scrypt_p, iv, salt, blob)?;
 
     let mut digest: Vec<u8> = Vec::with_capacity(512 / 8);
 
@@ -173,7 +176,7 @@ fn digest(
             digest.as_mut_ptr() as *mut c_uchar,
             blob_with_metadata.as_ptr() as *const c_uchar,
             blob_with_metadata.len() as c_ulonglong,
-            key.as_ptr() as *const c_uchar
+            key.as_ptr() as *const c_uchar,
         )
     };
 
@@ -189,7 +192,15 @@ fn digest(
 }
 
 /// Creates the data that is signed with HMAC
-fn digest_blob_with_metadata(version: u32, scrypt_log2_n: u8, scrypt_r: u32, scrypt_p: u32, iv: &[u8], salt: &[u8], blob: &[u8]) -> Result<Vec<u8>, PasswordError> {
+fn digest_blob_with_metadata(
+    version: u32,
+    scrypt_log2_n: u8,
+    scrypt_r: u32,
+    scrypt_p: u32,
+    iv: &[u8],
+    salt: &[u8],
+    blob: &[u8],
+) -> Result<Vec<u8>, PasswordError> {
     let mut version_bytes_cursor: Vec<u8> = Vec::new();
     version_bytes_cursor.write_u32::<BigEndian>(version)?;
     let mut scrypt_bytes_cursor: Vec<u8> = Vec::new();
@@ -213,7 +224,9 @@ pub struct Schema {
 
 impl Schema {
     fn new() -> Schema {
-        Schema { passwords: Vec::new() }
+        Schema {
+            passwords: Vec::new(),
+        }
     }
 }
 
@@ -267,7 +280,13 @@ pub struct PasswordStore {
 impl PasswordStore {
     pub fn new<D: Deref<Target = str>>(master_password: D) -> IoResult<PasswordStore> {
         let salt = generate_random_salt()?;
-        let key = generate_encryption_key(master_password.deref(), salt, SCRYPT_PARAM_LOG2_N, SCRYPT_PARAM_R, SCRYPT_PARAM_P);
+        let key = generate_encryption_key(
+            master_password.deref(),
+            salt,
+            SCRYPT_PARAM_LOG2_N,
+            SCRYPT_PARAM_R,
+            SCRYPT_PARAM_P,
+        );
 
         Ok(PasswordStore {
             key: key,
@@ -303,42 +322,46 @@ impl PasswordStore {
 
         // Read the old salt.
         let mut salt: [u8; SALT_LEN] = [0u8; SALT_LEN];
-        reader.read(&mut salt).and_then(
-            |num_bytes| if num_bytes == SALT_LEN {
+        reader.read(&mut salt).and_then(|num_bytes| {
+            if num_bytes == SALT_LEN {
                 Ok(())
             } else {
                 Err(IoError::new(IoErrorKind::Other, "unexpected eof"))
-            },
-        )?;
+            }
+        })?;
 
         // Read the old IV.
         let mut iv: [u8; IV_LEN] = [0u8; IV_LEN];
-        reader.read(&mut iv).and_then(
-            |num_bytes| if num_bytes == IV_LEN {
+        reader.read(&mut iv).and_then(|num_bytes| {
+            if num_bytes == IV_LEN {
                 Ok(())
             } else {
                 Err(IoError::new(IoErrorKind::Other, "unexpected eof"))
-            },
-        )?;
+            }
+        })?;
 
         // Read the HMAC signature.
         let mut old_signature_mac: [u8; SIGNATURE_LEN] = [0u8; SIGNATURE_LEN];
-        reader.read(&mut old_signature_mac).and_then(
-            |num_bytes| if num_bytes ==
-                SIGNATURE_LEN
-            {
+        reader.read(&mut old_signature_mac).and_then(|num_bytes| {
+            if num_bytes == SIGNATURE_LEN {
                 Ok(())
             } else {
                 Err(IoError::new(IoErrorKind::Other, "unexpected eof"))
-            },
-        )?;
+            }
+        })?;
 
         // The encrypted password data.
         let mut blob: Vec<u8> = Vec::new();
         reader.read_to_end(&mut blob)?;
 
         // Derive a 256 bits encryption key from the password.
-        let key = generate_encryption_key(master_password.deref(), salt, scrypt_log2_n, scrypt_r, scrypt_p);
+        let key = generate_encryption_key(
+            master_password.deref(),
+            salt,
+            scrypt_log2_n,
+            scrypt_r,
+            scrypt_p,
+        );
 
         // Decrypt the data.
         let passwords = match aes::decrypt(blob.deref(), key.as_ref(), iv.as_ref()) {
@@ -387,7 +410,9 @@ impl PasswordStore {
             scrypt_r: scrypt_r,
             scrypt_p: scrypt_p,
             salt: salt,
-            schema: Schema { passwords: passwords },
+            schema: Schema {
+                passwords: passwords,
+            },
             master_password: master_password.deref().into(),
         })
     }
@@ -414,7 +439,8 @@ impl PasswordStore {
         };
 
         // Reset the file pointer.
-        file.seek(SeekFrom::Start(0)).and_then(|_| file.set_len(0))?;
+        file.seek(SeekFrom::Start(0))
+            .and_then(|_| file.set_len(0))?;
 
         // Write the file version.
         file.write_u32::<BigEndian>(VERSION)?;
@@ -453,7 +479,9 @@ impl PasswordStore {
     pub fn get_all_passwords(&self) -> Vec<&Password> {
         let mut passwords: Vec<&Password> = self.schema.passwords.iter().collect();
 
-        passwords.sort_by_key(|p| { return p.name.to_lowercase(); });
+        passwords.sort_by_key(|p| {
+            return p.name.to_lowercase();
+        });
 
         passwords
     }
@@ -471,7 +499,9 @@ impl PasswordStore {
     }
 
     pub fn delete_password(&mut self, name: &str) -> Result<Password, PasswordError> {
-        let p = self.get_password(name).ok_or(PasswordError::NoSuchAppError)?;
+        let p = self
+            .get_password(name)
+            .ok_or(PasswordError::NoSuchAppError)?;
 
         let mut i = 0;
         while i < self.schema.passwords.len() {
@@ -485,7 +515,8 @@ impl PasswordStore {
 
     pub fn search_passwords(&self, name: &str) -> Vec<&Password> {
         // Fuzzy search password app names.
-        let keys = self.schema
+        let keys = self
+            .schema
             .passwords
             .iter()
             .map(|p| p.name.to_lowercase())
@@ -526,7 +557,9 @@ impl PasswordStore {
             }
         }
 
-        passwords.sort_by_key(|p| { return p.name.to_lowercase(); });
+        passwords.sort_by_key(|p| {
+            return p.name.to_lowercase();
+        });
 
         passwords
     }
@@ -560,7 +593,7 @@ impl PasswordStore {
     pub fn change_password(
         &mut self,
         app_name: &str,
-        closure: &Fn(Password) -> Password,
+        closure: &dyn Fn(Password) -> Password,
     ) -> Result<Password, PasswordError> {
         let old_password = self.delete_password(app_name.deref())?;
         let new_password = closure(old_password.clone());
@@ -575,7 +608,13 @@ impl PasswordStore {
     }
 
     pub fn change_master_password(&mut self, master_password: &str) {
-        self.key = generate_encryption_key(master_password, self.salt, self.scrypt_log2_n, self.scrypt_r, self.scrypt_p);
+        self.key = generate_encryption_key(
+            master_password,
+            self.salt,
+            self.scrypt_log2_n,
+            self.scrypt_r,
+            self.scrypt_p,
+        );
     }
 
     pub fn change_scrypt_params(&mut self, scrypt_log2_n: u8, scrypt_r: u32, scrypt_p: u32) {
@@ -583,14 +622,23 @@ impl PasswordStore {
         self.scrypt_r = scrypt_r;
         self.scrypt_p = scrypt_p;
 
-        self.key = generate_encryption_key(self.master_password.deref(), self.salt, self.scrypt_log2_n, self.scrypt_r, self.scrypt_p);
+        self.key = generate_encryption_key(
+            self.master_password.deref(),
+            self.salt,
+            self.scrypt_log2_n,
+            self.scrypt_r,
+            self.scrypt_p,
+        );
     }
 }
 
 #[cfg(test)]
 mod test {
+    use password::v2::{
+        generate_encryption_key, generate_random_iv, generate_random_salt, Password, PasswordStore,
+        SCRYPT_PARAM_LOG2_N, SCRYPT_PARAM_P, SCRYPT_PARAM_R,
+    };
     use password::PasswordError;
-    use password::v2::{PasswordStore, Password, generate_encryption_key, generate_random_iv, generate_random_salt, SCRYPT_PARAM_LOG2_N, SCRYPT_PARAM_R, SCRYPT_PARAM_P};
 
     #[test]
     fn test_generate_random_iv_has_right_length() {
@@ -611,7 +659,8 @@ mod test {
                 SCRYPT_PARAM_LOG2_N,
                 SCRYPT_PARAM_R,
                 SCRYPT_PARAM_P
-            ).len(),
+            )
+            .len(),
             32
         );
     }
@@ -626,11 +675,9 @@ mod test {
     fn test_add_password() {
         let mut store = PasswordStore::new("****").unwrap();
 
-        assert!(
-            store
-                .add_password(Password::new("name", "username", "password"))
-                .is_ok()
-        );
+        assert!(store
+            .add_password(Password::new("name", "username", "password"))
+            .is_ok());
 
         // need a wrap around the immutable borrow so the borrow checker is happy
         {
@@ -654,22 +701,18 @@ mod test {
 
         // empty password => not allowed
         let mut store = PasswordStore::new("****").unwrap();
-        assert!(
-            store
-                .add_password(Password::new("name", "username", ""))
-                .is_err()
-        );
+        assert!(store
+            .add_password(Password::new("name", "username", ""))
+            .is_err());
     }
 
     #[test]
     fn test_change_password() {
         let mut store = PasswordStore::new("****").unwrap();
 
-        assert!(
-            store
-                .add_password(Password::new("name", "username", "password"))
-                .is_ok()
-        );
+        assert!(store
+            .add_password(Password::new("name", "username", "password"))
+            .is_ok());
         assert_eq!(
             store
                 .change_password("name", &|p| {
@@ -696,18 +739,15 @@ mod test {
 
         // empty password => do not change anything
         let mut store = PasswordStore::new("****").unwrap();
-        assert!(
-            store
-                .add_password(Password::new("name", "username", "password"))
-                .is_ok()
-        );
+        assert!(store
+            .add_password(Password::new("name", "username", "password"))
+            .is_ok());
         assert!(store
             .change_password("name", &|p| {
                 // change app name and password, keep username
                 Password::new(p.username.clone(), p.username.clone(), "")
             })
-            .is_err()
-        );
+            .is_err());
         assert_eq!(store.get_all_passwords()[0].name, "name");
         assert_eq!(store.get_all_passwords()[0].username, "username");
         assert_eq!(store.get_all_passwords()[0].password, "password".into());
@@ -717,16 +757,12 @@ mod test {
     fn test_delete_password() {
         let mut store = PasswordStore::new("****").unwrap();
 
-        assert!(
-            store
-                .add_password(Password::new("name1", "username", "password"))
-                .is_ok()
-        );
-        assert!(
-            store
-                .add_password(Password::new("name2", "username", "password"))
-                .is_ok()
-        );
+        assert!(store
+            .add_password(Password::new("name1", "username", "password"))
+            .is_ok());
+        assert!(store
+            .add_password(Password::new("name2", "username", "password"))
+            .is_ok());
         assert_eq!(store.get_all_passwords().len(), 2);
 
         assert_eq!(
@@ -749,11 +785,9 @@ mod test {
         let mut store = PasswordStore::new("****").unwrap();
 
         assert_eq!(store.get_password("name"), None);
-        assert!(
-            store
-                .add_password(Password::new("name", "username", "password"))
-                .is_ok()
-        );
+        assert!(store
+            .add_password(Password::new("name", "username", "password"))
+            .is_ok());
         assert_eq!(
             store.get_password("name").unwrap(),
             Password::new("name", "username", "password")
@@ -769,11 +803,9 @@ mod test {
         let mut store = PasswordStore::new("****").unwrap();
 
         assert!(!store.has_password("name"));
-        assert!(
-            store
-                .add_password(Password::new("name", "username", "password"))
-                .is_ok()
-        );
+        assert!(store
+            .add_password(Password::new("name", "username", "password"))
+            .is_ok());
         assert!(store.has_password("name"));
     }
 }

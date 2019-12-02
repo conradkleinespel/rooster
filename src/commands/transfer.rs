@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use getopts;
-use password;
 use ffi;
+use getopts;
 use list;
 use macros::{show_error, show_ok};
+use password;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -52,8 +52,9 @@ pub fn callback_exec(
         query,
         list::WITH_NUMBERS,
         "Which password would you like to transfer?",
-    ).ok_or(1)?
-        .clone();
+    )
+    .ok_or(1)?
+    .clone();
 
     let old_username = password.username;
 
@@ -74,9 +75,12 @@ pub fn callback_exec(
             Ok(())
         }
         Err(err) => {
-            show_error(format!(
-                "Woops, I couldn't save the new app name (reason: {:?}).",
-                err).as_str()
+            show_error(
+                format!(
+                    "Woops, I couldn't save the new app name (reason: {:?}).",
+                    err
+                )
+                .as_str(),
             );
             Err(1)
         }

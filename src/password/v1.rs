@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use ffi;
+use super::PasswordError;
 use aes;
+use ffi;
 use safe_string::SafeString;
 use safe_vec::SafeVec;
 use serde_json;
-use super::PasswordError;
 
 use serde_json::Error;
-use std::ops::DerefMut;
 use std::ops::Deref;
+use std::ops::DerefMut;
 use std::os::raw::{c_uchar, c_ulonglong};
 
 extern "C" {
@@ -90,7 +90,7 @@ fn generate_encryption_key(master_password: &str) -> SafeVec {
         crypto_hash_sha256(
             key.deref_mut().as_mut_ptr() as *mut c_uchar,
             master_password.as_ptr() as *const c_uchar,
-            master_password.len() as c_ulonglong
+            master_password.len() as c_ulonglong,
         )
     };
 

@@ -14,46 +14,46 @@
 
 // #![allow(useless_format, too_many_arguments)]
 
-extern crate libc;
-extern crate getopts;
-extern crate rpassword;
-extern crate rand;
+extern crate ansi_term;
 extern crate byteorder;
+extern crate clipboard;
+extern crate dirs;
+extern crate getopts;
+extern crate libc;
+extern crate openssl;
+extern crate rand;
+extern crate rpassword;
 extern crate serde;
 extern crate serde_json;
-extern crate clipboard;
 extern crate zxcvbn;
-extern crate dirs;
-extern crate openssl;
-extern crate ansi_term;
 
 #[macro_use]
 extern crate serde_derive;
 
-use std::fs::File;
-use std::env;
-use std::env::VarError;
-use std::io::Result as IoResult;
-use std::io::{Read, stdin};
-use std::path::{Path, PathBuf};
 use getopts::Options;
+use macros::{show_error, show_title_1};
 use rpassword::prompt_password_stderr;
 use safe_string::SafeString;
 use safe_vec::SafeVec;
+use std::env;
+use std::env::VarError;
+use std::fs::File;
+use std::io::Result as IoResult;
+use std::io::{stdin, Read};
 use std::ops::Deref;
-use macros::{show_error, show_title_1};
+use std::path::{Path, PathBuf};
 
 mod macros;
 mod aes;
+mod clip;
 mod commands;
 mod ffi;
+mod generate;
+mod list;
 mod password;
+mod quale;
 mod safe_string;
 mod safe_vec;
-mod generate;
-mod clip;
-mod list;
-mod quale;
 mod shell_escape;
 
 const ROOSTER_FILE_ENV_VAR: &'static str = "ROOSTER_FILE";
@@ -190,7 +190,6 @@ mod test {
     }
 }
 
-
 fn open_password_file(filename: &str) -> IoResult<File> {
     let mut options = std::fs::OpenOptions::new();
     options.read(true);
@@ -224,7 +223,7 @@ fn get_password_store_from_input_interactive(
     if retries == 0 {
         show_error(
             "Decryption of your Rooster file keeps failing. \
-            Your Rooster file is probably corrupted."
+             Your Rooster file is probably corrupted.",
         );
         return Err(password::PasswordError::CorruptionLikelyError);
     }
@@ -236,9 +235,12 @@ fn get_password_store_from_input_interactive(
     let master_password = match ask_master_password() {
         Ok(p) => p,
         Err(err) => {
-            show_error(format!(
-                "Woops, I could not read your master password (reason: {}).",
-                err).as_str()
+            show_error(
+                format!(
+                    "Woops, I could not read your master password (reason: {}).",
+                    err
+                )
+                .as_str(),
             );
             std::process::exit(1);
         }
@@ -254,7 +256,7 @@ fn get_password_store_from_input_interactive(
         }
         Err(password::PasswordError::OutdatedRoosterBinaryError) => {
             show_error(
-                "I could not open the Rooster file because your version of Rooster is outdated."
+                "I could not open the Rooster file because your version of Rooster is outdated.",
             );
             show_error("Try upgrading Rooster to the latest version.");
             return Err(password::PasswordError::OutdatedRoosterBinaryError);
@@ -268,7 +270,7 @@ fn get_password_store_from_input_interactive(
             println!();
             println!(
                 "WARNING: If in doubt, it could mean you've been hacked. Only \
-            proceed if you recently upgraded your Rooster installation."
+                 proceed if you recently upgraded your Rooster installation."
             );
             println!();
             println!("Upgrade to version 2? [y/n]");
@@ -279,10 +281,7 @@ fn get_password_store_from_input_interactive(
                         if line.starts_with('y') {
                             // This time we'll try to upgrade
                             return get_password_store_from_input_interactive(
-                                &input,
-                                retries,
-                                true,
-                                false,
+                                &input, retries, true, false,
                             );
                         } else if line.starts_with('n') {
                             // The user doesn't want to upgrade, that's fine
@@ -292,9 +291,11 @@ fn get_password_store_from_input_interactive(
                         }
                     }
                     Err(io_err) => {
-                        show_error(format!(
+                        show_error(
+                            format!(
                             "Woops, an error occured while reading your response (reason: {:?}).",
-                            io_err).as_str()
+                            io_err)
+                            .as_str(),
                         );
                         return Err(password::PasswordError::Io(io_err));
                     }
@@ -356,7 +357,7 @@ fn execute_command_from_filename(
     }
 
     match store.sync(file) {
-        Ok(()) => { Ok(()) }
+        Ok(()) => Ok(()),
         Err(err) => {
             show_error(format!("I could not save the password file (reason: {:?}).", err).as_str());
             Err(1)
@@ -373,12 +374,14 @@ fn get_password_file_path() -> Result<(PathBuf, bool), i32> {
         Err(VarError::NotPresent) => {
             // If the environment variable is not there, we'll look in the default location:
             // ~/.passwords.rooster
-            let mut file_default = PathBuf::from(dirs::home_dir()
-                .ok_or(1)?
-                .as_os_str()
-                .to_os_string()
-                .into_string()
-                .map_err(|_| 1)?);
+            let mut file_default = PathBuf::from(
+                dirs::home_dir()
+                    .ok_or(1)?
+                    .as_os_str()
+                    .to_os_string()
+                    .into_string()
+                    .map_err(|_| 1)?,
+            );
             file_default.push(ROOSTER_FILE_DEFAULT);
             (file_default, false)
         }
@@ -457,7 +460,6 @@ fn main() {
         }
     };
 
-
     // Global help was requested.
     if matches.opt_present("help") && matches.free.is_empty() {
         usage();
@@ -481,10 +483,13 @@ fn main() {
     let command: &Command = match command_from_name(command_name.as_ref()) {
         Some(command) => command,
         None => {
-            show_error(format!(
-                "Woops, the command `{}` does not exist. Try the --help option for more \
-                          info.",
-                command_name).as_str()
+            show_error(
+                format!(
+                    "Woops, the command `{}` does not exist. Try the --help option for more \
+                     info.",
+                    command_name
+                )
+                .as_str(),
             );
             std::process::exit(1);
         }
@@ -508,7 +513,7 @@ fn main() {
             Err(_) => {
                 show_error(
                     "Woops, I could not read the path to your password file. \
-                    Make sure it only contains ASCII characters."
+                     Make sure it only contains ASCII characters.",
                 );
                 std::process::exit(1);
             }
@@ -522,7 +527,7 @@ fn main() {
                 show_error("");
                 show_error(
                     "Update or remove the ROOSTER_FILE environment variable \
-                and try again. Or run `rooster init` to start fresh."
+                     and try again. Or run `rooster init` to start fresh.",
                 );
             } else {
                 show_title_1("First time user");
@@ -533,7 +538,7 @@ fn main() {
                 println!();
                 println!(
                     "Set the ROOSTER_FILE environment variable. \
-                    For instance:"
+                     For instance:"
                 );
                 println!("    export ROOSTER_FILE=path/to/passwords.rooster");
             }
@@ -547,15 +552,17 @@ fn main() {
                     std::io::ErrorKind::NotFound => {
                         show_error(
                             "Woops, I can't find your password file\
-                            . Run `rooster init` to create one."
+                             . Run `rooster init` to create one.",
                         );
                     }
                     _ => {
-                        show_error(format!(
-                            "Woops, I couldn't read your password file ({} for \"{}\").",
-                            err,
-                            password_file_path_as_string
-                        ).as_str());
+                        show_error(
+                            format!(
+                                "Woops, I couldn't read your password file ({} for \"{}\").",
+                                err, password_file_path_as_string
+                            )
+                            .as_str(),
+                        );
                     }
                 }
                 std::process::exit(1);

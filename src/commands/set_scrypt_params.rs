@@ -13,8 +13,8 @@
 // limitations under the License.
 
 use getopts;
-use password;
 use macros::show_error;
+use password;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -47,7 +47,7 @@ pub fn callback_exec(
 
     if log2_n > 20 || r > 8 || p > 1 {
         show_error("These parameters seem very high. You might be unable to open your password file ever again. Aborting.");
-        return Err(1)
+        return Err(1);
     }
 
     store.change_scrypt_params(log2_n, r, p);

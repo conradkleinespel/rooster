@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::fmt;
-use std::ops::Drop;
-use std::ops::Deref;
+use serde::de::{Deserialize, Deserializer, Error, Visitor};
 use serde::ser::{Serialize, Serializer};
-use serde::de::{Deserialize, Deserializer, Visitor, Error};
 use std::convert::Into;
+use std::fmt;
+use std::ops::Deref;
+use std::ops::Drop;
 use std::{ptr, sync::atomic};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -93,9 +93,11 @@ impl<'de> Deserialize<'de> for SafeString {
     where
         D: Deserializer<'de>,
     {
-        deserializer.deserialize_string(StringVisitor).map(
-            |parsed_value| SafeString { inner: parsed_value },
-        )
+        deserializer
+            .deserialize_string(StringVisitor)
+            .map(|parsed_value| SafeString {
+                inner: parsed_value,
+            })
     }
 }
 
@@ -107,7 +109,9 @@ mod test {
 
     #[test]
     fn safe_string_serialization() {
-        let s = SafeString { inner: String::from("blabla") };
+        let s = SafeString {
+            inner: String::from("blabla"),
+        };
 
         match serde_json::to_string(&s) {
             Ok(json) => assert_eq!("\"blabla\"", json),
@@ -122,7 +126,11 @@ mod test {
 
     #[test]
     fn safe_string_within_struct_serialization() {
-        let ts = TestStruct { password: SafeString { inner: String::from("blabla") } };
+        let ts = TestStruct {
+            password: SafeString {
+                inner: String::from("blabla"),
+            },
+        };
 
         match serde_json::to_string(&ts) {
             Ok(json) => assert_eq!("{\"password\":\"blabla\"}", json),
@@ -137,7 +145,12 @@ mod test {
         let res: Result<SafeString, Error> = serde_json::from_str(s);
 
         match res {
-            Ok(ss) => assert_eq!(ss, SafeString { inner: String::from("blabla") }),
+            Ok(ss) => assert_eq!(
+                ss,
+                SafeString {
+                    inner: String::from("blabla")
+                }
+            ),
             Err(_) => panic!("Deserialization failed"),
         }
     }
@@ -147,12 +160,14 @@ mod test {
         let json = "{\"password\":\"blabla\"}";
         let res: Result<TestStruct, Error> = serde_json::from_str(json);
         match res {
-            Ok(ts) => {
-                assert_eq!(
-                    ts,
-                    TestStruct { password: SafeString { inner: String::from("blabla") } }
-                )
-            }
+            Ok(ts) => assert_eq!(
+                ts,
+                TestStruct {
+                    password: SafeString {
+                        inner: String::from("blabla")
+                    }
+                }
+            ),
             Err(_) => panic!("Deserialization failed"),
         }
     }

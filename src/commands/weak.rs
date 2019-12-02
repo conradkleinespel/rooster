@@ -33,7 +33,6 @@ pub fn callback_exec(
     matches: &getopts::Matches,
     store: &mut password::v2::PasswordStore,
 ) -> Result<(), i32> {
-
     let show_password = matches.opt_present("show");
 
     let mut weak_passwords: Vec<password::v2::Password> = Vec::new();
@@ -47,20 +46,24 @@ pub fn callback_exec(
         }
     }
 
-    let longest_password = weak_passwords.iter().fold(
-        0,
-        |acc, p| if p.name.len() > acc {
+    let longest_password = weak_passwords.iter().fold(0, |acc, p| {
+        if p.name.len() > acc {
             p.name.len()
         } else {
             acc
-        },
-    );
+        }
+    });
 
     if weak_passwords.len() > 0 {
         println!("The following passwords are weak:");
         for password in weak_passwords {
             if show_password {
-                println!("{:app_name_width$} {}", password.name, password.password.deref(), app_name_width=longest_password);
+                println!(
+                    "{:app_name_width$} {}",
+                    password.name,
+                    password.password.deref(),
+                    app_name_width = longest_password
+                );
             } else {
                 println!("{}", password.name);
             }

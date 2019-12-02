@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod get;
 pub mod add;
+pub mod change;
 pub mod delete;
+pub mod export;
 pub mod generate;
+pub mod get;
+pub mod import;
+pub mod init;
 pub mod list;
 pub mod regenerate;
-pub mod import;
-pub mod export;
+pub mod rename;
 pub mod set_master_password;
 pub mod set_scrypt_params;
-pub mod rename;
 pub mod transfer;
-pub mod change;
 pub mod uninstall;
-pub mod init;
 pub mod weak;

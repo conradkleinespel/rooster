@@ -14,9 +14,9 @@
 
 use clip;
 use getopts;
-use password;
 use list;
 use macros::show_error;
+use password;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -51,8 +51,7 @@ pub fn callback_exec(
 
     let query = &matches.free[1];
 
-    let prompt =
-        format!(
+    let prompt = format!(
         "Which password would you like {}? ",
         if show {
             "to see"
@@ -60,8 +59,8 @@ pub fn callback_exec(
             "to copy to your clipboard"
         },
     );
-    let password = list::search_and_choose_password(store, query, list::WITH_NUMBERS, &prompt)
-        .ok_or(1)?;
+    let password =
+        list::search_and_choose_password(store, query, list::WITH_NUMBERS, &prompt).ok_or(1)?;
 
     clip::confirm_password_retrieved(show, &password);
 

@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use getopts;
 use get_password_file_path;
+use getopts;
+use macros::show_error;
 use quale::which;
 use std::ops::Deref;
-use macros::show_error;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -31,9 +31,7 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
     let path = match which("rooster") {
         Some(path) => path.to_string_lossy().into_owned(),
         None => {
-            show_error(
-                "Woops, seems like Rooster isn't installed. I can't find it in your $PATH."
-            );
+            show_error("Woops, seems like Rooster isn't installed. I can't find it in your $PATH.");
             return Err(1);
         }
     };
@@ -45,14 +43,14 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
         println!();
         println!(
             "If you want to remove your password file as well, you can — just make sure you don't \
-            lock yourself out of your online accounts. It is located at:"
+             lock yourself out of your online accounts. It is located at:"
         );
         println!("    {}", filename.to_string_lossy().deref());
         if from_env {
             println!();
             println!(
                 "Seems like you've set the ROOSTER_FILE environment variable in your shell \
-            configuration. You may want to remove it to clean things up."
+                 configuration. You may want to remove it to clean things up."
             );
         }
     }

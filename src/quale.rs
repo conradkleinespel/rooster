@@ -25,7 +25,8 @@ pub fn which<S: AsRef<ffi::OsStr>>(name: S) -> Option<path::PathBuf> {
     let dirs_iter = paths_iter.filter_map(|path| fs::read_dir(path).ok());
 
     for dir in dirs_iter {
-        let mut matches_iter = dir.filter_map(|file| file.ok())
+        let mut matches_iter = dir
+            .filter_map(|file| file.ok())
             .filter(|file| file.file_name() == name)
             .filter(is_executable);
         if let Some(file) = matches_iter.next() {
@@ -42,26 +43,21 @@ fn is_executable(file: &fs::DirEntry) -> bool {
         Ok(metadata) => metadata,
         Err(..) => return false,
     };
-    let file_path = match file.path()
-        .to_str()
-        .and_then(|p| ffi::CString::new(p).ok()) {
+    let file_path = match file.path().to_str().and_then(|p| ffi::CString::new(p).ok()) {
         Some(path) => path,
         None => return false,
     };
-    let is_executable_by_user = unsafe {
-        libc::access(file_path.into_raw(), libc::X_OK) == libc::EXIT_SUCCESS
-    };
-    static EXECUTABLE_FLAGS: u32 =
-        (libc::S_IEXEC | libc::S_IXGRP | libc::S_IXOTH) as u32;
-    let has_executable_flag =
-        file_metadata.permissions().mode() & EXECUTABLE_FLAGS != 0;
+    let is_executable_by_user =
+        unsafe { libc::access(file_path.into_raw(), libc::X_OK) == libc::EXIT_SUCCESS };
+    static EXECUTABLE_FLAGS: u32 = (libc::S_IEXEC | libc::S_IXGRP | libc::S_IXOTH) as u32;
+    let has_executable_flag = file_metadata.permissions().mode() & EXECUTABLE_FLAGS != 0;
     is_executable_by_user && has_executable_flag && file_metadata.is_file()
 }
 
 #[cfg(test)]
 mod tests {
-    use std::path;
     use super::which;
+    use std::path;
 
     /// FIXME: this is not a good test since it relies on PATH and the
     ///        filesystem being in a certain state.

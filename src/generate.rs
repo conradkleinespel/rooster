@@ -124,7 +124,7 @@ mod test {
         let pw = ps.generate_hard_password().unwrap();
         for c in pw.deref().chars() {
             match c {
-                'a'...'z' | 'A'...'Z' | '0'...'9' => {}
+                'a'..='z' | 'A'..='Z' | '0'..='9' => {}
                 _ => panic!(),
             }
         }
@@ -135,7 +135,7 @@ mod test {
         let mut ok = false;
         for c in pw.deref().chars() {
             match c {
-                'a'...'z' | 'A'...'Z' | '0'...'9' => {}
+                'a'..='z' | 'A'..='Z' | '0'..='9' => {}
                 _ => ok = true,
             }
         }

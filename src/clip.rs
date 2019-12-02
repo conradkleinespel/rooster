@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use macros::show_ok;
 use password;
 use safe_string::SafeString;
 use std::ops::Deref;
-use macros::show_ok;
 
 // On Windows and Mac, we'll use the native solutions provided by the OS libraries
 #[cfg(any(windows, macos))]
 pub fn copy_to_clipboard(s: &SafeString) -> Result<(), ()> {
-    use clipboard::ClipboardProvider;
     use clipboard::ClipboardContext;
+    use clipboard::ClipboardProvider;
 
     let mut context: ClipboardContext = ClipboardProvider::new().map_err(|_| ())?;
     context.set_contents(s.deref().to_owned()).map_err(|_| ())?;
@@ -32,8 +32,8 @@ pub fn copy_to_clipboard(s: &SafeString) -> Result<(), ()> {
 // and battle tested tools: xsel and xclip.
 #[cfg(all(unix, not(macos)))]
 pub fn copy_to_clipboard(s: &SafeString) -> Result<(), ()> {
-    use shell_escape;
     use quale::which;
+    use shell_escape;
     use std::process::Command;
 
     let password = SafeString::new(shell_escape::escape(s.deref().into()).into());
@@ -56,28 +56,26 @@ pub fn copy_to_clipboard(s: &SafeString) -> Result<(), ()> {
                 Err(())
             }
         }
-        None => {
-            match which("xclip") {
-                Some(xclip) => {
-                    let shell = format!(
-                        "printf '%s' {} | {} -selection clipboard 2> /dev/null",
-                        password.deref(),
-                        xclip.to_string_lossy()
-                    );
-                    if Command::new("sh")
-                        .args(&["-c", shell.as_str()])
-                        .status()
-                        .map_err(|_| ())?
-                        .success()
-                    {
-                        Ok(())
-                    } else {
-                        Err(())
-                    }
+        None => match which("xclip") {
+            Some(xclip) => {
+                let shell = format!(
+                    "printf '%s' {} | {} -selection clipboard 2> /dev/null",
+                    password.deref(),
+                    xclip.to_string_lossy()
+                );
+                if Command::new("sh")
+                    .args(&["-c", shell.as_str()])
+                    .status()
+                    .map_err(|_| ())?
+                    .success()
+                {
+                    Ok(())
+                } else {
+                    Err(())
                 }
-                None => Err(()),
             }
-        }
+            None => Err(()),
+        },
     }
 }
 
@@ -93,26 +91,29 @@ pub fn paste_keys() -> String {
 
 pub fn confirm_password_retrieved(show: bool, password: &password::v2::Password) {
     if show {
-        show_ok(format!(
-            "Alright! Here is your password for {}:",
-            password.name).as_str()
-        );
+        show_ok(format!("Alright! Here is your password for {}:", password.name).as_str());
         show_ok(format!("Username: {}", password.username).as_str());
         show_ok(format!("Password: {}", password.password.deref()).as_str());
     } else {
         if copy_to_clipboard(&password.password).is_err() {
-            show_ok(format!(
-                "Hmm, I tried to copy your new password to your clipboard, but \
-                         something went wrong. You can see it with `rooster get '{}' --show`",
-                password.name).as_str()
+            show_ok(
+                format!(
+                    "Hmm, I tried to copy your new password to your clipboard, but \
+                     something went wrong. You can see it with `rooster get '{}' --show`",
+                    password.name
+                )
+                .as_str(),
             );
         } else {
-            show_ok(format!(
-                "Alright! Here is your password for {}:",
-                password.name).as_str()
-            );
+            show_ok(format!("Alright! Here is your password for {}:", password.name).as_str());
             show_ok(format!("Username: {}", password.username).as_str());
-            show_ok(format!("Password: ******** (copied to clipboard, paste with {})", paste_keys()).as_str());
+            show_ok(
+                format!(
+                    "Password: ******** (copied to clipboard, paste with {})",
+                    paste_keys()
+                )
+                .as_str(),
+            );
         }
     }
 }

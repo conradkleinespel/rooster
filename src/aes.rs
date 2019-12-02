@@ -8,20 +8,12 @@
 
 use safe_vec::SafeVec;
 
-pub fn encrypt(
-    data: &[u8],
-    key: &[u8],
-    iv: &[u8],
-) -> Result<Vec<u8>, ()> {
+pub fn encrypt(data: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>, ()> {
     openssl::symm::encrypt(openssl::symm::Cipher::aes_256_cbc(), key, Some(iv), data)
         .map_err(|_| ())
 }
 
-pub fn decrypt(
-    data: &[u8],
-    key: &[u8],
-    iv: &[u8],
-) -> Result<SafeVec, ()> {
+pub fn decrypt(data: &[u8], key: &[u8], iv: &[u8]) -> Result<SafeVec, ()> {
     openssl::symm::decrypt(openssl::symm::Cipher::aes_256_cbc(), key, Some(iv), data)
         .map_err(|_| ())
         .map(|vec| SafeVec::new(vec))

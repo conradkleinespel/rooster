@@ -13,9 +13,9 @@
 // limitations under the License.
 
 use getopts;
+use macros::{show_error, show_title_1};
 use rpassword::prompt_password_stderr;
 use safe_string::SafeString;
-use macros::{show_error, show_title_1};
 
 pub fn callback_help() {
     println!("Usage:");
@@ -32,7 +32,7 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
         Err(_) => {
             show_error(
                 "Woops, I could not read the path to your password file. Make sure it only \
-                contains ASCII characters."
+                 contains ASCII characters.",
             );
             return Err(1);
         }
@@ -68,16 +68,21 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
     let master_password = prompt_password_stderr("Choose your master password: ")
         .map(SafeString::new)
         .map_err(|err| {
-            show_error(format!("Woops, I couldn't read the master passwords ({:?}).", err).as_str());
+            show_error(
+                format!("Woops, I couldn't read the master passwords ({:?}).", err).as_str(),
+            );
             1
         })?;
     let store = match ::password::v2::PasswordStore::new(master_password) {
         Ok(store) => store,
         Err(err) => {
-            show_error(format!(
-                "Woops, I couldn't use the random number generator on your machine \
-            (reason: {:?}). Without it, I can't create a secure password file.",
-                err).as_str()
+            show_error(
+                format!(
+                    "Woops, I couldn't use the random number generator on your machine \
+                     (reason: {:?}). Without it, I can't create a secure password file.",
+                    err
+                )
+                .as_str(),
             );
             return Err(1);
         }
@@ -86,9 +91,12 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
     let mut file = match ::create_password_file(filename_as_string.as_str()).map_err(|_| 1) {
         Ok(file) => file,
         Err(err) => {
-            show_error(format!(
-                "Woops, I couldn't create a new password file (reason: {:?})",
-                err).as_str()
+            show_error(
+                format!(
+                    "Woops, I couldn't create a new password file (reason: {:?})",
+                    err
+                )
+                .as_str(),
             );
             return Err(1);
         }
@@ -96,17 +104,23 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
 
     if let Err(err) = store.sync(&mut file) {
         if let Err(err) = ::std::fs::remove_file(filename) {
-            show_error(format!(
-                "Woops, I was able to create a new password file but couldn't save \
-            it (reason: {:?}). You may want to remove this dangling file:",
-                err).as_str()
+            show_error(
+                format!(
+                    "Woops, I was able to create a new password file but couldn't save \
+                     it (reason: {:?}). You may want to remove this dangling file:",
+                    err
+                )
+                .as_str(),
             );
             show_error(format!("    {}", filename_as_string).as_str());
             return Err(1);
         }
-        show_error(format!(
-            "Woops, I couldn't create a new password file (reason: {:?}).",
-            err).as_str()
+        show_error(
+            format!(
+                "Woops, I couldn't create a new password file (reason: {:?}).",
+                err
+            )
+            .as_str(),
         );
         return Err(1);
     }
@@ -120,7 +134,7 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
         println!();
         println!(
             "If you want to move this file, set the $ROOSTER_FILE \
-            environment variable to the new path. For instance:"
+             environment variable to the new path. For instance:"
         );
         println!("    export ROOSTER_FILE=path/to/passwords.rooster");
     }

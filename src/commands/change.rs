@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use clip;
+use ffi;
 use getopts;
+use list;
+use macros::show_error;
 use password;
 use rpassword::prompt_password_stderr;
 use safe_string::SafeString;
-use clip;
-use ffi;
-use list;
-use macros::show_error;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -57,13 +57,14 @@ pub fn callback_exec(
         query,
         list::WITH_NUMBERS,
         "Which password would like to update?",
-    ).ok_or(1)?
-        .clone();
+    )
+    .ok_or(1)?
+    .clone();
 
     let password_as_string = prompt_password_stderr(
-        format!("What password do you want for \"{}\"? ", password.name)
-            .as_str(),
-    ).map_err(|err| {
+        format!("What password do you want for \"{}\"? ", password.name).as_str(),
+    )
+    .map_err(|err| {
         show_error(format!("\nI couldn't read the app's password (reason: {:?}).", err).as_str());
         1
     })?;
@@ -83,8 +84,10 @@ pub fn callback_exec(
         .map_err(|err| {
             show_error(
                 format!(
-                "Woops, I couldn't save the new password (reason: {:?}).",
-                err).as_str()
+                    "Woops, I couldn't save the new password (reason: {:?}).",
+                    err
+                )
+                .as_str(),
             );
             1
         })?;

@@ -13,11 +13,11 @@
 // limitations under the License.
 
 use getopts;
+use macros::show_error;
 use password;
 use safe_string::SafeString;
 use serde_json;
 use std::ops::Deref;
-use macros::show_error;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -37,9 +37,12 @@ pub fn callback_exec(
     let passwords_json = match serde_json::to_string(&passwords_ref) {
         Ok(passwords_json) => passwords_json,
         Err(json_err) => {
-            show_error(format!(
-                "Woops, I could not encode the passwords into JSON (reason: {:?}).",
-                json_err).as_str()
+            show_error(
+                format!(
+                    "Woops, I could not encode the passwords into JSON (reason: {:?}).",
+                    json_err
+                )
+                .as_str(),
             );
             return Err(1);
         }

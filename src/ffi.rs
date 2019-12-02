@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::ptr;
 use libc;
+use std::ptr;
 
 #[allow(non_camel_case_types)]
 pub type time_t = libc::c_uint;

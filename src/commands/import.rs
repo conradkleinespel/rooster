@@ -13,10 +13,10 @@
 // limitations under the License.
 
 use getopts;
-use serde_json;
-use password::v2::{Password, PasswordStore};
-use std::fs::File;
 use macros::{show_error, show_ok};
+use password::v2::{Password, PasswordStore};
+use serde_json;
+use std::fs::File;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -47,9 +47,12 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut PasswordStore) -> R
             1
         })?;
         serde_json::from_reader(&dump_file).map_err(|json_err| {
-            show_error(format!(
-                "Woops, I could not import the passwords from JSON (reason: {}).",
-                json_err).as_str()
+            show_error(
+                format!(
+                    "Woops, I could not import the passwords from JSON (reason: {}).",
+                    json_err
+                )
+                .as_str(),
             );
             1
         })?
@@ -58,18 +61,23 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut PasswordStore) -> R
     let mut added = 0;
     for password in imported_pwds {
         if let Some(_) = store.get_password(&password.name) {
-            show_error(format!(
-                "Oh, password for {} is already present! Skipping it.",
-                password.name).as_str()
+            show_error(
+                format!(
+                    "Oh, password for {} is already present! Skipping it.",
+                    password.name
+                )
+                .as_str(),
             );
             continue;
         }
 
         if let Err(err) = store.add_password(password.clone()) {
-            show_error(format!(
-                "Woops, couldn't add password for {} (reason: {:?})",
-                password.name,
-                err).as_str()
+            show_error(
+                format!(
+                    "Woops, couldn't add password for {} (reason: {:?})",
+                    password.name, err
+                )
+                .as_str(),
             );
             continue;
         }
@@ -80,14 +88,20 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut PasswordStore) -> R
     if added == 0 {
         show_error("Apparently, I could not find any new password :(");
     } else if added == 1 {
-        show_ok(format!(
-            "Imported {} brand new password into the Rooster file!",
-            added).as_str()
+        show_ok(
+            format!(
+                "Imported {} brand new password into the Rooster file!",
+                added
+            )
+            .as_str(),
         );
     } else {
-        show_ok(format!(
-            "Imported {} brand new passwords into the Rooster file!",
-            added).as_str()
+        show_ok(
+            format!(
+                "Imported {} brand new passwords into the Rooster file!",
+                added
+            )
+            .as_str(),
         );
     }
 

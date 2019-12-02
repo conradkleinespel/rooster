@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use password::v2::{Password, PasswordStore};
-use std::io::Write;
-use std::io::stdin;
 use macros::show_error;
+use password::v2::{Password, PasswordStore};
+use std::io::stdin;
+use std::io::Write;
 
 /// Used to indicate lists should have a number, ie: 23 Google my.account@gmail.com
 pub const WITH_NUMBERS: bool = true;
@@ -30,21 +30,22 @@ pub enum OutputStream {
 
 fn get_list_of_passwords(passwords: &Vec<&Password>, with_numbers: bool) -> Vec<String> {
     // Find the app name column length
-    let longest_app_name = passwords.iter().fold(0, |acc, p| if p.name.len() > acc {
-        p.name.len()
-    } else {
-        acc
+    let longest_app_name = passwords.iter().fold(0, |acc, p| {
+        if p.name.len() > acc {
+            p.name.len()
+        } else {
+            acc
+        }
     });
 
     // Find the username column length
-    let longest_username = passwords.iter().fold(
-        0,
-        |acc, p| if p.username.len() > acc {
+    let longest_username = passwords.iter().fold(0, |acc, p| {
+        if p.username.len() > acc {
             p.username.len()
         } else {
             acc
-        },
-    );
+        }
+    });
 
     // Find the number column length
     let i_width = ((passwords.len() as f64).log10() + 1 as f64).floor() as usize;
@@ -53,26 +54,22 @@ fn get_list_of_passwords(passwords: &Vec<&Password>, with_numbers: bool) -> Vec<
 
     for (i, p) in passwords.iter().enumerate() {
         let s = match with_numbers {
-            WITH_NUMBERS => {
-                format!(
-                    "{:i_width$} {:app_name_width$} {:username_width$}",
-                    i + 1,
-                    p.name,
-                    p.username,
-                    i_width = i_width,
-                    app_name_width = longest_app_name,
-                    username_width = longest_username,
-                )
-            }
-            WITHOUT_NUMBERS => {
-                format!(
-                    "{:app_name_width$} {:username_width$}",
-                    p.name,
-                    p.username,
-                    app_name_width = longest_app_name,
-                    username_width = longest_username,
-                )
-            }
+            WITH_NUMBERS => format!(
+                "{:i_width$} {:app_name_width$} {:username_width$}",
+                i + 1,
+                p.name,
+                p.username,
+                i_width = i_width,
+                app_name_width = longest_app_name,
+                username_width = longest_username,
+            ),
+            WITHOUT_NUMBERS => format!(
+                "{:app_name_width$} {:username_width$}",
+                p.name,
+                p.username,
+                app_name_width = longest_app_name,
+                username_width = longest_username,
+            ),
         };
 
         list.push(s);
@@ -102,7 +99,6 @@ fn request_password_index_from_stdin(passwords: &Vec<&Password>, prompt: &str) -
     // Read the index from the command line and convert to a number
     let mut line = String::new();
     loop {
-
         if passwords.len() > 1 {
             println!("{}", prompt);
             print_stderr!("Type a number from 1 to {}: ", passwords.len());
@@ -168,9 +164,9 @@ pub fn search_and_choose_password<'a>(
         return None;
     }
 
-    if let Some(&password) = passwords.iter().find(|p| {
-        p.name.to_lowercase() == query.to_lowercase()
-    })
+    if let Some(&password) = passwords
+        .iter()
+        .find(|p| p.name.to_lowercase() == query.to_lowercase())
     {
         return Some(&password);
     }
@@ -182,7 +178,7 @@ pub fn search_and_choose_password<'a>(
 #[cfg(test)]
 mod test {
     use super::get_list_of_passwords;
-    use list::{WITH_NUMBERS, WITHOUT_NUMBERS};
+    use list::{WITHOUT_NUMBERS, WITH_NUMBERS};
     use password::v2::Password;
     use safe_string::SafeString;
 
@@ -198,7 +194,7 @@ mod test {
             Password::new(
                 format!("youtube.com"),
                 format!("that long username"),
-                SafeString::new(format!("xxxx"))
+                SafeString::new(format!("xxxx")),
             ),
             google.clone(),
         ];

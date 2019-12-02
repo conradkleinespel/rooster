@@ -1,8 +1,8 @@
 #![macro_use]
+use ansi_term::Color::{Green, Red};
+use ansi_term::Style;
 #[allow(unused_imports)]
 use std::io::Write;
-use ansi_term::Color::{Red, Green};
-use ansi_term::Style;
 
 #[macro_export]
 macro_rules! println_stderr(
@@ -14,24 +14,15 @@ macro_rules! println_stderr(
 );
 
 pub fn show_error(s: &str) {
-    println_stderr!(
-        "{}",
-        Red.paint(s)
-    )
+    println_stderr!("{}", Red.paint(s))
 }
 
 pub fn show_ok(s: &str) {
-    println!(
-        "{}",
-        Green.paint(s)
-    )
+    println!("{}", Green.paint(s))
 }
 
 pub fn show_title_1(s: &str) {
-    println!(
-        "{}",
-        Style::new().underline().bold().paint(s)
-    )
+    println!("{}", Style::new().underline().bold().paint(s))
 }
 
 #[macro_export]

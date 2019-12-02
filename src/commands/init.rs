@@ -15,7 +15,7 @@
 use getopts;
 use rpassword::prompt_password_stderr;
 use safe_string::SafeString;
-use std::io::Write;
+use macros::{show_error, show_title_1};
 
 pub fn callback_help() {
     println!("Usage:");
@@ -30,7 +30,7 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
     let (filename, filename_from_env) = match ::get_password_file_path() {
         Ok(path) => path,
         Err(_) => {
-            println_err!(
+            show_error(
                 "Woops, I could not read the path to your password file. Make sure it only \
                 contains ASCII characters."
             );
@@ -39,52 +39,45 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
     };
     let filename_as_string = filename.to_string_lossy().into_owned();
     if filename.exists() {
-        println_err!("Woops, there is already a Rooster file located at:");
-        println_err!("    {}", filename_as_string);
-        println_err!("");
-        println_err!("Type `rooster --help` to see what Rooster can do for you.");
+        show_error("Woops, there is already a Rooster file located at:");
+        show_error(format!("    {}", filename_as_string).as_str());
+        show_error("");
+        show_error("Type `rooster --help` to see what Rooster can do for you.");
         return Err(1);
     }
 
-    println_title!("|---------- Welcome to Rooster  ---------|");
+    show_title_1("Welcome to Rooster");
     println!();
-    println!("Rooster is a simple password manager for geeks.");
-    println!();
-    println!("Let's get started! Type ENTER to continue.");
+    println!("Rooster is a simple password manager for geeks. Let's get started! Type ENTER to continue.");
 
     let mut dummy = String::new();
     if let Err(err) = ::std::io::stdin().read_line(&mut dummy) {
-        println_err!("Woops, I didn't see the ENTER key (reason: {:?}).", err);
+        show_error(format!("Woops, I didn't see the ENTER key (reason: {:?}).", err).as_str());
         return Err(1);
     }
 
-    println_title!("|---------- Set Master Password ---------|");
+    show_title_1("The master password");
     println!();
     println!(
         "With Rooster, you only need to remember one password: \
-    the Master Password. It keeps all of you other passwords safe."
-    );
-    println!();
-    println!(
-        "The stronger it is, the better your passwords are \
+    the master password. It keeps all of you other passwords safe. The stronger it is, the better your passwords are \
                       protected."
     );
     println!();
 
-    let master_password = prompt_password_stderr("What would you like it to be? ")
+    let master_password = prompt_password_stderr("Choose your master password: ")
         .map(SafeString::new)
         .map_err(|err| {
-            println_err!("Woops, I couldn't read the master passwords ({:?}).", err);
+            show_error(format!("Woops, I couldn't read the master passwords ({:?}).", err).as_str());
             1
         })?;
-
     let store = match ::password::v2::PasswordStore::new(master_password) {
         Ok(store) => store,
         Err(err) => {
-            println_err!(
+            show_error(format!(
                 "Woops, I couldn't use the random number generator on your machine \
             (reason: {:?}). Without it, I can't create a secure password file.",
-                err
+                err).as_str()
             );
             return Err(1);
         }
@@ -93,9 +86,9 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
     let mut file = match ::create_password_file(filename_as_string.as_str()).map_err(|_| 1) {
         Ok(file) => file,
         Err(err) => {
-            println_err!(
+            show_error(format!(
                 "Woops, I couldn't create a new password file (reason: {:?})",
-                err
+                err).as_str()
             );
             return Err(1);
         }
@@ -103,23 +96,23 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
 
     if let Err(err) = store.sync(&mut file) {
         if let Err(err) = ::std::fs::remove_file(filename) {
-            println_err!(
+            show_error(format!(
                 "Woops, I was able to create a new password file but couldn't save \
             it (reason: {:?}). You may want to remove this dangling file:",
-                err
+                err).as_str()
             );
-            println_err!("    {}", filename_as_string);
+            show_error(format!("    {}", filename_as_string).as_str());
             return Err(1);
         }
-        println_err!(
+        show_error(format!(
             "Woops, I couldn't create a new password file (reason: {:?}).",
-            err
+            err).as_str()
         );
         return Err(1);
     }
 
     println!();
-    println_title!("|--- All set, you can now use Rooster ---|");
+    show_title_1("All done and ready to rock");
     println!();
     println!("You passwords will be saved in:");
     println!("    {}", filename_as_string);

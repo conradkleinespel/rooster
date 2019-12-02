@@ -16,7 +16,7 @@ use getopts;
 use get_password_file_path;
 use quale::which;
 use std::ops::Deref;
-use std::io::Write;
+use macros::show_error;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -31,7 +31,7 @@ pub fn callback_exec(_matches: &getopts::Matches) -> Result<(), i32> {
     let path = match which("rooster") {
         Some(path) => path.to_string_lossy().into_owned(),
         None => {
-            println_err!(
+            show_error(
                 "Woops, seems like Rooster isn't installed. I can't find it in your $PATH."
             );
             return Err(1);

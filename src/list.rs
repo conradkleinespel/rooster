@@ -15,6 +15,7 @@
 use password::v2::{Password, PasswordStore};
 use std::io::Write;
 use std::io::stdin;
+use macros::show_error;
 
 /// Used to indicate lists should have a number, ie: 23 Google my.account@gmail.com
 pub const WITH_NUMBERS: bool = true;
@@ -163,7 +164,7 @@ pub fn search_and_choose_password<'a>(
 ) -> Option<&'a Password> {
     let passwords = store.search_passwords(query);
     if passwords.len() == 0 {
-        println_err!("Woops, I can't find any passwords for \"{}\".", query);
+        show_error(format!("Woops, I can't find any passwords for \"{}\".", query).as_str());
         return None;
     }
 

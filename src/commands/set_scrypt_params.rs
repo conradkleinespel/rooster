@@ -14,7 +14,7 @@
 
 use getopts;
 use password;
-use std::io::Write;
+use macros::show_error;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -27,8 +27,8 @@ pub fn callback_help() {
 
 pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
     if matches.free.len() < 4 {
-        println_err!("Woops, seems like a param is missing here. For help, try:");
-        println_err!("    rooster set-scrypt-params -h");
+        show_error("Woops, seems like a param is missing here. For help, try:");
+        show_error("    rooster set-scrypt-params -h");
         return Err(1);
     }
 
@@ -46,7 +46,7 @@ pub fn callback_exec(
     let p = matches.free[3].trim().parse::<u32>().unwrap();
 
     if log2_n > 20 || r > 8 || p > 1 {
-        println_err!("These parameters seem very high. You might be unable to open your password file ever again. Aborting.");
+        show_error("These parameters seem very high. You might be unable to open your password file ever again. Aborting.");
         return Err(1)
     }
 

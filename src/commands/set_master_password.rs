@@ -16,8 +16,8 @@ use getopts;
 use password;
 use rpassword::prompt_password_stderr;
 use safe_string::SafeString;
-use std::io::Write;
 use std::ops::Deref;
+use macros::{show_error, show_ok};
 
 pub fn callback_help() {
     println!("Usage:");
@@ -43,29 +43,29 @@ pub fn callback_exec(
             ) {
                 Ok(master_password_confirmation) => SafeString::new(master_password_confirmation),
                 Err(err) => {
-                    println_err!(
+                    show_error(format!(
                         "I could not read your new master password (reason: {:?}).",
-                        err
+                        err).as_str()
                     );
                     return Err(1);
                 }
             };
 
             if master_password != master_password_confirmation {
-                println_err!("The master password confirmation did not match. Aborting.");
+                show_error("The master password confirmation did not match. Aborting.");
                 return Err(1);
             }
 
             store.change_master_password(master_password.deref());
         }
         Err(err) => {
-            println_err!(
+            show_error(format!(
                 "I could not read your new master password (reason: {:?}).",
-                err
+                err).as_str()
             );
             return Err(1);
         }
     }
-    println_ok!("Your master password has been changed.");
+    show_ok("Your master password has been changed.");
     Ok(())
 }

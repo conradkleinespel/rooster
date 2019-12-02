@@ -18,7 +18,7 @@ use list;
 use password;
 use generate::{PasswordSpec, check_password_len};
 use clip;
-use std::io::Write;
+use macros::show_error;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -37,8 +37,8 @@ pub fn callback_help() {
 
 pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
     if matches.free.len() < 2 {
-        println_err!("Woops, seems like the app name is missing here. For help, try:");
-        println_err!("    rooster regenerate -h");
+        show_error("Woops, seems like the app name is missing here. For help, try:");
+        show_error("    rooster regenerate -h");
         return Err(1);
     }
 
@@ -71,9 +71,9 @@ pub fn callback_exec(
     let password_as_string = match pwspec.generate_hard_password() {
         Ok(password_as_string) => password_as_string,
         Err(io_err) => {
-            println_err!(
+            show_error(format!(
                 "Woops, I could not generate the password (reason: {:?}).",
-                io_err
+                io_err).as_str()
             );
             return Err(1);
         }
@@ -97,9 +97,9 @@ pub fn callback_exec(
             Ok(())
         }
         Err(err) => {
-            println_err!(
+            show_error(format!(
                 "Woops, I couldn't save the new password (reason: {:?}).",
-                err
+                err).as_str()
             );
             Err(1)
         }

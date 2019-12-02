@@ -15,6 +15,7 @@
 use password;
 use safe_string::SafeString;
 use std::ops::Deref;
+use macros::show_ok;
 
 // On Windows and Mac, we'll use the native solutions provided by the OS libraries
 #[cfg(any(windows, macos))]
@@ -92,26 +93,26 @@ pub fn paste_keys() -> String {
 
 pub fn confirm_password_retrieved(show: bool, password: &password::v2::Password) {
     if show {
-        println_ok!(
+        show_ok(format!(
             "Alright! Here is your password for {}:",
-            password.name
+            password.name).as_str()
         );
-        println_ok!("Username: {}", password.username);
-        println_ok!("Password: {}", password.password.deref());
+        show_ok(format!("Username: {}", password.username).as_str());
+        show_ok(format!("Password: {}", password.password.deref()).as_str());
     } else {
         if copy_to_clipboard(&password.password).is_err() {
-            println_ok!(
+            show_ok(format!(
                 "Hmm, I tried to copy your new password to your clipboard, but \
                          something went wrong. You can see it with `rooster get '{}' --show`",
-                password.name,
+                password.name).as_str()
             );
         } else {
-            println_ok!(
+            show_ok(format!(
                 "Alright! Here is your password for {}:",
-                password.name
+                password.name).as_str()
             );
-            println_ok!("Username: {}", password.username);
-            println_ok!("Password: ******** (copied to clipboard, paste with {})", paste_keys());
+            show_ok(format!("Username: {}", password.username).as_str());
+            show_ok(format!("Password: ******** (copied to clipboard, paste with {})", paste_keys()).as_str());
         }
     }
 }

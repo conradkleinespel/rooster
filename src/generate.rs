@@ -13,8 +13,9 @@
 // limitations under the License.
 
 use rand::{Rng, rngs::OsRng};
-use std::io::{Write, Result as IoResult};
+use std::io::{Result as IoResult};
 use safe_string::SafeString;
+use macros::show_error;
 
 fn generate_password(alnum: bool, len: usize) -> IoResult<SafeString> {
     let mut password_as_string = String::new();
@@ -79,15 +80,15 @@ pub fn check_password_len(opt: Option<usize>) -> Option<usize> {
             // a password of length < 4 with 4 different kinds of characters (uppercase,
             // lowercase, numeric, punctuation).
             if len < 4 {
-                println_err!("Woops! The length of the password must be at least 4. This");
-                println_err!("allows us to make sure your password is secure.");
+                show_error("Woops! The length of the password must be at least 4. This");
+                show_error("allows us to make sure your password is secure.");
                 None
             } else {
                 Some(len)
             }
         }
         None => {
-            println_err!("Woops! The length option must be a valid number, for instance 8 or 16.");
+            show_error("Woops! The length option must be a valid number, for instance 8 or 16.");
             None
         }
     }

@@ -16,7 +16,7 @@ use getopts;
 use serde_json;
 use password::v2::{Password, PasswordStore};
 use std::fs::File;
-use std::io::Write;
+use macros::{show_error, show_ok};
 
 pub fn callback_help() {
     println!("Usage:");
@@ -29,8 +29,8 @@ pub fn callback_help() {
 
 pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
     if matches.free.len() < 2 {
-        println_err!("Woops, seems like the file path is missing here. For help, try:");
-        println_err!("    rooster import -h");
+        show_error("Woops, seems like the file path is missing here. For help, try:");
+        show_error("    rooster import -h");
         return Err(1);
     }
 
@@ -43,13 +43,13 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut PasswordStore) -> R
     let imported_pwds: Vec<Password> = {
         let path_str = &matches.free[1];
         let dump_file = File::open(path_str).map_err(|err| {
-            println_err!("Uh oh, could not open the file (reason: {})", err);
+            show_error(format!("Uh oh, could not open the file (reason: {})", err).as_str());
             1
         })?;
         serde_json::from_reader(&dump_file).map_err(|json_err| {
-            println_err!(
+            show_error(format!(
                 "Woops, I could not import the passwords from JSON (reason: {}).",
-                json_err,
+                json_err).as_str()
             );
             1
         })?
@@ -58,18 +58,18 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut PasswordStore) -> R
     let mut added = 0;
     for password in imported_pwds {
         if let Some(_) = store.get_password(&password.name) {
-            println_err!(
+            show_error(format!(
                 "Oh, password for {} is already present! Skipping it.",
-                password.name,
+                password.name).as_str()
             );
             continue;
         }
 
         if let Err(err) = store.add_password(password.clone()) {
-            println_err!(
+            show_error(format!(
                 "Woops, couldn't add password for {} (reason: {:?})",
                 password.name,
-                err,
+                err).as_str()
             );
             continue;
         }
@@ -78,16 +78,16 @@ pub fn callback_exec(matches: &getopts::Matches, store: &mut PasswordStore) -> R
     }
 
     if added == 0 {
-        println_err!("Apparently, I could not find any new password :(");
+        show_error("Apparently, I could not find any new password :(");
     } else if added == 1 {
-        println_ok!(
+        show_ok(format!(
             "Imported {} brand new password into the Rooster file!",
-            added
+            added).as_str()
         );
     } else {
-        println_ok!(
+        show_ok(format!(
             "Imported {} brand new passwords into the Rooster file!",
-            added
+            added).as_str()
         );
     }
 

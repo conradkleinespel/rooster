@@ -16,7 +16,7 @@ use clip;
 use getopts;
 use password;
 use list;
-use std::io::Write;
+use macros::show_error;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -33,8 +33,8 @@ pub fn callback_help() {
 
 pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
     if matches.free.len() < 2 {
-        println_err!("Woops, seems like the app name is missing here. For help, try:");
-        println_err!("    rooster get -h");
+        show_error("Woops, seems like the app name is missing here. For help, try:");
+        show_error("    rooster get -h");
         return Err(1);
     }
 

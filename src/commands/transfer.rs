@@ -16,7 +16,7 @@ use getopts;
 use password;
 use ffi;
 use list;
-use std::io::Write;
+use macros::{show_error, show_ok};
 
 pub fn callback_help() {
     println!("Usage:");
@@ -30,8 +30,8 @@ pub fn callback_help() {
 
 pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
     if matches.free.len() < 3 {
-        println_err!("Woops, seems like the app name or username is missing here. For help, try:");
-        println_err!("    rooster transfer -h");
+        show_error("Woops, seems like the app name or username is missing here. For help, try:");
+        show_error("    rooster transfer -h");
         return Err(1);
     }
 
@@ -70,13 +70,13 @@ pub fn callback_exec(
 
     match change_result {
         Ok(_) => {
-            println_ok!("Done! I've transfered {} to {}", old_username, new_username);
+            show_ok(format!("Done! I've transfered {} to {}", old_username, new_username).as_str());
             Ok(())
         }
         Err(err) => {
-            println_err!(
+            show_error(format!(
                 "Woops, I couldn't save the new app name (reason: {:?}).",
-                err
+                err).as_str()
             );
             Err(1)
         }

@@ -19,7 +19,7 @@ use safe_string::SafeString;
 use clip;
 use ffi;
 use list;
-use std::io::Write;
+use macros::show_error;
 
 pub fn callback_help() {
     println!("Usage:");
@@ -36,8 +36,8 @@ pub fn callback_help() {
 
 pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
     if matches.free.len() < 2 {
-        println_err!("Woops, seems like the app name is missing here. For help, try:");
-        println_err!("    rooster change -h");
+        show_error("Woops, seems like the app name is missing here. For help, try:");
+        show_error("    rooster change -h");
         return Err(1);
     }
 
@@ -64,7 +64,7 @@ pub fn callback_exec(
         format!("What password do you want for \"{}\"? ", password.name)
             .as_str(),
     ).map_err(|err| {
-        println_err!("\nI couldn't read the app's password (reason: {:?}).", err);
+        show_error(format!("\nI couldn't read the app's password (reason: {:?}).", err).as_str());
         1
     })?;
 
@@ -81,9 +81,10 @@ pub fn callback_exec(
             }
         })
         .map_err(|err| {
-            println_err!(
+            show_error(
+                format!(
                 "Woops, I couldn't save the new password (reason: {:?}).",
-                err
+                err).as_str()
             );
             1
         })?;

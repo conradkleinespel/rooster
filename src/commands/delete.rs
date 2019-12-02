@@ -15,7 +15,7 @@
 use getopts;
 use list;
 use password;
-use std::io::Write;
+use macros::{show_error, show_ok};
 
 pub fn callback_help() {
     println!("Usage:");
@@ -29,8 +29,8 @@ pub fn callback_help() {
 
 pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
     if matches.free.len() < 2 {
-        println_err!("Woops, seems like the app name is missing here. For help, try:");
-        println_err!("    rooster delete -h");
+        show_error("Woops, seems like the app name is missing here. For help, try:");
+        show_error("    rooster delete -h");
         return Err(1);
     }
 
@@ -54,14 +54,14 @@ pub fn callback_exec(
         .clone();
 
     if let Err(err) = store.delete_password(&password.name) {
-        println_err!(
+        show_error(format!(
             "Woops, I couldn't delete this password (reason: {:?}).",
-            err
+            err).as_str()
         );
         return Err(1);
     }
 
-    println_ok!("Done! I've deleted the password for \"{}\".", password.name);
+    show_ok(format!("Done! I've deleted the password for \"{}\".", password.name).as_str());
 
     Ok(())
 }

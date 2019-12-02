@@ -1,6 +1,8 @@
 #![macro_use]
 #[allow(unused_imports)]
 use std::io::Write;
+use ansi_term::Color::{Red, Green};
+use ansi_term::Style;
 
 #[macro_export]
 macro_rules! println_stderr(
@@ -11,50 +13,26 @@ macro_rules! println_stderr(
     )
 );
 
-#[macro_export]
-macro_rules! println_err(
-    ($($args:tt)*) => (
-        println_stderr!(
-            "{}",
-            format!(
-                "{}{}{}",
-                ::color::Color::Red.to_color_code(),
-                format!($($args)*),
-                ::color::Color::Reset.to_color_code()
-            )
-        )
+pub fn show_error(s: &str) {
+    println_stderr!(
+        "{}",
+        Red.paint(s)
     )
-);
+}
 
-#[macro_export]
-macro_rules! println_ok(
-    ($($args:tt)*) => (
-        println!(
-            "{}",
-            format!(
-                "{}{}{}",
-                ::color::Color::Green.to_color_code(),
-                format!($($args)*),
-                ::color::Color::Reset.to_color_code()
-            )
-        )
+pub fn show_ok(s: &str) {
+    println!(
+        "{}",
+        Green.paint(s)
     )
-);
+}
 
-#[macro_export]
-macro_rules! println_title(
-    ($($args:tt)*) => (
-        println!(
-            "{}",
-            format!(
-                "{}{}{}",
-                ::color::Color::Cyan.to_color_code(),
-                format!($($args)*),
-                ::color::Color::Reset.to_color_code()
-            )
-        )
+pub fn show_title_1(s: &str) {
+    println!(
+        "{}",
+        Style::new().underline().bold().paint(s)
     )
-);
+}
 
 #[macro_export]
 macro_rules! print_stderr(

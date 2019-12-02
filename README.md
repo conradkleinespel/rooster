@@ -1,12 +1,16 @@
+# Rooster
+
 Rooster is a simple password manager for geeks (it works in the terminal).
+
+[![asciicast](https://asciinema.org/a/9opp6uXiI2XFURj8yNHYV3xfb.svg)](https://asciinema.org/a/9opp6uXiI2XFURj8yNHYV3xfb)
 
 ## Why another password manager
 
 There are a lot of password managers out there. Rooster has some unique goals:
 
-- it is easy to maintain so that it never becomes unmaintained
-- it works completely offline with optional support for online sync
-- it stores simple username/password tuples, nothing more, nothing less
+- it is **easy to maintain** so that it never becomes unmaintained
+- it works completely **offline** with optional support for online sync
+- it stores **username/password combinations, nothing more, nothing less**
 
 Rooster protects your passwords with state-of-the-art cryptography algorithms:
 
@@ -15,14 +19,6 @@ Rooster protects your passwords with state-of-the-art cryptography algorithms:
 - hmac-sha512 for authentication
 
 Supported operating systems include Linux, BSD and OSX. Windows is not supported at this time.
-
-## Demo
-
-Click the image below to view a short demo of how Rooster works when you first set it up.
-
-[![asciicast](https://asciinema.org/a/GMNgrde8cMRvn7gx8yl7Gk5kS.svg)](https://asciinema.org/a/GMNgrde8cMRvn7gx8yl7Gk5kS)
-
-For more, type `rooster --help` after installation.
 
 ## Installation
 

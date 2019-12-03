@@ -1,6 +1,6 @@
 [package]
 name = "rooster"
-version = "2.8.3"
+version = "2.8.4"
 authors = ["Conrad Kleinespel <conradk@conradk.com>"]
 license = "Apache-2.0"
 repository = "https://github.com/conradkdotcom/rooster"

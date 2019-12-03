@@ -2,14 +2,17 @@
 
 Rooster is a simple password manager for geeks (it works in the terminal).
 
+[![Build Status](https://travis-ci.org/conradkleinespel/rooster.svg?branch=master)](https://travis-ci.org/conradkleinespel/rooster)
+[![Chat on Discord](https://img.shields.io/badge/chat-on%20discord-7289DA)](https://discord.gg/9zXtYqQ)
+
 [![asciicast](https://asciinema.org/a/9opp6uXiI2XFURj8yNHYV3xfb.svg)](https://asciinema.org/a/9opp6uXiI2XFURj8yNHYV3xfb)
 
 ## Supporting Rooster
 
 Rooster is currently being maintained as a side-project, during nights and weekends, next to my full-time job. I am looking for a way to sustain my work on open source. If you find value in what I do and you would like to contribute, please consider:
 
-- [Becoming a backer on Patreon](https://www.patreon.com/conradkdotcom)
-- [Making a recurring donation on Liberapay](https://liberapay.com/conradkdotcom/)
+- [Becoming a backer on Patreon](https://www.patreon.com/conradkleinespel)
+- [Making a recurring donation on Liberapay](https://liberapay.com/conradkleinespel/)
 
 ## Features
 
@@ -33,7 +36,7 @@ To install Rooster, run the following commands as `root`.
 
 On **Arch Linux**, install [Rooster from AUR](https://aur.archlinux.org/packages/rooster).
 
-On **Void Linux**, install [Rooster from XBPS](https://github.com/void-linux/void-packages/blob/master/srcpkgs/rooster/template). 
+On **Void Linux**, install [Rooster from XBPS](https://github.com/void-linux/void-packages/blob/master/srcpkgs/rooster/template).
 
 On **Fedora**:
 

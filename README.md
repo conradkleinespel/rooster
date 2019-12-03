@@ -4,12 +4,19 @@ Rooster is a simple password manager for geeks (it works in the terminal).
 
 [![asciicast](https://asciinema.org/a/9opp6uXiI2XFURj8yNHYV3xfb.svg)](https://asciinema.org/a/9opp6uXiI2XFURj8yNHYV3xfb)
 
-## Why another password manager
+## Supporting Rooster
 
-There are a lot of password managers out there. Rooster has some unique goals:
+Rooster is currently being maintained as a side-project, during nights and weekends, next to my full-time job. I am looking for a way to sustain my work on open source. If you find value in what I do and you would like to contribute, please consider:
 
-- it is **easy to maintain** so that it never becomes unmaintained
-- it works completely **offline** with optional support for online sync
+- [Becoming a backer on Patreon](https://www.patreon.com/conradkdotcom)
+- [Making a recurring donation on Liberapay](https://liberapay.com/conradkdotcom/)
+
+## Features
+
+Rooster has some unique goals:
+
+- it is easy to maintain so that it **never becomes unmaintained**
+- it **works completely offline** by saving your password in a single local file
 - it stores **username/password combinations, nothing more, nothing less**
 
 Rooster protects your passwords with state-of-the-art cryptography algorithms:
@@ -77,7 +84,7 @@ Once you have installed Rooster (see instructions below), you can view documenta
 rooster --help
 ```
 
-## Restricting capabilities
+## Trustless security
 
 For added trustless security, you can restrict the operating system capabilities that Rooster has access to.
 
@@ -119,3 +126,7 @@ Here's a list of existing Rooster contributors:
 - Awesome Rustaceans from the [Rust Paris meetup](http://www.meetup.com/Rust-Paris/)
 
 Thank you very much for your help!  :smiley:  :heart:
+
+## License
+
+The source code is released under the Apache 2.0 license.

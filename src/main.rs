@@ -54,6 +54,9 @@ mod password;
 mod quale;
 mod safe_string;
 mod safe_vec;
+
+// We conditionally compile this module to avoid "unused function" warnings.
+#[cfg(all(unix, not(target_os="macos")))]
 mod shell_escape;
 
 const ROOSTER_FILE_ENV_VAR: &'static str = "ROOSTER_FILE";

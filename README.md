@@ -121,6 +121,7 @@ Here's a list of existing Rooster contributors:
 
 - [@conradkleinespel](https://github.com/conradkleinespel)
 - [@cr6git](https://github.com/cr6git)
+- [@dwrensha](https://github.com/dwrensha)
 - [@Eternity-Yarr](https://github.com/Eternity-Yarr)
 - [@jaezun](https://github.com/jaezun)
 - [@maxjacobson](https://github.com/maxjacobson)

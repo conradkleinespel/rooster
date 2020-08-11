@@ -100,7 +100,7 @@ const VERSION: u32 = 2;
 // Create a random IV.
 fn generate_random_iv() -> IoResult<[u8; IV_LEN]> {
     let mut bytes: [u8; IV_LEN] = [0; IV_LEN];
-    let mut rng = OsRng::new()?;
+    let mut rng = OsRng::default();
     rng.fill_bytes(&mut bytes);
     Ok(bytes)
 }
@@ -108,7 +108,7 @@ fn generate_random_iv() -> IoResult<[u8; IV_LEN]> {
 // Create a random salt.
 fn generate_random_salt() -> IoResult<[u8; SALT_LEN]> {
     let mut bytes: [u8; SALT_LEN] = [0; SALT_LEN];
-    let mut rng = OsRng::new()?;
+    let mut rng = OsRng::default();
     rng.fill_bytes(&mut bytes);
     Ok(bytes)
 }

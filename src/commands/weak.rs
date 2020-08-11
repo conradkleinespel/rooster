@@ -40,7 +40,7 @@ pub fn callback_exec(
     for password in store.get_all_passwords() {
         if let Ok(result) = zxcvbn(password.password.deref(), &[]) {
             // Score is from 0 to 4. Anything lower than 4 should be considered not good enough.
-            if result.score <= 3 {
+            if result.score() <= 3 {
                 weak_passwords.push(password.clone());
             }
         }

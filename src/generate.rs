@@ -19,7 +19,7 @@ use macros::show_error;
 
 fn generate_password(alnum: bool, len: usize) -> IoResult<SafeString> {
     let mut password_as_string = String::new();
-    let mut rng = OsRng::new()?;
+    let mut rng = OsRng::default();
     for _ in 0..len {
         if alnum {
             match rng.gen_range(0, 3) {

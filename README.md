@@ -7,12 +7,7 @@ Rooster is a simple password manager for geeks (it works in the terminal).
 
 [![asciicast](https://asciinema.org/a/9opp6uXiI2XFURj8yNHYV3xfb.svg)](https://asciinema.org/a/9opp6uXiI2XFURj8yNHYV3xfb)
 
-## Supporting Rooster
-
-Rooster is currently being maintained as a side-project, during nights and weekends, next to my full-time job. I am looking for a way to sustain my work on open source. If you find value in what I do and you would like to contribute, please consider:
-
-- [Becoming a backer on Patreon](https://www.patreon.com/conradkleinespel)
-- [Making a recurring donation on Liberapay](https://liberapay.com/conradkleinespel/)
+Rooster is made available free of charge. You can support its development through [Liberapay](https://liberapay.com/conradkleinespel/) 💪
 
 ## Features
 

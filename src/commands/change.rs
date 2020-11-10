@@ -14,43 +14,17 @@
 
 use clip;
 use ffi;
-use getopts;
 use list;
 use macros::show_error;
 use password;
 use rpassword::prompt_password_stderr;
 use safe_string::SafeString;
 
-pub fn callback_help() {
-    println!("Usage:");
-    println!("    rooster change -h");
-    println!("    rooster change <query>");
-    println!();
-    println!("Options:");
-    println!("    -s, --show        Show the password instead of copying it to the clipboard");
-    println!();
-    println!("Examples:");
-    println!("    rooster change youtube");
-    println!("    rooster change ytb     # fuzzy-searching works too");
-}
-
-pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
-    if matches.free.len() < 2 {
-        show_error("Woops, seems like the app name is missing here. For help, try:");
-        show_error("    rooster change -h");
-        return Err(1);
-    }
-
-    Ok(())
-}
-
 pub fn callback_exec(
-    matches: &getopts::Matches,
+    matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
 ) -> Result<(), i32> {
-    check_args(matches)?;
-
-    let query = &matches.free[1];
+    let query = matches.value_of("app").unwrap();
 
     let password = list::search_and_choose_password(
         store,
@@ -92,7 +66,7 @@ pub fn callback_exec(
             1
         })?;
 
-    let show = matches.opt_present("show");
+    let show = matches.is_present("show");
     clip::confirm_password_retrieved(show, &password);
     Ok(())
 }

@@ -12,21 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use getopts;
 use list;
 use password;
 
-pub fn callback_help() {
-    println!("Usage:");
-    println!("    rooster list -h");
-    println!("    rooster list");
-    println!();
-    println!("Example:");
-    println!("    rooster list");
-}
-
 pub fn callback_exec(
-    _matches: &getopts::Matches,
+    _matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
 ) -> Result<(), i32> {
     let passwords = store.get_all_passwords();

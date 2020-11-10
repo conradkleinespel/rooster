@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use rand::{Rng, rngs::OsRng};
-use std::io::{Result as IoResult};
-use safe_string::SafeString;
 use macros::show_error;
+use rand::{rngs::OsRng, Rng};
+use safe_string::SafeString;
+use std::io::Result as IoResult;
 
 fn generate_password(alnum: bool, len: usize) -> IoResult<SafeString> {
     let mut password_as_string = String::new();
@@ -43,9 +43,10 @@ fn generate_password(alnum: bool, len: usize) -> IoResult<SafeString> {
 fn password_is_hard(password: &str, alnum: bool) -> bool {
     let is_punctuation = |c| -> bool { "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~".find(c).is_some() };
 
-    password.find(char::is_numeric).is_some() && password.find(char::is_lowercase).is_some() &&
-        password.find(char::is_uppercase).is_some() &&
-        (alnum || password.find(is_punctuation).is_some())
+    password.find(char::is_numeric).is_some()
+        && password.find(char::is_lowercase).is_some()
+        && password.find(char::is_uppercase).is_some()
+        && (alnum || password.find(is_punctuation).is_some())
 }
 
 pub struct PasswordSpec {
@@ -96,8 +97,8 @@ pub fn check_password_len(opt: Option<usize>) -> Option<usize> {
 
 #[cfg(test)]
 mod test {
-    use std::ops::Deref;
     use generate::PasswordSpec;
+    use std::ops::Deref;
 
     #[test]
     fn test_default_password_size_is_32() {

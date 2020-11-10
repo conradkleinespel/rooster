@@ -13,43 +13,15 @@
 // limitations under the License.
 
 use clip;
-use getopts;
 use list;
-use macros::show_error;
 use password;
 
-pub fn callback_help() {
-    println!("Usage:");
-    println!("    rooster get -h");
-    println!("    rooster get <query>");
-    println!();
-    println!("Options:");
-    println!("    -s, --show        Show the password instead of copying it to the clipboard");
-    println!();
-    println!("Examples:");
-    println!("    rooster get youtube");
-    println!("    rooster get ytb     # fuzzy-searching works too");
-}
-
-pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
-    if matches.free.len() < 2 {
-        show_error("Woops, seems like the app name is missing here. For help, try:");
-        show_error("    rooster get -h");
-        return Err(1);
-    }
-
-    Ok(())
-}
-
 pub fn callback_exec(
-    matches: &getopts::Matches,
+    matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
 ) -> Result<(), i32> {
-    check_args(matches)?;
-
-    let show = matches.opt_present("show");
-
-    let query = &matches.free[1];
+    let show = matches.is_present("show");
+    let query = matches.value_of("app").unwrap();
 
     let prompt = format!(
         "Which password would you like {}? ",

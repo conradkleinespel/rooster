@@ -12,38 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use getopts;
 use macros::show_error;
 use password;
 
-pub fn callback_help() {
-    println!("Usage:");
-    println!("    rooster set-scrypt-params -h");
-    println!("    rooster set-scrypt-params <log2n> <r> <p>");
-    println!();
-    println!("Example:");
-    println!("    rooster set-scrypt-params 12 8 1");
-}
-
-pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
-    if matches.free.len() < 4 {
-        show_error("Woops, seems like a param is missing here. For help, try:");
-        show_error("    rooster set-scrypt-params -h");
-        return Err(1);
-    }
-
-    Ok(())
-}
-
 pub fn callback_exec(
-    matches: &getopts::Matches,
+    matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
 ) -> Result<(), i32> {
-    check_args(matches)?;
-
-    let log2_n = matches.free[1].trim().parse::<u8>().unwrap();
-    let r = matches.free[2].trim().parse::<u32>().unwrap();
-    let p = matches.free[3].trim().parse::<u32>().unwrap();
+    let log2_n = matches
+        .value_of("log2n")
+        .unwrap()
+        .trim()
+        .parse::<u8>()
+        .unwrap();
+    let r = matches
+        .value_of("r")
+        .unwrap()
+        .trim()
+        .parse::<u32>()
+        .unwrap();
+    let p = matches
+        .value_of("p")
+        .unwrap()
+        .trim()
+        .parse::<u32>()
+        .unwrap();
 
     if log2_n > 20 || r > 8 || p > 1 {
         show_error("These parameters seem very high. You might be unable to open your password file ever again. Aborting.");

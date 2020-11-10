@@ -18,7 +18,7 @@ use safe_string::SafeString;
 use std::ops::Deref;
 
 // On Windows and Mac, we'll use the native solutions provided by the OS libraries
-#[cfg(any(windows, target_os="macos"))]
+#[cfg(any(windows, target_os = "macos"))]
 pub fn copy_to_clipboard(s: &SafeString) -> Result<(), ()> {
     use clipboard::ClipboardContext;
     use clipboard::ClipboardProvider;
@@ -30,7 +30,7 @@ pub fn copy_to_clipboard(s: &SafeString) -> Result<(), ()> {
 
 // On UNIX, the most stable way to copy to the clipboard is using one of the existing
 // and battle tested tools: xsel and xclip.
-#[cfg(all(unix, not(target_os="macos")))]
+#[cfg(all(unix, not(target_os = "macos")))]
 pub fn copy_to_clipboard(s: &SafeString) -> Result<(), ()> {
     use quale::which;
     use shell_escape;

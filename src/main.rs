@@ -16,21 +16,20 @@
 
 extern crate ansi_term;
 extern crate byteorder;
+extern crate clap;
 extern crate clipboard;
 extern crate dirs;
-extern crate getopts;
 extern crate libc;
 extern crate openssl;
 extern crate rand;
 extern crate rpassword;
 extern crate serde;
 extern crate serde_json;
-extern crate zxcvbn;
 
 #[macro_use]
 extern crate serde_derive;
 
-use getopts::Options;
+use clap::{App, Arg, ArgMatches};
 use macros::{show_error, show_title_1};
 use rpassword::prompt_password_stderr;
 use safe_string::SafeString;
@@ -43,155 +42,24 @@ use std::io::{stdin, Read};
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
 
-mod macros;
 mod aes;
 mod clip;
 mod commands;
 mod ffi;
 mod generate;
 mod list;
+mod macros;
 mod password;
 mod quale;
 mod safe_string;
 mod safe_vec;
 
 // We conditionally compile this module to avoid "unused function" warnings.
-#[cfg(all(unix, not(target_os="macos")))]
+#[cfg(all(unix, not(target_os = "macos")))]
 mod shell_escape;
 
 const ROOSTER_FILE_ENV_VAR: &'static str = "ROOSTER_FILE";
 const ROOSTER_FILE_DEFAULT: &'static str = ".passwords.rooster";
-
-struct Command {
-    name: &'static str,
-    callback_exec:
-        Option<fn(&getopts::Matches, &mut password::v2::PasswordStore) -> Result<(), i32>>,
-    callback_help: fn(),
-    callback_without_store: Option<fn(&getopts::Matches) -> Result<(), i32>>,
-}
-
-static COMMANDS: &'static [Command] = &[
-    Command {
-        name: "get",
-        callback_exec: Some(commands::get::callback_exec),
-        callback_help: commands::get::callback_help,
-        callback_without_store: Some(commands::get::check_args),
-    },
-    Command {
-        name: "add",
-        callback_exec: Some(commands::add::callback_exec),
-        callback_help: commands::add::callback_help,
-        callback_without_store: Some(commands::add::check_args),
-    },
-    Command {
-        name: "delete",
-        callback_exec: Some(commands::delete::callback_exec),
-        callback_help: commands::delete::callback_help,
-        callback_without_store: Some(commands::delete::check_args),
-    },
-    Command {
-        name: "generate",
-        callback_exec: Some(commands::generate::callback_exec),
-        callback_help: commands::generate::callback_help,
-        callback_without_store: Some(commands::generate::check_args),
-    },
-    Command {
-        name: "regenerate",
-        callback_exec: Some(commands::regenerate::callback_exec),
-        callback_help: commands::regenerate::callback_help,
-        callback_without_store: Some(commands::regenerate::check_args),
-    },
-    Command {
-        name: "list",
-        callback_exec: Some(commands::list::callback_exec),
-        callback_help: commands::list::callback_help,
-        callback_without_store: None,
-    },
-    Command {
-        name: "import",
-        callback_exec: Some(commands::import::callback_exec),
-        callback_help: commands::import::callback_help,
-        callback_without_store: Some(commands::import::check_args),
-    },
-    Command {
-        name: "export",
-        callback_exec: Some(commands::export::callback_exec),
-        callback_help: commands::export::callback_help,
-        callback_without_store: None,
-    },
-    Command {
-        name: "set-master-password",
-        callback_exec: Some(commands::set_master_password::callback_exec),
-        callback_help: commands::set_master_password::callback_help,
-        callback_without_store: None,
-    },
-    Command {
-        name: "set-scrypt-params",
-        callback_exec: Some(commands::set_scrypt_params::callback_exec),
-        callback_help: commands::set_scrypt_params::callback_help,
-        callback_without_store: Some(commands::set_scrypt_params::check_args),
-    },
-    Command {
-        name: "rename",
-        callback_exec: Some(commands::rename::callback_exec),
-        callback_help: commands::rename::callback_help,
-        callback_without_store: Some(commands::rename::check_args),
-    },
-    Command {
-        name: "transfer",
-        callback_exec: Some(commands::transfer::callback_exec),
-        callback_help: commands::transfer::callback_help,
-        callback_without_store: Some(commands::transfer::check_args),
-    },
-    Command {
-        name: "change",
-        callback_exec: Some(commands::change::callback_exec),
-        callback_help: commands::change::callback_help,
-        callback_without_store: Some(commands::change::check_args),
-    },
-    Command {
-        name: "uninstall",
-        callback_exec: None,
-        callback_help: commands::uninstall::callback_help,
-        callback_without_store: Some(commands::uninstall::callback_exec),
-    },
-    Command {
-        name: "init",
-        callback_exec: None,
-        callback_help: commands::init::callback_help,
-        callback_without_store: Some(commands::init::callback_exec),
-    },
-    Command {
-        name: "weak",
-        callback_exec: Some(commands::weak::callback_exec),
-        callback_help: commands::weak::callback_help,
-        callback_without_store: None,
-    },
-];
-
-fn command_from_name(name: &str) -> Option<&'static Command> {
-    for c in COMMANDS.iter() {
-        if c.name == name {
-            return Some(c);
-        }
-    }
-    None
-}
-
-#[cfg(test)]
-mod test {
-    use super::command_from_name;
-
-    #[test]
-    fn test_command_from_name_returns_none_if_not_exists() {
-        assert!(command_from_name("haha").is_none());
-    }
-
-    #[test]
-    fn test_command_from_name_returns_some_if_exists() {
-        assert!(command_from_name("get").is_some());
-    }
-}
 
 fn open_password_file(filename: &str) -> IoResult<File> {
     let mut options = std::fs::OpenOptions::new();
@@ -349,15 +217,12 @@ fn get_password_store_from_input(
 }
 
 fn execute_command_from_filename(
-    matches: &getopts::Matches,
-    command: &Command,
+    matches: &ArgMatches,
+    command: fn(&ArgMatches, &mut password::v2::PasswordStore) -> Result<(), i32>,
     file: &mut File,
     store: &mut password::v2::PasswordStore,
 ) -> Result<(), i32> {
-    // Execute the command and save the new password list
-    if let Some(cb) = command.callback_exec {
-        (cb)(matches, store)?;
-    }
+    (command)(matches, store)?;
 
     match store.sync(file) {
         Ok(()) => Ok(()),
@@ -397,189 +262,227 @@ fn ask_master_password() -> IoResult<SafeString> {
     prompt_password_stderr("Type your master password: ").map(SafeString::new)
 }
 
-fn usage() {
-    println!("Welcome to Rooster, the simple password manager for geeks :-)");
-    println!();
-    println!("Usage:");
-    println!("    rooster -h");
-    println!("    rooster [options] <command> [<args> ...]");
-    println!("    rooster <command> -h");
-    println!();
-    println!("Options:");
-    println!("    -h, --help                 Display a help message");
-    println!("    -V, --version              Display the version of Rooster you are using");
-    println!();
-    println!("Commands:");
-    println!("    init                       Create a new password file");
-    println!("    add                        Add a new password manually");
-    println!("    change                     Change a password manually");
-    println!("    delete                     Delete a password");
-    println!("    generate                   Generate a password");
-    println!("    regenerate                 Regenerate a previously existing password");
-    println!("    get                        Retrieve a password");
-    println!("    rename                     Rename the app for a password");
-    println!("    transfer                   Change the username for a password");
-    println!("    list                       List all apps and usernames");
-    println!("    import                     Load all your raw password data from JSON file");
-    println!("    export                     Dump all your raw password data in JSON");
-    println!("    set-master-password        Set your master password");
-    println!("    set-scrypt-params          Set the key derivation parameters");
-    println!("    uninstall                  Show instructions to uninstall Rooster");
-    println!("    weak                       List apps that have weak passwords");
-}
-
 fn main() {
-    let args: Vec<String> = std::env::args().collect();
-
-    let mut opts = Options::new();
-    opts.optflag("h", "help", "Display a help message");
-    opts.optflag(
-        "V",
-        "version",
-        "Display the version of Rooster you are using",
-    );
-    opts.optflag(
-        "a",
-        "alnum",
-        "Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords",
-    );
-    opts.optopt(
-        "l",
-        "length",
-        "Set a custom length for the generated password",
-        "32",
-    );
-    opts.optflag(
-        "s",
-        "show",
-        "Show the password instead of copying it to the clipboard",
-    );
-
-    let matches = match opts.parse(&args[1..]) {
-        Ok(m) => m,
-        Err(err) => {
-            show_error(format!("{}", err).as_str());
-            std::process::exit(1);
-        }
-    };
-
-    // Global help was requested.
-    if matches.opt_present("help") && matches.free.is_empty() {
-        usage();
-        std::process::exit(0);
-    }
-
-    if matches.opt_present("version") {
-        println!("v{}", env!("CARGO_PKG_VERSION"));
-        std::process::exit(0);
-    }
-
-    // No command was given, this is abnormal, so we'll show the docs.
-    let command_name = match matches.free.get(0) {
-        Some(command_name) => command_name,
-        None => {
-            usage();
-            std::process::exit(1);
-        }
-    };
-
-    let command: &Command = match command_from_name(command_name.as_ref()) {
-        Some(command) => command,
-        None => {
-            show_error(
-                format!(
-                    "Woops, the command `{}` does not exist. Try the --help option for more \
-                     info.",
-                    command_name
+    let matches: ArgMatches = App::new("rooster")
+        .about("Welcome to Rooster, the simple password manager for geeks :-)")
+        .version(env!("CARGO_PKG_VERSION"))
+        .subcommand(App::new("init").about("Create a new password file"))
+        .subcommand(
+            App::new("add")
+                .about("Add a new password manually")
+                .arg(Arg::new("app"))
+                .arg(Arg::new("username"))
+                .arg(
+                    Arg::new("show")
+                        .short('s')
+                        .long("show")
+                        .about("Show the password instead of copying it to the clipboard"),
+                ),
+        )
+        .subcommand(
+            App::new("change")
+                .about("Change a password manually")
+                .arg(Arg::new("app"))
+                .arg(
+                    Arg::new("show")
+                        .short('s')
+                        .long("show")
+                        .about("Show the password instead of copying it to the clipboard"),
+                ),
+        )
+        .subcommand(
+            App::new("delete")
+                .about("Delete a password")
+                .arg(Arg::new("app")),
+        )
+        .subcommand(
+            App::new("generate")
+                .about("Generate a password")
+                .arg(Arg::new("app"))
+                .arg(Arg::new("username"))
+                .arg(
+                    Arg::new("show")
+                        .short('s')
+                        .long("show")
+                        .about("Show the password instead of copying it to the clipboard"),
                 )
-                .as_str(),
+                .arg(
+                    Arg::new("alnum")
+                        .short('a')
+                        .long("alnum")
+                        .about("Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords"),
+                )
+                .arg(
+                    Arg::new("length")
+                        .short('l')
+                        .long("length")
+                        .default_value("32")
+                        .about("Set a custom length for the generated password"),
+                ),
+        )
+        .subcommand(
+            App::new("regenerate")
+                .about("Regenerate a previously existing password")
+                .arg(Arg::new("app"))
+                .arg(
+                    Arg::new("show")
+                        .short('s')
+                        .long("show")
+                        .about("Show the password instead of copying it to the clipboard"),
+                )
+                .arg(
+                    Arg::new("alnum")
+                        .short('a')
+                        .long("alnum")
+                        .about("Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords"),
+                )
+                .arg(
+                    Arg::new("length")
+                        .short('l')
+                        .long("length")
+                        .default_value("32")
+                        .about("Set a custom length for the generated password"),
+                ),
+        )
+        .subcommand(
+            App::new("get")
+                .about("Retrieve a password")
+                .arg(Arg::new("app"))
+                .arg(
+                    Arg::new("show")
+                        .short('s')
+                        .long("show")
+                        .about("Show the password instead of copying it to the clipboard"),
+                ),
+        )
+        .subcommand(
+            App::new("rename")
+                .about("Rename the app for a password")
+                .arg(Arg::new("app"))
+                .arg(Arg::new("new_name"))
+        )
+        .subcommand(
+            App::new("transfer")
+                .about("Change the username for a password")
+                .arg(Arg::new("app"))
+                .arg(Arg::new("new_username"))
+        )
+        .subcommand(App::new("list").about("List all apps and usernames"))
+        .subcommand(App::new("import").about("Load all your raw password data from JSON file"))
+        .subcommand(App::new("export").about("Dump all your raw password data in JSON"))
+        .subcommand(App::new("set-master-password").about("Set your master password"))
+        .subcommand(
+            App::new("set-scrypt-params")
+                .about("Set the key derivation parameters")
+                .arg(Arg::new("log2n"))
+                .arg(Arg::new("r"))
+                .arg(Arg::new("p")),
+        )
+        .get_matches();
+
+    let subcommand = matches.subcommand_name().unwrap();
+
+    let command_matches = matches.subcommand_matches(subcommand).unwrap();
+
+    if subcommand == "init" {
+        match commands::init::callback_exec(command_matches) {
+            Err(i) => std::process::exit(i),
+            _ => std::process::exit(0),
+        }
+    }
+
+    let command_callback = match subcommand {
+        "get" => commands::get::callback_exec,
+        "add" => commands::add::callback_exec,
+        "delete" => commands::delete::callback_exec,
+        "generate" => commands::generate::callback_exec,
+        "regenerate" => commands::regenerate::callback_exec,
+        "list" => commands::list::callback_exec,
+        "import" => commands::import::callback_exec,
+        "export" => commands::export::callback_exec,
+        "set-master-password" => commands::set_master_password::callback_exec,
+        "set-scrypt-params" => commands::set_scrypt_params::callback_exec,
+        "rename" => commands::rename::callback_exec,
+        "transfer" => commands::transfer::callback_exec,
+        "change" => commands::change::callback_exec,
+        _ => unreachable!("Validation should have been done by `clap` before"),
+    };
+
+    // Fetch the Rooster file path now, so we can display it in help messages.
+    let (password_file_path, password_file_path_from_env) = match get_password_file_path() {
+        Ok(info) => info,
+        Err(_) => {
+            show_error(
+                "Woops, I could not read the path to your password file. \
+             Make sure it only contains ASCII characters.",
             );
             std::process::exit(1);
         }
     };
 
-    if matches.opt_present("help") {
-        (command.callback_help)();
-        std::process::exit(0);
-    }
+    let password_file_path_as_string = password_file_path.to_string_lossy().into_owned();
 
-    if let Some(cb) = command.callback_without_store {
-        if let Err(i) = (cb)(&matches) {
-            std::process::exit(i);
+    if !password_file_path.exists() {
+        if password_file_path_from_env {
+            show_error("Woops, I couldn't find your password file at:");
+            show_error(format!("    {}", password_file_path_as_string).as_str());
+            show_error("");
+            show_error(
+                "Update or remove the ROOSTER_FILE environment variable \
+             and try again. Or run `rooster init` to start fresh.",
+            );
+        } else {
+            show_title_1("First time user");
+            println!();
+            println!("Try `rooster init`.");
+            println!();
+            show_title_1("Long time user");
+            println!();
+            println!(
+                "Set the ROOSTER_FILE environment variable. \
+             For instance:"
+            );
+            println!("    export ROOSTER_FILE=path/to/passwords.rooster");
         }
+        std::process::exit(1);
     }
 
-    if command.callback_exec.is_some() {
-        // Fetch the Rooster file path now, so we can display it in help messages.
-        let (password_file_path, password_file_path_from_env) = match get_password_file_path() {
-            Ok(path) => path,
-            Err(_) => {
-                show_error(
-                    "Woops, I could not read the path to your password file. \
-                     Make sure it only contains ASCII characters.",
-                );
-                std::process::exit(1);
-            }
-        };
-        let password_file_path_as_string = password_file_path.to_string_lossy().into_owned();
-
-        if !password_file_path.exists() {
-            if password_file_path_from_env {
-                show_error("Woops, I couldn't find your password file at:");
-                show_error(format!("    {}", password_file_path_as_string).as_str());
-                show_error("");
-                show_error(
-                    "Update or remove the ROOSTER_FILE environment variable \
-                     and try again. Or run `rooster init` to start fresh.",
-                );
-            } else {
-                show_title_1("First time user");
-                println!();
-                println!("Try `rooster init`.");
-                println!();
-                show_title_1("Long time user");
-                println!();
-                println!(
-                    "Set the ROOSTER_FILE environment variable. \
-                     For instance:"
-                );
-                println!("    export ROOSTER_FILE=path/to/passwords.rooster");
+    let mut file = match open_password_file(password_file_path_as_string.deref()) {
+        Ok(file) => file,
+        Err(err) => {
+            match err.kind() {
+                std::io::ErrorKind::NotFound => {
+                    show_error(
+                        "Woops, I can't find your password file\
+                     . Run `rooster init` to create one.",
+                    );
+                }
+                _ => {
+                    show_error(
+                        format!(
+                            "Woops, I couldn't read your password file ({} for \"{}\").",
+                            err, password_file_path_as_string
+                        )
+                        .as_str(),
+                    );
+                }
             }
             std::process::exit(1);
         }
+    };
 
-        let mut file = match open_password_file(password_file_path_as_string.deref()) {
-            Ok(file) => file,
-            Err(err) => {
-                match err.kind() {
-                    std::io::ErrorKind::NotFound => {
-                        show_error(
-                            "Woops, I can't find your password file\
-                             . Run `rooster init` to create one.",
-                        );
-                    }
-                    _ => {
-                        show_error(
-                            format!(
-                                "Woops, I couldn't read your password file ({} for \"{}\").",
-                                err, password_file_path_as_string
-                            )
-                            .as_str(),
-                        );
-                    }
-                }
-                std::process::exit(1);
-            }
-        };
+    let mut store = match get_password_store(&mut file) {
+        Err(i) => std::process::exit(i),
+        Ok(store) => store,
+    };
 
-        let mut store = match get_password_store(&mut file) {
-            Err(i) => std::process::exit(i),
-            Ok(store) => store,
-        };
-
-        match execute_command_from_filename(&matches, command, &mut file, &mut store) {
-            Err(i) => std::process::exit(i),
-            _ => std::process::exit(0),
-        }
+    match execute_command_from_filename(
+        command_matches,
+        command_callback,
+        &mut file,
+        &mut store,
+    ) {
+        Err(i) => std::process::exit(i),
+        _ => std::process::exit(0),
     }
 }

@@ -15,43 +15,15 @@
 use clip;
 use ffi;
 use generate::{check_password_len, PasswordSpec};
-use getopts;
 use list;
 use macros::show_error;
 use password;
 
-pub fn callback_help() {
-    println!("Usage:");
-    println!("    rooster regenerate -h");
-    println!("    rooster regenerate <query>");
-    println!();
-    println!("Options:");
-    println!("    -a, --alnum       Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords");
-    println!("    -l, --length      Set a custom length for the generated password, default is 32");
-    println!("    -s, --show        Show the password instead of copying it to the clipboard");
-    println!();
-    println!("Examples:");
-    println!("    rooster regenerate youtube");
-    println!("    rooster regenerate ytb     # fuzzy-searching works too");
-}
-
-pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
-    if matches.free.len() < 2 {
-        show_error("Woops, seems like the app name is missing here. For help, try:");
-        show_error("    rooster regenerate -h");
-        return Err(1);
-    }
-
-    Ok(())
-}
-
 pub fn callback_exec(
-    matches: &getopts::Matches,
+    matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
 ) -> Result<(), i32> {
-    check_args(matches)?;
-
-    let query = &matches.free[1];
+    let query = matches.value_of("app").unwrap();
 
     let password = list::search_and_choose_password(
         store,
@@ -63,9 +35,9 @@ pub fn callback_exec(
     .clone();
 
     let pwspec = PasswordSpec::new(
-        matches.opt_present("alnum"),
+        matches.is_present("alnum"),
         matches
-            .opt_str("length")
+            .value_of("length")
             .and_then(|len| check_password_len(len.parse::<usize>().ok())),
     );
 
@@ -96,7 +68,7 @@ pub fn callback_exec(
 
     match change_result {
         Ok(password) => {
-            let show = matches.opt_present("show");
+            let show = matches.is_present("show");
             clip::confirm_password_retrieved(show, &password);
             Ok(())
         }

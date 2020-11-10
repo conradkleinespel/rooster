@@ -13,6 +13,13 @@ macro_rules! println_stderr(
     )
 );
 
+#[macro_export]
+macro_rules! print_stderr(
+    ($($arg:tt)*) => (
+        write!(::std::io::stderr(), $($arg)*).and_then(|_| ::std::io::stderr().flush()).unwrap()
+    )
+);
+
 pub fn show_error(s: &str) {
     println_stderr!("{}", Red.paint(s))
 }
@@ -25,9 +32,6 @@ pub fn show_title_1(s: &str) {
     println!("{}", Style::new().underline().bold().paint(s))
 }
 
-#[macro_export]
-macro_rules! print_stderr(
-    ($($arg:tt)*) => (
-        write!(::std::io::stderr(), $($arg)*).and_then(|_| ::std::io::stderr().flush()).unwrap()
-    )
-);
+pub fn write_to_stderr(s: &str) {
+    print_stderr!("{}", s);
+}

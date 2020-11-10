@@ -82,32 +82,6 @@ Once you have installed Rooster (see instructions below), you can view documenta
 rooster --help
 ```
 
-## Trustless security
-
-For added trustless security, you can restrict the operating system capabilities that Rooster has access to.
-
-For instance, to run Rooster without network access on Linux, you might do this:
-
-```shell
-# make unshare usable without being root
-sudo chmod u+s "`which unshare`"
-
-# run rooster without network
-unshare -n rooster
-```
-
-Other operating systems have similar protections.
-
-## Automated tests
-
-Rooster has 3 sets of tests:
-
-- code level tests which you can run with `cargo test`
-- integration tests which you can run with `./tests-integration.sh`
-- build tests for various Linux distributions which you can run with `./tests-build.sh`
-
-You'll need to install [Docker](https://www.docker.com/) to run build and integration tests.
-
 ## Contributors
 
 We welcome contribution from everyone. Feel free to open an issue or a pull request at any time.

@@ -13,39 +13,16 @@
 // limitations under the License.
 
 use ffi;
-use getopts;
 use list;
 use macros::{show_error, show_ok};
 use password;
 
-pub fn callback_help() {
-    println!("Usage:");
-    println!("    rooster transfer -h");
-    println!("    rooster transfer <app> <new_username>");
-    println!();
-    println!("Examples:");
-    println!("    rooster transfer dailymotion new@example.com");
-    println!("    rooster transfer dm new@example.com          # fuzzy-searching works too");
-}
-
-pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
-    if matches.free.len() < 3 {
-        show_error("Woops, seems like the app name or username is missing here. For help, try:");
-        show_error("    rooster transfer -h");
-        return Err(1);
-    }
-
-    Ok(())
-}
-
 pub fn callback_exec(
-    matches: &getopts::Matches,
+    matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
 ) -> Result<(), i32> {
-    check_args(matches)?;
-
-    let query = &matches.free[1];
-    let new_username = &matches.free[2];
+    let query = matches.value_of("app").unwrap();
+    let new_username = matches.value_of("new_username").unwrap().to_owned();
 
     let password = list::search_and_choose_password(
         store,

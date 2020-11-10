@@ -14,46 +14,16 @@
 
 use clip::{copy_to_clipboard, paste_keys};
 use generate::{check_password_len, PasswordSpec};
-use getopts;
 use macros::{show_error, show_ok};
 use password;
 use std::ops::Deref;
 
-pub fn callback_help() {
-    println!("Usage:");
-    println!("    rooster generate -h");
-    println!("    rooster generate <app_name> <username>");
-    println!();
-    println!("Options:");
-    println!("    -a, --alnum       Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords");
-    println!("    -l, --length      Set a custom length for the generated password, default is 32");
-    println!("    -s, --show        Show the password instead of copying it to the clipboard");
-    println!();
-    println!("Example:");
-    println!("    rooster generate YouTube me@example.com");
-}
-
-pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
-    if matches.free.len() < 3 {
-        show_error(
-            "Woops, seems like the app name or the username is missing here. For help, \
-             try:",
-        );
-        show_error("    rooster generate -h");
-        return Err(1);
-    }
-
-    Ok(())
-}
-
 pub fn callback_exec(
-    matches: &getopts::Matches,
+    matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
 ) -> Result<(), i32> {
-    check_args(matches)?;
-
-    let app_name = matches.free[1].clone();
-    let username = matches.free[2].clone();
+    let app_name = matches.value_of("app").unwrap();
+    let username = matches.value_of("username").unwrap();
 
     if store.has_password(app_name.deref()) {
         show_error("Woops, there is already an app with that name.");
@@ -61,9 +31,9 @@ pub fn callback_exec(
     }
 
     let pwspec = PasswordSpec::new(
-        matches.opt_present("alnum"),
+        matches.is_present("alnum"),
         matches
-            .opt_str("length")
+            .value_of("length")
             .and_then(|len| check_password_len(len.parse::<usize>().ok())),
     );
 
@@ -87,7 +57,7 @@ pub fn callback_exec(
 
     match store.add_password(password) {
         Ok(_) => {
-            if matches.opt_present("show") {
+            if matches.is_present("show") {
                 show_ok(
                     format!(
                         "Alright! Here is your password: {}",

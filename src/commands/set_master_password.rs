@@ -12,24 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use getopts;
 use macros::{show_error, show_ok};
 use password;
 use rpassword::prompt_password_stderr;
 use safe_string::SafeString;
 use std::ops::Deref;
 
-pub fn callback_help() {
-    println!("Usage:");
-    println!("    rooster set-master-password -h");
-    println!("    rooster set-master-password");
-    println!();
-    println!("Example:");
-    println!("    rooster set-master-password");
-}
-
 pub fn callback_exec(
-    _matches: &getopts::Matches,
+    _matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
 ) -> Result<(), i32> {
     match prompt_password_stderr("Type your new master password: ") {

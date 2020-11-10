@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use macros::show_error;
+use macros::{show_error, write_to_stderr};
 use password::v2::{Password, PasswordStore};
 use std::io::stdin;
-use std::io::Write;
 
 /// Used to indicate lists should have a number, ie: 23 Google my.account@gmail.com
 pub const WITH_NUMBERS: bool = true;
@@ -101,9 +100,9 @@ fn request_password_index_from_stdin(passwords: &Vec<&Password>, prompt: &str) -
     loop {
         if passwords.len() > 1 {
             println!("{}", prompt);
-            print_stderr!("Type a number from 1 to {}: ", passwords.len());
+            write_to_stderr(format!("Type a number from 1 to {}: ", passwords.len()).as_str());
         } else if passwords.len() == 1 {
-            print_stderr!("If this is the password you mean, type \"1\" and hit ENTER: ");
+            write_to_stderr("If this is the password you mean, type \"1\" and hit ENTER: ");
         }
 
         line.clear();
@@ -112,31 +111,31 @@ fn request_password_index_from_stdin(passwords: &Vec<&Password>, prompt: &str) -
                 match line.trim().parse::<usize>() {
                     Ok(index) => {
                         if index == 0 || index > passwords.len() {
-                            print_stderr!(
+                            write_to_stderr(format!(
                                 "I need a number between 1 and {}. Let's try again:",
                                 passwords.len()
-                            );
+                            ).as_str());
                             continue;
                         }
 
                         return index - 1;
                     }
                     Err(err) => {
-                        print_stderr!(
+                        write_to_stderr(format!(
                             "This isn't a valid number (reason: {}). Let's try again (1 to {}): ",
                             err,
                             passwords.len()
-                        );
+                        ).as_str());
                         continue;
                     }
                 };
             }
             Err(err) => {
-                print_stderr!(
+                write_to_stderr(format!(
                     "I couldn't read that (reason: {}). Let's try again (1 to {}): ",
                     err,
                     passwords.len()
-                );
+                ).as_str());
             }
         }
     }

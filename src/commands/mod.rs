@@ -26,5 +26,3 @@ pub mod rename;
 pub mod set_master_password;
 pub mod set_scrypt_params;
 pub mod transfer;
-pub mod uninstall;
-pub mod weak;

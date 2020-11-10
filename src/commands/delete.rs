@@ -12,38 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use getopts;
 use list;
 use macros::{show_error, show_ok};
 use password;
 
-pub fn callback_help() {
-    println!("Usage:");
-    println!("    rooster delete -h");
-    println!("    rooster delete <query>");
-    println!();
-    println!("Examples:");
-    println!("    rooster delete youtube");
-    println!("    rooster delete ytb     # fuzzy-searching works too");
-}
-
-pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
-    if matches.free.len() < 2 {
-        show_error("Woops, seems like the app name is missing here. For help, try:");
-        show_error("    rooster delete -h");
-        return Err(1);
-    }
-
-    Ok(())
-}
-
 pub fn callback_exec(
-    matches: &getopts::Matches,
+    matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
 ) -> Result<(), i32> {
-    check_args(matches)?;
-
-    let query = &matches.free[1];
+    let query = matches.value_of("app").unwrap();
 
     let password = list::search_and_choose_password(
         store,

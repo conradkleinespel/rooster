@@ -12,44 +12,39 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use getopts;
 use macros::show_error;
 use password;
 use safe_string::SafeString;
 use serde_json;
 use std::ops::Deref;
 
-pub fn callback_help() {
-    println!("Usage:");
-    println!("    rooster export -h");
-    println!("    rooster export");
-    println!();
-    println!("Example:");
-    println!("    rooster export");
-}
-
 pub fn callback_exec(
-    _matches: &getopts::Matches,
+    matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
 ) -> Result<(), i32> {
     let passwords_ref = store.get_all_passwords();
 
-    let passwords_json = match serde_json::to_string(&passwords_ref) {
-        Ok(passwords_json) => passwords_json,
-        Err(json_err) => {
-            show_error(
-                format!(
-                    "Woops, I could not encode the passwords into JSON (reason: {:?}).",
-                    json_err
-                )
-                .as_str(),
-            );
-            return Err(1);
-        }
-    };
+    if matches.is_present("1password") {
+        println!("Exporting for 1password");
+        Ok(())
+    } else {
+        let passwords_json = match serde_json::to_string(&passwords_ref) {
+            Ok(passwords_json) => passwords_json,
+            Err(json_err) => {
+                show_error(
+                    format!(
+                        "Woops, I could not encode the passwords into JSON (reason: {:?}).",
+                        json_err
+                    )
+                    .as_str(),
+                );
+                return Err(1);
+            }
+        };
 
-    let passwords = SafeString::new(passwords_json);
-    // We exceptionally print to STDOUT because the export will most likely be redirected to a file
-    println!("{}", passwords.deref());
-    Ok(())
+        let passwords = SafeString::new(passwords_json);
+        // We exceptionally print to STDOUT because the export will most likely be redirected to a file
+        println!("{}", passwords.deref());
+        Ok(())
+    }
 }

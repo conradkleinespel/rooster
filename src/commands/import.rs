@@ -12,36 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use getopts;
 use macros::{show_error, show_ok};
 use password::v2::{Password, PasswordStore};
 use serde_json;
 use std::fs::File;
 
-pub fn callback_help() {
-    println!("Usage:");
-    println!("    rooster import -h");
-    println!("    rooster import <file_path>");
-    println!();
-    println!("Example:");
-    println!("    rooster import dump.json");
-}
-
-pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
-    if matches.free.len() < 2 {
-        show_error("Woops, seems like the file path is missing here. For help, try:");
-        show_error("    rooster import -h");
-        return Err(1);
-    }
-
-    Ok(())
-}
-
-pub fn callback_exec(matches: &getopts::Matches, store: &mut PasswordStore) -> Result<(), i32> {
-    check_args(matches)?;
-
+pub fn callback_exec(matches: &clap::ArgMatches, store: &mut PasswordStore) -> Result<(), i32> {
     let imported_pwds: Vec<Password> = {
-        let path_str = &matches.free[1];
+        let path_str = matches.value_of("path_to_json_import").unwrap();
         let dump_file = File::open(path_str).map_err(|err| {
             show_error(format!("Uh oh, could not open the file (reason: {})", err).as_str());
             1

@@ -13,39 +13,16 @@
 // limitations under the License.
 
 use ffi;
-use getopts;
 use list;
 use macros::{show_error, show_ok};
 use password;
 
-pub fn callback_help() {
-    println!("Usage:");
-    println!("    rooster rename -h");
-    println!("    rooster rename <query> <new_app_name>");
-    println!();
-    println!("Examples:");
-    println!("    rooster rename youtube Dailymotion");
-    println!("    rooster rename ytb Dailymotion     # fuzzy-searching works too");
-}
-
-pub fn check_args(matches: &getopts::Matches) -> Result<(), i32> {
-    if matches.free.len() < 3 {
-        show_error("Woops, seems like the app name is missing here. For help, try:");
-        show_error("    rooster rename -h");
-        return Err(1);
-    }
-
-    Ok(())
-}
-
 pub fn callback_exec(
-    matches: &getopts::Matches,
+    matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
 ) -> Result<(), i32> {
-    check_args(matches)?;
-
-    let query = &matches.free[1];
-    let new_name = &matches.free[2];
+    let query = matches.value_of("app").unwrap();
+    let new_name = matches.value_of("new_name").unwrap().to_owned();
 
     let password = list::search_and_choose_password(
         store,

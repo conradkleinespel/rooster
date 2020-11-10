@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use csv::Writer;
 use macros::show_error;
 use password;
 use safe_string::SafeString;
 use serde_json;
+use std::io::stdout;
 use std::ops::Deref;
 
 pub fn callback_exec(
@@ -24,10 +26,22 @@ pub fn callback_exec(
 ) -> Result<(), i32> {
     let passwords_ref = store.get_all_passwords();
 
-    if matches.is_present("1password") {
-        println!("Exporting for 1password");
-        Ok(())
-    } else {
+    if let Some(_) = matches.subcommand_matches("1password") {
+        let mut csv_writer = Writer::from_writer(stdout());
+        for password in passwords_ref {
+            match csv_writer.write_record(&[
+                &password.name,
+                &password.username,
+                password.password.inner.as_str(),
+            ]) {
+                Ok(_) => {}
+                Err(_) => return Err(1),
+            }
+        }
+        return Ok(());
+    }
+
+    if let Some(_) = matches.subcommand_matches("rooster") {
         let passwords_json = match serde_json::to_string(&passwords_ref) {
             Ok(passwords_json) => passwords_json,
             Err(json_err) => {
@@ -45,6 +59,8 @@ pub fn callback_exec(
         let passwords = SafeString::new(passwords_json);
         // We exceptionally print to STDOUT because the export will most likely be redirected to a file
         println!("{}", passwords.deref());
-        Ok(())
+        return Ok(());
     }
+
+    return Err(1);
 }

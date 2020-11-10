@@ -18,6 +18,7 @@ extern crate ansi_term;
 extern crate byteorder;
 extern crate clap;
 extern crate clipboard;
+extern crate csv;
 extern crate dirs;
 extern crate libc;
 extern crate openssl;
@@ -29,7 +30,7 @@ extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
-use clap::{App, Arg, ArgMatches};
+use clap::{App, AppSettings, Arg, ArgMatches};
 use macros::{show_error, show_title_1};
 use rpassword::prompt_password_stderr;
 use safe_string::SafeString;
@@ -264,6 +265,8 @@ fn ask_master_password() -> IoResult<SafeString> {
 
 fn main() {
     let matches: ArgMatches = App::new("rooster")
+        // .global_setting(AppSettings::HelpRequired)
+        .setting(AppSettings::SubcommandRequiredElseHelp)
         .about("Welcome to Rooster, the simple password manager for geeks :-)")
         .version(env!("CARGO_PKG_VERSION"))
         .subcommand(App::new("init").about("Create a new password file"))
@@ -359,17 +362,28 @@ fn main() {
             App::new("rename")
                 .about("Rename the app for a password")
                 .arg(Arg::new("app"))
-                .arg(Arg::new("new_name"))
+                .arg(Arg::new("new_name")),
         )
         .subcommand(
             App::new("transfer")
                 .about("Change the username for a password")
                 .arg(Arg::new("app"))
-                .arg(Arg::new("new_username"))
+                .arg(Arg::new("new_username")),
         )
         .subcommand(App::new("list").about("List all apps and usernames"))
         .subcommand(App::new("import").about("Load all your raw password data from JSON file"))
-        .subcommand(App::new("export").about("Dump all your raw password data in JSON"))
+        .subcommand(
+            App::new("export")
+                .setting(AppSettings::SubcommandRequiredElseHelp)
+                .about("Export raw password data")
+                .subcommand(
+                    App::new("rooster").about("Export raw password data in Rooster's JSON format"),
+                )
+                .subcommand(
+                    App::new("1password")
+                        .about("Export raw password data in 1Password compatible CSV format"),
+                ),
+        )
         .subcommand(App::new("set-master-password").about("Set your master password"))
         .subcommand(
             App::new("set-scrypt-params")
@@ -476,12 +490,7 @@ fn main() {
         Ok(store) => store,
     };
 
-    match execute_command_from_filename(
-        command_matches,
-        command_callback,
-        &mut file,
-        &mut store,
-    ) {
+    match execute_command_from_filename(command_matches, command_callback, &mut file, &mut store) {
         Err(i) => std::process::exit(i),
         _ => std::process::exit(0),
     }

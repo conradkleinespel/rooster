@@ -24,43 +24,58 @@ pub fn callback_exec(
     matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
 ) -> Result<(), i32> {
+    let subcommand_name = matches.subcommand_name().unwrap();
+    let subcommand_matches = matches.subcommand_matches(subcommand_name).unwrap();
+
+    if subcommand_name == "json" {
+        export_to_json(subcommand_matches, store)
+    } else if subcommand_name == "1password" {
+        export_to_1password(subcommand_matches, store)
+    } else {
+        unimplemented!("Invalid export destination")
+    }
+}
+
+fn export_to_1password(
+    _matches: &clap::ArgMatches,
+    store: &mut password::v2::PasswordStore,
+) -> Result<(), i32> {
     let passwords_ref = store.get_all_passwords();
-
-    if let Some(_) = matches.subcommand_matches("1password") {
-        let mut csv_writer = Writer::from_writer(stdout());
-        for password in passwords_ref {
-            match csv_writer.write_record(&[
-                &password.name,
-                &password.username,
-                password.password.inner.as_str(),
-            ]) {
-                Ok(_) => {}
-                Err(_) => return Err(1),
-            }
+    let mut csv_writer = Writer::from_writer(stdout());
+    for password in passwords_ref {
+        match csv_writer.write_record(&[
+            &password.name,
+            &password.username,
+            password.password.inner.as_str(),
+        ]) {
+            Ok(_) => {}
+            Err(_) => return Err(1),
         }
-        return Ok(());
     }
+    return Ok(());
+}
 
-    if let Some(_) = matches.subcommand_matches("rooster") {
-        let passwords_json = match serde_json::to_string(&passwords_ref) {
-            Ok(passwords_json) => passwords_json,
-            Err(json_err) => {
-                show_error(
-                    format!(
-                        "Woops, I could not encode the passwords into JSON (reason: {:?}).",
-                        json_err
-                    )
-                    .as_str(),
-                );
-                return Err(1);
-            }
-        };
+fn export_to_json(
+    _matches: &clap::ArgMatches,
+    store: &mut password::v2::PasswordStore,
+) -> Result<(), i32> {
+    let passwords_ref = store.get_all_passwords();
+    let passwords_json = match serde_json::to_string(&passwords_ref) {
+        Ok(passwords_json) => passwords_json,
+        Err(json_err) => {
+            show_error(
+                format!(
+                    "Woops, I could not encode the passwords into JSON (reason: {:?}).",
+                    json_err
+                )
+                .as_str(),
+            );
+            return Err(1);
+        }
+    };
 
-        let passwords = SafeString::new(passwords_json);
-        // We exceptionally print to STDOUT because the export will most likely be redirected to a file
-        println!("{}", passwords.deref());
-        return Ok(());
-    }
-
-    return Err(1);
+    let passwords = SafeString::new(passwords_json);
+    // We exceptionally print to STDOUT because the export will most likely be redirected to a file
+    println!("{}", passwords.deref());
+    return Ok(());
 }

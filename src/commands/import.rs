@@ -12,32 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use ffi;
 use macros::{show_error, show_ok};
 use password::v2::{Password, PasswordStore};
 use serde_json;
 use std::fs::File;
 
 pub fn callback_exec(matches: &clap::ArgMatches, store: &mut PasswordStore) -> Result<(), i32> {
-    let imported_pwds: Vec<Password> = {
-        let path_str = matches.value_of("path_to_json_import").unwrap();
-        let dump_file = File::open(path_str).map_err(|err| {
-            show_error(format!("Uh oh, could not open the file (reason: {})", err).as_str());
-            1
-        })?;
-        serde_json::from_reader(&dump_file).map_err(|json_err| {
-            show_error(
-                format!(
-                    "Woops, I could not import the passwords from JSON (reason: {}).",
-                    json_err
-                )
-                .as_str(),
-            );
-            1
-        })?
-    };
+    let subcommand_name = matches.subcommand_name().unwrap();
+    let subcommand_matches = matches.subcommand_matches(subcommand_name).unwrap();
 
+    let passwords = if subcommand_name == "json" {
+        create_imported_passwords_from_json(subcommand_matches)
+    } else if subcommand_name == "1password" {
+        create_imported_passwords_from_1password(subcommand_matches)
+    } else {
+        unimplemented!("Invalid import source")
+    }?;
+
+    import_passwords(passwords, store)
+}
+
+fn import_passwords(passwords: Vec<Password>, store: &mut PasswordStore) -> Result<(), i32> {
     let mut added = 0;
-    for password in imported_pwds {
+    for password in passwords {
         if let Some(_) = store.get_password(&password.name) {
             show_error(
                 format!(
@@ -84,4 +82,52 @@ pub fn callback_exec(matches: &clap::ArgMatches, store: &mut PasswordStore) -> R
     }
 
     Ok(())
+}
+
+fn create_imported_passwords_from_1password(
+    matches: &clap::ArgMatches,
+) -> Result<Vec<Password>, i32> {
+    let path_str = matches.value_of("path").unwrap();
+    let mut reader = csv::Reader::from_path(path_str).map_err(|err| {
+        show_error(format!("Uh oh, could not open the file (reason: {})", err).as_str());
+        1
+    })?;
+    let mut passwords = vec![];
+    for record_result in reader.records() {
+        if let Ok(record) = record_result {
+            if &record[3] != "Login" {
+                continue;
+            }
+
+            // Fields are, in order: 0/Notes, 1/Password, 2/Title, 3/Type (we can only import "Login"), 4/URL, 5/Username
+            passwords.push(Password {
+                name: record[2].into(),
+                username: record[5].into(),
+                password: record[1].into(),
+                created_at: ffi::time(),
+                updated_at: ffi::time(),
+            })
+        } else {
+            return Err(1);
+        }
+    }
+    return Ok(passwords);
+}
+
+fn create_imported_passwords_from_json(matches: &clap::ArgMatches) -> Result<Vec<Password>, i32> {
+    let path_str = matches.value_of("path").unwrap();
+    let dump_file = File::open(path_str).map_err(|err| {
+        show_error(format!("Uh oh, could not open the file (reason: {})", err).as_str());
+        1
+    })?;
+    serde_json::from_reader(&dump_file).map_err(|json_err| {
+        show_error(
+            format!(
+                "Woops, I could not import the passwords from JSON (reason: {}).",
+                json_err
+            )
+            .as_str(),
+        );
+        1
+    })?
 }

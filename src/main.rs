@@ -273,8 +273,8 @@ fn main() {
         .subcommand(
             App::new("add")
                 .about("Add a new password manually")
-                .arg(Arg::new("app"))
-                .arg(Arg::new("username"))
+                .arg(Arg::new("app").required(true))
+                .arg(Arg::new("username").required(true))
                 .arg(
                     Arg::new("show")
                         .short('s')
@@ -285,7 +285,7 @@ fn main() {
         .subcommand(
             App::new("change")
                 .about("Change a password manually")
-                .arg(Arg::new("app"))
+                .arg(Arg::new("app").required(true))
                 .arg(
                     Arg::new("show")
                         .short('s')
@@ -296,13 +296,13 @@ fn main() {
         .subcommand(
             App::new("delete")
                 .about("Delete a password")
-                .arg(Arg::new("app")),
+                .arg(Arg::new("app").required(true)),
         )
         .subcommand(
             App::new("generate")
                 .about("Generate a password")
-                .arg(Arg::new("app"))
-                .arg(Arg::new("username"))
+                .arg(Arg::new("app").required(true))
+                .arg(Arg::new("username").required(true))
                 .arg(
                     Arg::new("show")
                         .short('s')
@@ -326,7 +326,7 @@ fn main() {
         .subcommand(
             App::new("regenerate")
                 .about("Regenerate a previously existing password")
-                .arg(Arg::new("app"))
+                .arg(Arg::new("app").required(true))
                 .arg(
                     Arg::new("show")
                         .short('s')
@@ -350,7 +350,7 @@ fn main() {
         .subcommand(
             App::new("get")
                 .about("Retrieve a password")
-                .arg(Arg::new("app"))
+                .arg(Arg::new("app").required(true))
                 .arg(
                     Arg::new("show")
                         .short('s')
@@ -361,24 +361,36 @@ fn main() {
         .subcommand(
             App::new("rename")
                 .about("Rename the app for a password")
-                .arg(Arg::new("app"))
-                .arg(Arg::new("new_name")),
+                .arg(Arg::new("app").required(true))
+                .arg(Arg::new("new_name").required(true)),
         )
         .subcommand(
             App::new("transfer")
                 .about("Change the username for a password")
-                .arg(Arg::new("app"))
-                .arg(Arg::new("new_username")),
+                .arg(Arg::new("app").required(true))
+                .arg(Arg::new("new_username").required(true)),
         )
         .subcommand(App::new("list").about("List all apps and usernames"))
-        .subcommand(App::new("import").about("Load all your raw password data from JSON file"))
+        .subcommand(
+            App::new("import")
+                .setting(AppSettings::SubcommandRequiredElseHelp)
+                .about("Load all your raw password data from JSON file")
+                .subcommand(
+                    App::new("json")
+                        .about("Import a file generated with `rooster export json`")
+                        .arg(Arg::new("path").required(true)),
+                )
+                .subcommand(
+                    App::new("1password")
+                        .about("Import a \"Common Fields\" CSV export from 1Password")
+                        .arg(Arg::new("path").required(true)),
+                ),
+        )
         .subcommand(
             App::new("export")
                 .setting(AppSettings::SubcommandRequiredElseHelp)
                 .about("Export raw password data")
-                .subcommand(
-                    App::new("rooster").about("Export raw password data in Rooster's JSON format"),
-                )
+                .subcommand(App::new("json").about("Export raw password data in JSON format"))
                 .subcommand(
                     App::new("1password")
                         .about("Export raw password data in 1Password compatible CSV format"),

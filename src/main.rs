@@ -432,6 +432,15 @@ fn main() {
                         ),
                 )
                 .subcommand(
+                    App::new("csv")
+                        .about("Import a file generated with `rooster export csv`")
+                        .arg(
+                            Arg::new("path")
+                                .required(true)
+                                .about("The path to the file you want to import"),
+                        ),
+                )
+                .subcommand(
                     App::new("1password")
                         .about("Import a \"Common Fields\" CSV export from 1Password")
                         .arg(
@@ -446,6 +455,7 @@ fn main() {
                 .setting(AppSettings::SubcommandRequiredElseHelp)
                 .about("Export raw password data")
                 .subcommand(App::new("json").about("Export raw password data in JSON format"))
+                .subcommand(App::new("csv").about("Export raw password data in CSV format"))
                 .subcommand(
                     App::new("1password")
                         .about("Export raw password data in 1Password compatible CSV format"),

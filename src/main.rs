@@ -265,7 +265,8 @@ fn ask_master_password() -> IoResult<SafeString> {
 
 fn main() {
     let matches: ArgMatches = App::new("rooster")
-        // .global_setting(AppSettings::HelpRequired)
+        .global_setting(AppSettings::HelpRequired)
+        .global_setting(AppSettings::DisableHelpSubcommand)
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .about("Welcome to Rooster, the simple password manager for geeks :-)")
         .version(env!("CARGO_PKG_VERSION"))
@@ -273,8 +274,16 @@ fn main() {
         .subcommand(
             App::new("add")
                 .about("Add a new password manually")
-                .arg(Arg::new("app").required(true))
-                .arg(Arg::new("username").required(true))
+                .arg(
+                    Arg::new("app")
+                        .required(true)
+                        .about("The name of the app (fuzzy-matched)"),
+                )
+                .arg(
+                    Arg::new("username")
+                        .required(true)
+                        .about("Your username for this account"),
+                )
                 .arg(
                     Arg::new("show")
                         .short('s')
@@ -285,7 +294,11 @@ fn main() {
         .subcommand(
             App::new("change")
                 .about("Change a password manually")
-                .arg(Arg::new("app").required(true))
+                .arg(
+                    Arg::new("app")
+                        .required(true)
+                        .about("The name of the app (fuzzy-matched)"),
+                )
                 .arg(
                     Arg::new("show")
                         .short('s')
@@ -294,15 +307,25 @@ fn main() {
                 ),
         )
         .subcommand(
-            App::new("delete")
-                .about("Delete a password")
-                .arg(Arg::new("app").required(true)),
+            App::new("delete").about("Delete a password").arg(
+                Arg::new("app")
+                    .required(true)
+                    .about("The name of the app (fuzzy-matched)"),
+            ),
         )
         .subcommand(
             App::new("generate")
                 .about("Generate a password")
-                .arg(Arg::new("app").required(true))
-                .arg(Arg::new("username").required(true))
+                .arg(
+                    Arg::new("app")
+                        .required(true)
+                        .about("The name of the app (fuzzy-matched)"),
+                )
+                .arg(
+                    Arg::new("username")
+                        .required(true)
+                        .about("Your username for this account"),
+                )
                 .arg(
                     Arg::new("show")
                         .short('s')
@@ -326,7 +349,11 @@ fn main() {
         .subcommand(
             App::new("regenerate")
                 .about("Regenerate a previously existing password")
-                .arg(Arg::new("app").required(true))
+                .arg(
+                    Arg::new("app")
+                        .required(true)
+                        .about("The name of the app (fuzzy-matched)"),
+                )
                 .arg(
                     Arg::new("show")
                         .short('s')
@@ -350,7 +377,11 @@ fn main() {
         .subcommand(
             App::new("get")
                 .about("Retrieve a password")
-                .arg(Arg::new("app").required(true))
+                .arg(
+                    Arg::new("app")
+                        .required(true)
+                        .about("The name of the app (fuzzy-matched)"),
+                )
                 .arg(
                     Arg::new("show")
                         .short('s')
@@ -361,14 +392,30 @@ fn main() {
         .subcommand(
             App::new("rename")
                 .about("Rename the app for a password")
-                .arg(Arg::new("app").required(true))
-                .arg(Arg::new("new_name").required(true)),
+                .arg(
+                    Arg::new("app")
+                        .required(true)
+                        .about("The current name of the app (fuzzy-matched)"),
+                )
+                .arg(
+                    Arg::new("new_name")
+                        .required(true)
+                        .about("The new name of the app"),
+                ),
         )
         .subcommand(
             App::new("transfer")
                 .about("Change the username for a password")
-                .arg(Arg::new("app").required(true))
-                .arg(Arg::new("new_username").required(true)),
+                .arg(
+                    Arg::new("app")
+                        .required(true)
+                        .about("The current name of the app (fuzzy-matched)"),
+                )
+                .arg(
+                    Arg::new("new_username")
+                        .required(true)
+                        .about("Your new username for this account"),
+                ),
         )
         .subcommand(App::new("list").about("List all apps and usernames"))
         .subcommand(
@@ -378,12 +425,20 @@ fn main() {
                 .subcommand(
                     App::new("json")
                         .about("Import a file generated with `rooster export json`")
-                        .arg(Arg::new("path").required(true)),
+                        .arg(
+                            Arg::new("path")
+                                .required(true)
+                                .about("The path to the file you want to import"),
+                        ),
                 )
                 .subcommand(
                     App::new("1password")
                         .about("Import a \"Common Fields\" CSV export from 1Password")
-                        .arg(Arg::new("path").required(true)),
+                        .arg(
+                            Arg::new("path")
+                                .required(true)
+                                .about("The path to the file you want to import"),
+                        ),
                 ),
         )
         .subcommand(
@@ -400,9 +455,13 @@ fn main() {
         .subcommand(
             App::new("set-scrypt-params")
                 .about("Set the key derivation parameters")
-                .arg(Arg::new("log2n"))
-                .arg(Arg::new("r"))
-                .arg(Arg::new("p")),
+                .arg(
+                    Arg::new("log2n")
+                        .required(true)
+                        .about("The log2n parameter"),
+                )
+                .arg(Arg::new("r").required(true).about("The r parameter"))
+                .arg(Arg::new("p").required(true).about("The p parameter")),
         )
         .get_matches();
 

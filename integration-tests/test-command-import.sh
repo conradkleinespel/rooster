@@ -22,6 +22,19 @@ docker volume create rooster >& /dev/null
 # create the file
 printf '\nxxxx\n' | docker run --rm -i -v rooster:/home/rooster rooster init || exit 1
 
+# import and check csv import
+csv_password_export='YouTube,test@example.com,abcd' || exit 1
+echo "$csv_password_export" | docker run --rm -i -v rooster:/home/rooster --entrypoint sh rooster -c 'tee /home/rooster/export.csv' || exit 1
+docker run --rm -i -v rooster:/home/rooster --entrypoint sh rooster -c 'printf "xxxx\n" | rooster import csv /home/rooster/export.csv' || exit 1
+docker run --rm -i -v rooster:/home/rooster --entrypoint sh rooster -c 'printf "xxxx\n" | rooster export csv | grep "YouTube,test@example.com,abcd"' || exit 1
+
+# create a new empty volume for tests
+docker volume rm rooster >& /dev/null
+docker volume create rooster >& /dev/null
+
+# create the file
+printf '\nxxxx\n' | docker run --rm -i -v rooster:/home/rooster rooster init || exit 1
+
 # import and check 1password import
 one_password_export='Note,abcd,YouTube,Login,youtube.com,test@example.com' || exit 1
 echo "$one_password_export" | docker run --rm -i -v rooster:/home/rooster --entrypoint sh rooster -c 'tee /home/rooster/export.1password' || exit 1

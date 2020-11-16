@@ -29,6 +29,8 @@ pub fn callback_exec(matches: &clap::ArgMatches, store: &mut PasswordStore) -> R
 
     let (valid, invalid) = if subcommand_name == "json" {
         create_imported_passwords_from_json(subcommand_matches)
+    } else if subcommand_name == "csv" {
+        create_imported_passwords_from_csv(subcommand_matches)
     } else if subcommand_name == "1password" {
         create_imported_passwords_from_1password(subcommand_matches)
     } else {
@@ -73,6 +75,37 @@ fn import_passwords(
     show_error(format!("Errors: {}", errors).as_str());
 
     Ok(())
+}
+
+fn create_imported_passwords_from_csv(
+    matches: &clap::ArgMatches,
+) -> Result<(Vec<Password>, Vec<Password>), i32> {
+    let path_str = matches.value_of("path").unwrap();
+    let mut reader = csv::ReaderBuilder::new()
+        .has_headers(false)
+        .from_path(path_str)
+        .map_err(|err| {
+            show_error(
+                format!("Uh oh, could not open or read the file (reason: {})", err).as_str(),
+            );
+            1
+        })?;
+    let mut valid = vec![];
+    let mut invalid = vec![];
+    for record_result in reader.records() {
+        if let Ok(record) = record_result {
+            valid.push(Password {
+                name: record[0].into(),
+                username: record[1].into(),
+                password: record[2].into(),
+                created_at: ffi::time(),
+                updated_at: ffi::time(),
+            });
+        } else {
+            return Err(1);
+        }
+    }
+    return Ok((valid, invalid));
 }
 
 fn create_imported_passwords_from_1password(

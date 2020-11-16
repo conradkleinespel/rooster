@@ -35,14 +35,16 @@ pub fn callback_exec(
 
     if subcommand_name == "json" {
         export_to_json(subcommand_matches, store)
+    } else if subcommand_name == "csv" {
+        export_to_csv(subcommand_matches, store)
     } else if subcommand_name == "1password" {
-        export_to_1password(subcommand_matches, store)
+        export_to_csv(subcommand_matches, store)
     } else {
         unimplemented!("Invalid export destination")
     }
 }
 
-fn export_to_1password(
+fn export_to_csv(
     _matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
 ) -> Result<(), i32> {

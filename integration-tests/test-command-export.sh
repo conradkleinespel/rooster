@@ -16,6 +16,10 @@ docker run --rm -i -v rooster:/home/rooster --entrypoint sh rooster -c 'jq ".pas
 docker run --rm -i -v rooster:/home/rooster --entrypoint sh rooster -c 'jq ".passwords[0].username" /home/rooster/rooster-export.json' | grep '"test@example.com"' || exit 1
 docker run --rm -i -v rooster:/home/rooster --entrypoint sh rooster -c 'jq ".passwords[0].name" /home/rooster/rooster-export.json' | grep '"YouTube"' || exit 1
 
+# export in csv format
+docker run --rm -i -v rooster:/home/rooster --entrypoint sh rooster -c 'printf "xxxx\n" | rooster export csv > /home/rooster/rooster-export.csv' || exit 1
+docker run --rm -i -v rooster:/home/rooster --entrypoint sh rooster -c 'cat /home/rooster/rooster-export.csv | grep "YouTube,test@example.com,abcd"' || exit 1
+
 # export in 1password format
 docker run --rm -i -v rooster:/home/rooster --entrypoint sh rooster -c 'printf "xxxx\n" | rooster export 1password > /home/rooster/rooster-export.1password' || exit 1
 docker run --rm -i -v rooster:/home/rooster --entrypoint sh rooster -c 'cat /home/rooster/rooster-export.1password | grep "YouTube,test@example.com,abcd"' || exit 1

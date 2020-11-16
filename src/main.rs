@@ -374,7 +374,7 @@ fn main() {
         .subcommand(
             App::new("import")
                 .setting(AppSettings::SubcommandRequiredElseHelp)
-                .about("Load all your raw password data from JSON file")
+                .about("Import all your existing passwords from elsewhere")
                 .subcommand(
                     App::new("json")
                         .about("Import a file generated with `rooster export json`")

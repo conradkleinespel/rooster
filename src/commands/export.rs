@@ -15,10 +15,16 @@
 use csv::Writer;
 use macros::show_error;
 use password;
+use password::v2::Password;
 use safe_string::SafeString;
 use serde_json;
 use std::io::stdout;
 use std::ops::Deref;
+
+#[derive(Serialize, Deserialize)]
+pub struct JsonExport {
+    passwords: Vec<Password>,
+}
 
 pub fn callback_exec(
     matches: &clap::ArgMatches,
@@ -59,8 +65,14 @@ fn export_to_json(
     _matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
 ) -> Result<(), i32> {
-    let passwords_ref = store.get_all_passwords();
-    let passwords_json = match serde_json::to_string(&passwords_ref) {
+    let export = JsonExport {
+        passwords: store
+            .get_all_passwords()
+            .into_iter()
+            .map(|password| password.clone())
+            .collect(),
+    };
+    let passwords_json = match serde_json::to_string(&export) {
         Ok(passwords_json) => passwords_json,
         Err(json_err) => {
             show_error(

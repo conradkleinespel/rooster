@@ -12,11 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use csv::StringRecord;
 use ffi;
 use macros::{show_error, show_ok};
 use password::v2::{Password, PasswordStore};
 use serde_json;
 use std::fs::File;
+use std::io::Read;
+
+#[derive(Serialize, Deserialize)]
+pub struct JsonExport {
+    passwords: Vec<Password>,
+}
 
 pub fn callback_exec(matches: &clap::ArgMatches, store: &mut PasswordStore) -> Result<(), i32> {
     let subcommand_name = matches.subcommand_name().unwrap();
@@ -88,10 +95,15 @@ fn create_imported_passwords_from_1password(
     matches: &clap::ArgMatches,
 ) -> Result<Vec<Password>, i32> {
     let path_str = matches.value_of("path").unwrap();
-    let mut reader = csv::Reader::from_path(path_str).map_err(|err| {
-        show_error(format!("Uh oh, could not open the file (reason: {})", err).as_str());
-        1
-    })?;
+    let mut reader = csv::ReaderBuilder::new()
+        .has_headers(false)
+        .from_path(path_str)
+        .map_err(|err| {
+            show_error(
+                format!("Uh oh, could not open or read the file (reason: {})", err).as_str(),
+            );
+            1
+        })?;
     let mut passwords = vec![];
     for record_result in reader.records() {
         if let Ok(record) = record_result {
@@ -120,7 +132,7 @@ fn create_imported_passwords_from_json(matches: &clap::ArgMatches) -> Result<Vec
         show_error(format!("Uh oh, could not open the file (reason: {})", err).as_str());
         1
     })?;
-    serde_json::from_reader(&dump_file).map_err(|json_err| {
+    let export: JsonExport = serde_json::from_reader(dump_file).map_err(|json_err| {
         show_error(
             format!(
                 "Woops, I could not import the passwords from JSON (reason: {}).",
@@ -129,5 +141,6 @@ fn create_imported_passwords_from_json(matches: &clap::ArgMatches) -> Result<Vec
             .as_str(),
         );
         1
-    })?
+    })?;
+    Ok(export.passwords)
 }

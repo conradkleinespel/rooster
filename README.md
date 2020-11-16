@@ -16,6 +16,7 @@ Rooster has some unique goals:
 - it is easy to maintain so that it **never becomes unmaintained**
 - it **works completely offline** by saving your password in a single local file
 - it stores **username/password combinations, nothing more, nothing less**
+- it can **import/export** passwords from and to 1Password/JSON/CSV
 
 Rooster protects your passwords with state-of-the-art cryptography algorithms:
 

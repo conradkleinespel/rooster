@@ -12,13 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use csv::StringRecord;
 use ffi;
-use macros::{show_error, show_ok};
+use macros::{show_error, show_ok, show_warning};
 use password::v2::{Password, PasswordStore};
 use serde_json;
 use std::fs::File;
-use std::io::Read;
 
 #[derive(Serialize, Deserialize)]
 pub struct JsonExport {
@@ -29,7 +27,7 @@ pub fn callback_exec(matches: &clap::ArgMatches, store: &mut PasswordStore) -> R
     let subcommand_name = matches.subcommand_name().unwrap();
     let subcommand_matches = matches.subcommand_matches(subcommand_name).unwrap();
 
-    let passwords = if subcommand_name == "json" {
+    let (valid, invalid) = if subcommand_name == "json" {
         create_imported_passwords_from_json(subcommand_matches)
     } else if subcommand_name == "1password" {
         create_imported_passwords_from_1password(subcommand_matches)
@@ -37,63 +35,49 @@ pub fn callback_exec(matches: &clap::ArgMatches, store: &mut PasswordStore) -> R
         unimplemented!("Invalid import source")
     }?;
 
-    import_passwords(passwords, store)
+    import_passwords(valid, invalid, store)
 }
 
-fn import_passwords(passwords: Vec<Password>, store: &mut PasswordStore) -> Result<(), i32> {
-    let mut added = 0;
-    for password in passwords {
+fn import_passwords(
+    valid: Vec<Password>,
+    invalid: Vec<Password>,
+    store: &mut PasswordStore,
+) -> Result<(), i32> {
+    let mut errors = 0;
+    let mut warnings = 0;
+    let mut successes = 0;
+    for password in invalid {
+        show_error(format!("{}, invalid format, skipping", password.name).as_str());
+        errors += 1;
+    }
+    for password in valid {
         if let Some(_) = store.get_password(&password.name) {
-            show_error(
-                format!(
-                    "Oh, password for {} is already present! Skipping it.",
-                    password.name
-                )
-                .as_str(),
+            show_warning(
+                format!("{}, already in password store, skipping", password.name).as_str(),
             );
+            warnings += 1;
             continue;
         }
 
         if let Err(err) = store.add_password(password.clone()) {
-            show_error(
-                format!(
-                    "Woops, couldn't add password for {} (reason: {:?})",
-                    password.name, err
-                )
-                .as_str(),
-            );
+            show_error(format!("{}, error ({:?})", password.name, err).as_str());
+            errors += 1;
             continue;
         }
 
-        added += 1;
+        successes += 1;
     }
 
-    if added == 0 {
-        show_error("Apparently, I could not find any new password :(");
-    } else if added == 1 {
-        show_ok(
-            format!(
-                "Imported {} brand new password into the Rooster file!",
-                added
-            )
-            .as_str(),
-        );
-    } else {
-        show_ok(
-            format!(
-                "Imported {} brand new passwords into the Rooster file!",
-                added
-            )
-            .as_str(),
-        );
-    }
+    show_ok(format!("Imported: {}", successes).as_str());
+    show_warning(format!("Warnings: {}", warnings).as_str());
+    show_error(format!("Errors: {}", errors).as_str());
 
     Ok(())
 }
 
 fn create_imported_passwords_from_1password(
     matches: &clap::ArgMatches,
-) -> Result<Vec<Password>, i32> {
+) -> Result<(Vec<Password>, Vec<Password>), i32> {
     let path_str = matches.value_of("path").unwrap();
     let mut reader = csv::ReaderBuilder::new()
         .has_headers(false)
@@ -104,29 +88,39 @@ fn create_imported_passwords_from_1password(
             );
             1
         })?;
-    let mut passwords = vec![];
+    let mut valid = vec![];
+    let mut invalid = vec![];
     for record_result in reader.records() {
         if let Ok(record) = record_result {
             if &record[3] != "Login" {
+                invalid.push(Password {
+                    name: record[2].into(),
+                    username: record[5].into(),
+                    password: record[1].into(),
+                    created_at: ffi::time(),
+                    updated_at: ffi::time(),
+                });
                 continue;
             }
 
             // Fields are, in order: 0/Notes, 1/Password, 2/Title, 3/Type (we can only import "Login"), 4/URL, 5/Username
-            passwords.push(Password {
+            valid.push(Password {
                 name: record[2].into(),
                 username: record[5].into(),
                 password: record[1].into(),
                 created_at: ffi::time(),
                 updated_at: ffi::time(),
-            })
+            });
         } else {
             return Err(1);
         }
     }
-    return Ok(passwords);
+    return Ok((valid, invalid));
 }
 
-fn create_imported_passwords_from_json(matches: &clap::ArgMatches) -> Result<Vec<Password>, i32> {
+fn create_imported_passwords_from_json(
+    matches: &clap::ArgMatches,
+) -> Result<(Vec<Password>, Vec<Password>), i32> {
     let path_str = matches.value_of("path").unwrap();
     let dump_file = File::open(path_str).map_err(|err| {
         show_error(format!("Uh oh, could not open the file (reason: {})", err).as_str());
@@ -142,5 +136,5 @@ fn create_imported_passwords_from_json(matches: &clap::ArgMatches) -> Result<Vec
         );
         1
     })?;
-    Ok(export.passwords)
+    Ok((export.passwords, vec![]))
 }

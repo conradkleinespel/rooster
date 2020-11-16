@@ -3,7 +3,6 @@
 Rooster is a simple password manager for geeks (it works in the terminal).
 
 ![CI](https://github.com/conradkleinespel/rooster/workflows/CI/badge.svg)
-[![Chat on Discord](https://img.shields.io/badge/chat-on%20discord-7289DA)](https://discord.gg/9zXtYqQ)
 
 [![asciicast](https://asciinema.org/a/9opp6uXiI2XFURj8yNHYV3xfb.svg)](https://asciinema.org/a/9opp6uXiI2XFURj8yNHYV3xfb)
 

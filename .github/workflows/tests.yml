@@ -27,6 +27,8 @@ jobs:
         run: ./integration-tests/test-command-delete.sh
       - name: Run integration test command-export
         run: ./integration-tests/test-command-export.sh
+      - name: Run integration test command-import
+        run: ./integration-tests/test-command-import.sh
       - name: Run integration test command-generate
         run: ./integration-tests/test-command-generate.sh
       - name: Run integration test command-get

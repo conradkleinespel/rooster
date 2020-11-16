@@ -111,31 +111,40 @@ fn request_password_index_from_stdin(passwords: &Vec<&Password>, prompt: &str) -
                 match line.trim().parse::<usize>() {
                     Ok(index) => {
                         if index == 0 || index > passwords.len() {
-                            write_to_stderr(format!(
-                                "I need a number between 1 and {}. Let's try again:",
-                                passwords.len()
-                            ).as_str());
+                            write_to_stderr(
+                                format!(
+                                    "I need a number between 1 and {}. Let's try again:",
+                                    passwords.len()
+                                )
+                                .as_str(),
+                            );
                             continue;
                         }
 
                         return index - 1;
                     }
                     Err(err) => {
-                        write_to_stderr(format!(
+                        write_to_stderr(
+                            format!(
                             "This isn't a valid number (reason: {}). Let's try again (1 to {}): ",
                             err,
                             passwords.len()
-                        ).as_str());
+                        )
+                            .as_str(),
+                        );
                         continue;
                     }
                 };
             }
             Err(err) => {
-                write_to_stderr(format!(
-                    "I couldn't read that (reason: {}). Let's try again (1 to {}): ",
-                    err,
-                    passwords.len()
-                ).as_str());
+                write_to_stderr(
+                    format!(
+                        "I couldn't read that (reason: {}). Let's try again (1 to {}): ",
+                        err,
+                        passwords.len()
+                    )
+                    .as_str(),
+                );
             }
         }
     }

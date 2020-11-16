@@ -16,9 +16,7 @@ use macros::{show_error, show_title_1};
 use rpassword::prompt_password_stderr;
 use safe_string::SafeString;
 
-pub fn callback_exec(
-    _matches: &clap::ArgMatches,
-) -> Result<(), i32> {
+pub fn callback_exec(_matches: &clap::ArgMatches) -> Result<(), i32> {
     let (filename, filename_from_env) = match ::get_password_file_path() {
         Ok(path) => path,
         Err(_) => {

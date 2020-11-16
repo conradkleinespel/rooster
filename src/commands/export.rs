@@ -12,39 +12,82 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use csv::Writer;
 use macros::show_error;
 use password;
+use password::v2::Password;
 use safe_string::SafeString;
 use serde_json;
+use std::io::stdout;
 use std::ops::Deref;
+
+#[derive(Serialize, Deserialize)]
+pub struct JsonExport {
+    passwords: Vec<Password>,
+}
 
 pub fn callback_exec(
     matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
 ) -> Result<(), i32> {
-    let passwords_ref = store.get_all_passwords();
+    let subcommand_name = matches.subcommand_name().unwrap();
+    let subcommand_matches = matches.subcommand_matches(subcommand_name).unwrap();
 
-    if matches.is_present("1password") {
-        println!("Exporting for 1password");
-        Ok(())
+    if subcommand_name == "json" {
+        export_to_json(subcommand_matches, store)
+    } else if subcommand_name == "1password" {
+        export_to_1password(subcommand_matches, store)
     } else {
-        let passwords_json = match serde_json::to_string(&passwords_ref) {
-            Ok(passwords_json) => passwords_json,
-            Err(json_err) => {
-                show_error(
-                    format!(
-                        "Woops, I could not encode the passwords into JSON (reason: {:?}).",
-                        json_err
-                    )
-                    .as_str(),
-                );
-                return Err(1);
-            }
-        };
-
-        let passwords = SafeString::new(passwords_json);
-        // We exceptionally print to STDOUT because the export will most likely be redirected to a file
-        println!("{}", passwords.deref());
-        Ok(())
+        unimplemented!("Invalid export destination")
     }
+}
+
+fn export_to_1password(
+    _matches: &clap::ArgMatches,
+    store: &mut password::v2::PasswordStore,
+) -> Result<(), i32> {
+    let passwords_ref = store.get_all_passwords();
+    let mut csv_writer = Writer::from_writer(stdout());
+    for password in passwords_ref {
+        match csv_writer.write_record(&[
+            &password.name,
+            &password.username,
+            password.password.inner.as_str(),
+        ]) {
+            Ok(_) => {}
+            Err(_) => return Err(1),
+        }
+    }
+    return Ok(());
+}
+
+fn export_to_json(
+    _matches: &clap::ArgMatches,
+    store: &mut password::v2::PasswordStore,
+) -> Result<(), i32> {
+    let export = JsonExport {
+        passwords: store
+            .get_all_passwords()
+            .into_iter()
+            .map(|password| password.clone())
+            .collect(),
+    };
+    let passwords_json = match serde_json::to_string(&export) {
+        Ok(passwords_json) => passwords_json,
+        Err(json_err) => {
+            show_error(
+                format!(
+                    "Woops, I could not encode the passwords into JSON (reason: {:?}).",
+                    json_err
+                )
+                .as_str(),
+            );
+            return Err(1);
+        }
+    };
+
+    let passwords = SafeString::new(passwords_json);
+    // We exceptionally print to STDOUT because the export will most likely be redirected to a file
+    println!("{}", passwords.deref());
+    return Ok(());
 }

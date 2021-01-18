@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use macros::show_ok;
+use io::WriterManager;
 use password;
 use safe_string::SafeString;
+use std::io::Write;
 use std::ops::Deref;
 
 // On Windows and Mac, we'll use the native solutions provided by the OS libraries
@@ -89,14 +90,28 @@ pub fn paste_keys() -> String {
     "Ctrl+V".to_string()
 }
 
-pub fn confirm_password_retrieved(show: bool, password: &password::v2::Password) {
+pub fn confirm_password_retrieved<
+    ErrorWriter: Write + ?Sized,
+    OutputWriter: Write + ?Sized,
+    InstructionWriter: Write + ?Sized,
+>(
+    show: bool,
+    password: &password::v2::Password,
+    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
+) {
     if show {
-        show_ok(format!("Alright! Here is your password for {}:", password.name).as_str());
-        show_ok(format!("Username: {}", password.username).as_str());
-        show_ok(format!("Password: {}", password.password.deref()).as_str());
+        writer
+            .output()
+            .success(format!("Alright! Here is your password for {}:", password.name).as_str());
+        writer
+            .output()
+            .success(format!("Username: {}", password.username).as_str());
+        writer
+            .output()
+            .success(format!("Password: {}", password.password.deref()).as_str());
     } else {
         if copy_to_clipboard(&password.password).is_err() {
-            show_ok(
+            writer.output().success(
                 format!(
                     "Hmm, I tried to copy your new password to your clipboard, but \
                      something went wrong. You can see it with `rooster get '{}' --show`",
@@ -105,9 +120,13 @@ pub fn confirm_password_retrieved(show: bool, password: &password::v2::Password)
                 .as_str(),
             );
         } else {
-            show_ok(format!("Alright! Here is your password for {}:", password.name).as_str());
-            show_ok(format!("Username: {}", password.username).as_str());
-            show_ok(
+            writer
+                .output()
+                .success(format!("Alright! Here is your password for {}:", password.name).as_str());
+            writer
+                .output()
+                .success(format!("Username: {}", password.username).as_str());
+            writer.output().success(
                 format!(
                     "Password: ******** (copied to clipboard, paste with {})",
                     paste_keys()

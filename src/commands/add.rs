@@ -13,38 +13,44 @@
 // limitations under the License.
 
 use clip::{copy_to_clipboard, paste_keys};
-use macros::{show_error, show_ok};
+use io::{ReaderManager, WriterManager};
 use password;
-use rpassword::prompt_password_stderr;
-use safe_string::SafeString;
+use std::io::{BufRead, Write};
 use std::ops::Deref;
 
-pub fn callback_exec(
+pub fn callback_exec<
+    R: BufRead,
+    ErrorWriter: Write + ?Sized,
+    OutputWriter: Write + ?Sized,
+    InstructionWriter: Write + ?Sized,
+>(
     matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
+    reader: &mut ReaderManager<R>,
+    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
 ) -> Result<(), i32> {
     let app_name = matches.value_of("app").unwrap();
     let username = matches.value_of("username").unwrap();
 
     if store.has_password(app_name.deref()) {
-        show_error("Woops, there is already an app with that name.");
+        writer
+            .error()
+            .error("Woops, there is already an app with that name.");
         return Err(1);
     }
 
-    match prompt_password_stderr(
-        format!("What password do you want for \"{}\"? ", app_name).as_str(),
-    ) {
+    writer
+        .instruction()
+        .prompt(format!("What password do you want for \"{}\"? ", app_name).as_str());
+    match reader.read_password() {
         Ok(password_as_string) => {
-            let password_as_string_clipboard = SafeString::new(password_as_string.clone());
-            let password = password::v2::Password::new(
-                app_name.clone(),
-                username,
-                SafeString::new(password_as_string),
-            );
+            let password_as_string_clipboard = password_as_string.clone();
+            let password =
+                password::v2::Password::new(app_name.clone(), username, password_as_string);
             match store.add_password(password) {
                 Ok(_) => {
                     if matches.is_present("show") {
-                        show_ok(
+                        writer.output().success(
                             format!(
                                 "Alright! Here is your password: {}",
                                 password_as_string_clipboard.deref()
@@ -55,7 +61,7 @@ pub fn callback_exec(
                     }
 
                     if copy_to_clipboard(&password_as_string_clipboard).is_err() {
-                        show_ok(
+                        writer.output().success(
                             format!(
                                 "Hmm, I tried to copy your new password to your clipboard, \
                                  but something went wrong. Don't worry, it's saved, and you \
@@ -65,7 +71,7 @@ pub fn callback_exec(
                             .as_str(),
                         );
                     } else {
-                        show_ok(
+                        writer.output().success(
                             format!(
                                 "Alright! I've saved your new password. You can paste it \
                                  anywhere with {}.",
@@ -76,17 +82,16 @@ pub fn callback_exec(
                     }
                 }
                 Err(err) => {
-                    show_error(
+                    writer.error().error(
                         format!("Woops, I couldn't add the password (reason: {:?}).", err).as_str(),
                     );
                     return Err(1);
                 }
             }
-
             Ok(())
         }
         Err(err) => {
-            show_error(
+            writer.error().error(
                 format!("\nI couldn't read the app's password (reason: {:?}).", err).as_str(),
             );
             Err(1)

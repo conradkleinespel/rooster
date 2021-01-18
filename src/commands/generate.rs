@@ -14,19 +14,29 @@
 
 use clip::{copy_to_clipboard, paste_keys};
 use generate::{check_password_len, PasswordSpec};
-use macros::{show_error, show_ok};
+use io::{ReaderManager, WriterManager};
 use password;
+use std::io::{BufRead, Write};
 use std::ops::Deref;
 
-pub fn callback_exec(
+pub fn callback_exec<
+    R: BufRead,
+    ErrorWriter: Write + ?Sized,
+    OutputWriter: Write + ?Sized,
+    InstructionWriter: Write + ?Sized,
+>(
     matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
+    reader: &mut ReaderManager<R>,
+    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
 ) -> Result<(), i32> {
     let app_name = matches.value_of("app").unwrap();
     let username = matches.value_of("username").unwrap();
 
     if store.has_password(app_name.deref()) {
-        show_error("Woops, there is already an app with that name.");
+        writer
+            .error()
+            .error("Woops, there is already an app with that name.");
         return Err(1);
     }
 
@@ -34,13 +44,13 @@ pub fn callback_exec(
         matches.is_present("alnum"),
         matches
             .value_of("length")
-            .and_then(|len| check_password_len(len.parse::<usize>().ok())),
+            .and_then(|len| check_password_len(len.parse::<usize>().ok(), writer)),
     );
 
     let password_as_string = match pwspec.generate_hard_password() {
         Ok(password_as_string) => password_as_string,
         Err(io_err) => {
-            show_error(
+            writer.error().error(
                 format!(
                     "Woops, I could not generate the password (reason: {:?}).",
                     io_err
@@ -58,7 +68,7 @@ pub fn callback_exec(
     match store.add_password(password) {
         Ok(_) => {
             if matches.is_present("show") {
-                show_ok(
+                writer.output().success(
                     format!(
                         "Alright! Here is your password: {}",
                         password_as_string_clipboard.deref()
@@ -69,7 +79,7 @@ pub fn callback_exec(
             }
 
             if copy_to_clipboard(&password_as_string_clipboard).is_err() {
-                show_ok(
+                writer.output().success(
                     format!(
                         "Hmm, I tried to copy your new password to your clipboard, but \
                          something went wrong. Don't worry, it's saved, and you can see it \
@@ -79,7 +89,7 @@ pub fn callback_exec(
                     .as_str(),
                 );
             } else {
-                show_ok(
+                writer.output().success(
                     format!(
                         "Alright! I've saved your new password. You can paste it anywhere \
                          with {}.",
@@ -92,7 +102,9 @@ pub fn callback_exec(
             Ok(())
         }
         Err(err) => {
-            show_error(format!("\nI couldn't add this password (reason: {:?}).", err).as_str());
+            writer
+                .error()
+                .error(format!("\nI couldn't add this password (reason: {:?}).", err).as_str());
             Err(1)
         }
     }

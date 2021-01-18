@@ -14,15 +14,21 @@
 
 use clip;
 use ffi;
+use io::{ReaderManager, WriterManager};
 use list;
-use macros::show_error;
 use password;
-use rpassword::prompt_password_stderr;
-use safe_string::SafeString;
+use std::io::{BufRead, Write};
 
-pub fn callback_exec(
+pub fn callback_exec<
+    R: BufRead,
+    ErrorWriter: Write + ?Sized,
+    OutputWriter: Write + ?Sized,
+    InstructionWriter: Write + ?Sized,
+>(
     matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
+    reader: &mut ReaderManager<R>,
+    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
 ) -> Result<(), i32> {
     let query = matches.value_of("app").unwrap();
 
@@ -31,19 +37,21 @@ pub fn callback_exec(
         query,
         list::WITH_NUMBERS,
         "Which password would like to update?",
+        reader,
+        writer,
     )
     .ok_or(1)?
     .clone();
 
-    let password_as_string = prompt_password_stderr(
-        format!("What password do you want for \"{}\"? ", password.name).as_str(),
-    )
-    .map_err(|err| {
-        show_error(format!("\nI couldn't read the app's password (reason: {:?}).", err).as_str());
+    writer
+        .instruction()
+        .prompt(format!("What password do you want for \"{}\"? ", password.name).as_str());
+    let password_as_string = reader.read_password().map_err(|err| {
+        writer
+            .error()
+            .error(format!("\nI couldn't read the app's password (reason: {:?}).", err).as_str());
         1
     })?;
-
-    let password_as_string = SafeString::new(password_as_string);
 
     let password = store
         .change_password(&password.name, &|old_password: password::v2::Password| {
@@ -56,7 +64,7 @@ pub fn callback_exec(
             }
         })
         .map_err(|err| {
-            show_error(
+            writer.error().error(
                 format!(
                     "Woops, I couldn't save the new password (reason: {:?}).",
                     err
@@ -67,6 +75,6 @@ pub fn callback_exec(
         })?;
 
     let show = matches.is_present("show");
-    clip::confirm_password_retrieved(show, &password);
+    clip::confirm_password_retrieved(show, &password, writer);
     Ok(())
 }

@@ -13,12 +13,12 @@
 // limitations under the License.
 
 use csv::Writer;
-use macros::show_error;
+use io::{ReaderManager, WriterManager};
 use password;
 use password::v2::Password;
 use safe_string::SafeString;
 use serde_json;
-use std::io::stdout;
+use std::io::{BufRead, Cursor, Write};
 use std::ops::Deref;
 
 #[derive(Serialize, Deserialize)]
@@ -26,30 +26,43 @@ pub struct JsonExport {
     passwords: Vec<Password>,
 }
 
-pub fn callback_exec(
+pub fn callback_exec<
+    R: BufRead,
+    ErrorWriter: Write + ?Sized,
+    OutputWriter: Write + ?Sized,
+    InstructionWriter: Write + ?Sized,
+>(
     matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
+    reader: &mut ReaderManager<R>,
+    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
 ) -> Result<(), i32> {
     let subcommand_name = matches.subcommand_name().unwrap();
     let subcommand_matches = matches.subcommand_matches(subcommand_name).unwrap();
 
     if subcommand_name == "json" {
-        export_to_json(subcommand_matches, store)
+        export_to_json(subcommand_matches, store, writer)
     } else if subcommand_name == "csv" {
-        export_to_csv(subcommand_matches, store)
+        export_to_csv(subcommand_matches, store, writer)
     } else if subcommand_name == "1password" {
-        export_to_csv(subcommand_matches, store)
+        export_to_csv(subcommand_matches, store, writer)
     } else {
         unimplemented!("Invalid export destination")
     }
 }
 
-fn export_to_csv(
-    _matches: &clap::ArgMatches,
+fn export_to_csv<
+    ErrorWriter: Write + ?Sized,
+    OutputWriter: Write + ?Sized,
+    InstructionWriter: Write + ?Sized,
+>(
+    matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
+    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
 ) -> Result<(), i32> {
     let passwords_ref = store.get_all_passwords();
-    let mut csv_writer = Writer::from_writer(stdout());
+    let output_cursor: Cursor<Vec<u8>> = Cursor::new(Vec::new());
+    let mut csv_writer = Writer::from_writer(output_cursor);
     for password in passwords_ref {
         match csv_writer.write_record(&[
             &password.name,
@@ -60,12 +73,23 @@ fn export_to_csv(
             Err(_) => return Err(1),
         }
     }
+    writer.output().raw(
+        String::from_utf8(csv_writer.into_inner().unwrap().into_inner())
+            .unwrap()
+            .as_str(),
+    );
+
     return Ok(());
 }
 
-fn export_to_json(
-    _matches: &clap::ArgMatches,
+fn export_to_json<
+    ErrorWriter: Write + ?Sized,
+    OutputWriter: Write + ?Sized,
+    InstructionWriter: Write + ?Sized,
+>(
+    matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
+    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
 ) -> Result<(), i32> {
     let export = JsonExport {
         passwords: store
@@ -77,7 +101,7 @@ fn export_to_json(
     let passwords_json = match serde_json::to_string(&export) {
         Ok(passwords_json) => passwords_json,
         Err(json_err) => {
-            show_error(
+            writer.error().error(
                 format!(
                     "Woops, I could not encode the passwords into JSON (reason: {:?}).",
                     json_err
@@ -89,7 +113,8 @@ fn export_to_json(
     };
 
     let passwords = SafeString::new(passwords_json);
-    // We exceptionally print to STDOUT because the export will most likely be redirected to a file
-    println!("{}", passwords.deref());
+    writer
+        .output()
+        .raw(format!("{}", passwords.deref()).as_str());
     return Ok(());
 }

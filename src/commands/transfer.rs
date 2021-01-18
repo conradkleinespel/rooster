@@ -13,13 +13,21 @@
 // limitations under the License.
 
 use ffi;
+use io::{ReaderManager, WriterManager};
 use list;
-use macros::{show_error, show_ok};
 use password;
+use std::io::{BufRead, Write};
 
-pub fn callback_exec(
+pub fn callback_exec<
+    R: BufRead,
+    ErrorWriter: Write + ?Sized,
+    OutputWriter: Write + ?Sized,
+    InstructionWriter: Write + ?Sized,
+>(
     matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
+    reader: &mut ReaderManager<R>,
+    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
 ) -> Result<(), i32> {
     let query = matches.value_of("app").unwrap();
     let new_username = matches.value_of("new_username").unwrap().to_owned();
@@ -29,6 +37,8 @@ pub fn callback_exec(
         query,
         list::WITH_NUMBERS,
         "Which password would you like to transfer?",
+        reader,
+        writer,
     )
     .ok_or(1)?
     .clone();
@@ -48,11 +58,13 @@ pub fn callback_exec(
 
     match change_result {
         Ok(_) => {
-            show_ok(format!("Done! I've transfered {} to {}", old_username, new_username).as_str());
+            writer.output().success(
+                format!("Done! I've transfered {} to {}", old_username, new_username).as_str(),
+            );
             Ok(())
         }
         Err(err) => {
-            show_error(
+            writer.error().error(
                 format!(
                     "Woops, I couldn't save the new app name (reason: {:?}).",
                     err

@@ -12,13 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use io::{ReaderManager, WriterManager};
 use list;
-use macros::{show_error, show_ok};
 use password;
+use std::io::{BufRead, Write};
 
-pub fn callback_exec(
+pub fn callback_exec<
+    R: BufRead,
+    ErrorWriter: Write + ?Sized,
+    OutputWriter: Write + ?Sized,
+    InstructionWriter: Write + ?Sized,
+>(
     matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
+    reader: &mut ReaderManager<R>,
+    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
 ) -> Result<(), i32> {
     let query = matches.value_of("app").unwrap();
 
@@ -27,12 +35,14 @@ pub fn callback_exec(
         query,
         list::WITH_NUMBERS,
         "Which password would you like me to delete?",
+        reader,
+        writer,
     )
     .ok_or(1)?
     .clone();
 
     if let Err(err) = store.delete_password(&password.name) {
-        show_error(
+        writer.error().error(
             format!(
                 "Woops, I couldn't delete this password (reason: {:?}).",
                 err
@@ -42,7 +52,9 @@ pub fn callback_exec(
         return Err(1);
     }
 
-    show_ok(format!("Done! I've deleted the password for \"{}\".", password.name).as_str());
+    writer
+        .output()
+        .success(format!("Done! I've deleted the password for \"{}\".", password.name).as_str());
 
     Ok(())
 }

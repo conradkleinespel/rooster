@@ -39,7 +39,7 @@ extern "C" {
 
 /// The schema of the JSON content in the password file.
 ///
-/// ```
+/// ```json
 /// {
 ///     "passwords": [
 ///         "name": "YouTube",

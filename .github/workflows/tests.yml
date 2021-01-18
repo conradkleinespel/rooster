@@ -7,47 +7,15 @@ jobs:
     name: Run unit and integration tests
     runs-on: ubuntu-latest
     steps:
+      - name: Install dependencies
+        run: sudo apt install curl unzip pkg-config libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libx11-dev libxmu-dev python3 libssl-dev libsodium-dev xsel
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Build and push
-        uses: docker/build-push-action@v2
+      - uses: actions-rs/toolchain@v1
+        name: Install rust
         with:
-          context: .
-          file: ./Dockerfile.alpine
-          platforms: linux/amd64
-          push: false
-          tags: rooster:latest
-      - name: Run unit tests
-        run: docker run --user root --rm --entrypoint /bin/sh rooster -c 'cargo test'
-      - name: Run integration test command-add
-        run: ./integration-tests/test-command-add.sh
-      - name: Run integration test command-change
-        run: ./integration-tests/test-command-change.sh
-      - name: Run integration test command-delete
-        run: ./integration-tests/test-command-delete.sh
-      - name: Run integration test command-export
-        run: ./integration-tests/test-command-export.sh
-      - name: Run integration test command-import
-        run: ./integration-tests/test-command-import.sh
-      - name: Run integration test command-generate
-        run: ./integration-tests/test-command-generate.sh
-      - name: Run integration test command-get
-        run: ./integration-tests/test-command-get.sh
-      - name: Run integration test command-list
-        run: ./integration-tests/test-command-list.sh
-      - name: Run integration test command-regenerate
-        run: ./integration-tests/test-command-regenerate.sh
-      - name: Run integration test command-rename
-        run: ./integration-tests/test-command-rename.sh
-      - name: Run integration test command-set-master-password
-        run: ./integration-tests/test-command-set-master-password.sh
-      - name: Run integration test command-transfer
-        run: ./integration-tests/test-command-transfer.sh
-      - name: Run integration test corruption
-        run: ./integration-tests/test-corruption.sh
-      - name: Run integration test password-retry-nok
-        run: ./integration-tests/test-password-retry-nok.sh
-      - name: Run integration test password-retry-ok
-        run: ./integration-tests/test-password-retry-ok.sh
-      - name: Run integration test setup
-        run: ./integration-tests/test-setup.sh
+          toolchain: stable
+      - uses: actions-rs/cargo@v1
+        name: Run cargo test
+        with:
+          command: test

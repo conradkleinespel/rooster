@@ -12,28 +12,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use macros::{show_error, show_ok};
+use io::{ReaderManager, WriterManager};
 use password;
-use rpassword::prompt_password_stderr;
-use safe_string::SafeString;
+use std::io::{BufRead, Write};
 use std::ops::Deref;
 
-pub fn callback_exec(
-    _matches: &clap::ArgMatches,
+pub fn callback_exec<
+    R: BufRead,
+    ErrorWriter: Write + ?Sized,
+    OutputWriter: Write + ?Sized,
+    InstructionWriter: Write + ?Sized,
+>(
+    matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
+    reader: &mut ReaderManager<R>,
+    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
 ) -> Result<(), i32> {
-    match prompt_password_stderr("Type your new master password: ") {
+    writer
+        .instruction()
+        .prompt("Type your new master password: ");
+    match reader.read_password() {
         Ok(master_password) => {
-            let master_password = SafeString::new(master_password);
-
-            let master_password_confirmation = match prompt_password_stderr(
-                "Type your new \
-                 master password \
-                 once more: ",
-            ) {
-                Ok(master_password_confirmation) => SafeString::new(master_password_confirmation),
+            writer
+                .instruction()
+                .prompt("Type your new master password once more: ");
+            let master_password_confirmation = match reader.read_password() {
+                Ok(master_password_confirmation) => master_password_confirmation,
                 Err(err) => {
-                    show_error(
+                    writer.error().error(
                         format!(
                             "I could not read your new master password (reason: {:?}).",
                             err
@@ -45,14 +51,16 @@ pub fn callback_exec(
             };
 
             if master_password != master_password_confirmation {
-                show_error("The master password confirmation did not match. Aborting.");
+                writer
+                    .error()
+                    .error("The master password confirmation did not match. Aborting.");
                 return Err(1);
             }
 
             store.change_master_password(master_password.deref());
         }
         Err(err) => {
-            show_error(
+            writer.error().error(
                 format!(
                     "I could not read your new master password (reason: {:?}).",
                     err
@@ -62,6 +70,8 @@ pub fn callback_exec(
             return Err(1);
         }
     }
-    show_ok("Your master password has been changed.");
+    writer
+        .output()
+        .success("Your master password has been changed.");
     Ok(())
 }

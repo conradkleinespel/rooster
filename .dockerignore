@@ -2,7 +2,6 @@
 /rooster-banner.png
 /README.md
 /LICENSE-APACHE
-/integration-tests.sh
 /Dockerfile.*
 /.dockerignore
 /.git

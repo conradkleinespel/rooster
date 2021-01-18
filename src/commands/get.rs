@@ -13,12 +13,21 @@
 // limitations under the License.
 
 use clip;
+use io::{ReaderManager, WriterManager};
 use list;
 use password;
+use std::io::{BufRead, Write};
 
-pub fn callback_exec(
+pub fn callback_exec<
+    R: BufRead,
+    ErrorWriter: Write + ?Sized,
+    OutputWriter: Write + ?Sized,
+    InstructionWriter: Write + ?Sized,
+>(
     matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
+    reader: &mut ReaderManager<R>,
+    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
 ) -> Result<(), i32> {
     let show = matches.is_present("show");
     let query = matches.value_of("app").unwrap();
@@ -32,9 +41,10 @@ pub fn callback_exec(
         },
     );
     let password =
-        list::search_and_choose_password(store, query, list::WITH_NUMBERS, &prompt).ok_or(1)?;
+        list::search_and_choose_password(store, query, list::WITH_NUMBERS, &prompt, reader, writer)
+            .ok_or(1)?;
 
-    clip::confirm_password_retrieved(show, &password);
+    clip::confirm_password_retrieved(show, &password, writer);
 
     Ok(())
 }

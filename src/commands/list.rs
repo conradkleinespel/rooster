@@ -12,23 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use io::{ReaderManager, WriterManager};
 use list;
 use password;
+use std::io::{BufRead, Write};
 
-pub fn callback_exec(
-    _matches: &clap::ArgMatches,
+pub fn callback_exec<
+    R: BufRead,
+    ErrorWriter: Write + ?Sized,
+    OutputWriter: Write + ?Sized,
+    InstructionWriter: Write + ?Sized,
+>(
+    matches: &clap::ArgMatches,
     store: &mut password::v2::PasswordStore,
+    reader: &mut ReaderManager<R>,
+    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
 ) -> Result<(), i32> {
     let passwords = store.get_all_passwords();
 
     if passwords.len() == 0 {
-        println!("No passwords on record yet. Add one with `rooster add <app> <username>`.");
+        writer
+            .output()
+            .info("No passwords on record yet. Add one with `rooster add <app> <username>`.");
     } else {
-        list::print_list_of_passwords(
-            &passwords,
-            list::WITHOUT_NUMBERS,
-            list::OutputStream::Stdout,
-        );
+        list::print_list_of_passwords(&passwords, list::WITHOUT_NUMBERS, writer);
     }
 
     Ok(())

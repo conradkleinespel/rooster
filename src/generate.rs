@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use macros::show_error;
+use io::WriterManager;
 use rand::{rngs::OsRng, Rng};
 use safe_string::SafeString;
-use std::io::Result as IoResult;
+use std::io::{Result as IoResult, Write};
 
 fn generate_password(alnum: bool, len: usize) -> IoResult<SafeString> {
     let mut password_as_string = String::new();
@@ -72,7 +72,14 @@ impl PasswordSpec {
     }
 }
 
-pub fn check_password_len(opt: Option<usize>) -> Option<usize> {
+pub fn check_password_len<
+    ErrorWriter: Write + ?Sized,
+    OutputWriter: Write + ?Sized,
+    InstructionWriter: Write + ?Sized,
+>(
+    opt: Option<usize>,
+    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
+) -> Option<usize> {
     match opt {
         Some(len) => {
             // We want passwords to contain at least one uppercase letter, one lowercase
@@ -81,15 +88,21 @@ pub fn check_password_len(opt: Option<usize>) -> Option<usize> {
             // a password of length < 4 with 4 different kinds of characters (uppercase,
             // lowercase, numeric, punctuation).
             if len < 4 {
-                show_error("Woops! The length of the password must be at least 4. This");
-                show_error("allows us to make sure your password is secure.");
+                writer
+                    .error()
+                    .error("Woops! The length of the password must be at least 4. This");
+                writer
+                    .error()
+                    .error("allows us to make sure your password is secure.");
                 None
             } else {
                 Some(len)
             }
         }
         None => {
-            show_error("Woops! The length option must be a valid number, for instance 8 or 16.");
+            writer
+                .error()
+                .error("Woops! The length option must be a valid number, for instance 8 or 16.");
             None
         }
     }

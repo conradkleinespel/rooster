@@ -12,20 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use macros::{show_error, write_to_stderr};
+use io::{ReaderManager, WriterManager};
 use password::v2::{Password, PasswordStore};
-use std::io::stdin;
+use std::io::{BufRead, Write};
 
 /// Used to indicate lists should have a number, ie: 23 Google my.account@gmail.com
 pub const WITH_NUMBERS: bool = true;
 
 /// Used to indicate lists should not have a number, ie: Google my.account@gmail.com
 pub const WITHOUT_NUMBERS: bool = false;
-
-pub enum OutputStream {
-    Stdout,
-    Stderr,
-}
 
 fn get_list_of_passwords(passwords: &Vec<&Password>, with_numbers: bool) -> Vec<String> {
     // Find the app name column length
@@ -77,41 +72,54 @@ fn get_list_of_passwords(passwords: &Vec<&Password>, with_numbers: bool) -> Vec<
     list
 }
 
-pub fn print_list_of_passwords(
+pub fn print_list_of_passwords<
+    ErrorWriter: Write + ?Sized,
+    OutputWriter: Write + ?Sized,
+    InstructionWriter: Write + ?Sized,
+>(
     passwords: &Vec<&Password>,
     with_numbers: bool,
-    output_stream: OutputStream,
+    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
 ) {
     let list = get_list_of_passwords(passwords, with_numbers);
 
     for s in list {
-        match output_stream {
-            OutputStream::Stdout => println!("{}", s),
-            OutputStream::Stderr => println!("{}", s),
-        }
+        writer.output().info(s.as_str());
     }
 }
 
-fn request_password_index_from_stdin(passwords: &Vec<&Password>, prompt: &str) -> usize {
+fn request_password_index_from_stdin<
+    R: BufRead,
+    ErrorWriter: Write + ?Sized,
+    OutputWriter: Write + ?Sized,
+    InstructionWriter: Write + ?Sized,
+>(
+    passwords: &Vec<&Password>,
+    prompt: &str,
+    reader: &mut ReaderManager<R>,
+    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
+) -> usize {
     assert!(!passwords.is_empty());
 
     // Read the index from the command line and convert to a number
-    let mut line = String::new();
     loop {
         if passwords.len() > 1 {
-            println!("{}", prompt);
-            write_to_stderr(format!("Type a number from 1 to {}: ", passwords.len()).as_str());
+            writer.instruction().info(prompt);
+            writer
+                .instruction()
+                .prompt(format!("Type a number from 1 to {}: ", passwords.len()).as_str());
         } else if passwords.len() == 1 {
-            write_to_stderr("If this is the password you mean, type \"1\" and hit ENTER: ");
+            writer
+                .instruction()
+                .prompt("If this is the password you mean, type \"1\" and hit ENTER: ");
         }
 
-        line.clear();
-        match stdin().read_line(&mut line) {
-            Ok(_) => {
+        match reader.read_line() {
+            Ok(line) => {
                 match line.trim().parse::<usize>() {
                     Ok(index) => {
                         if index == 0 || index > passwords.len() {
-                            write_to_stderr(
+                            writer.instruction().prompt(
                                 format!(
                                     "I need a number between 1 and {}. Let's try again:",
                                     passwords.len()
@@ -124,7 +132,7 @@ fn request_password_index_from_stdin(passwords: &Vec<&Password>, prompt: &str) -
                         return index - 1;
                     }
                     Err(err) => {
-                        write_to_stderr(
+                        writer.instruction().prompt(
                             format!(
                             "This isn't a valid number (reason: {}). Let's try again (1 to {}): ",
                             err,
@@ -137,7 +145,7 @@ fn request_password_index_from_stdin(passwords: &Vec<&Password>, prompt: &str) -
                 };
             }
             Err(err) => {
-                write_to_stderr(
+                writer.instruction().prompt(
                     format!(
                         "I couldn't read that (reason: {}). Let's try again (1 to {}): ",
                         err,
@@ -150,25 +158,44 @@ fn request_password_index_from_stdin(passwords: &Vec<&Password>, prompt: &str) -
     }
 }
 
-pub fn choose_password_in_list(
+fn choose_password_in_list<
+    R: BufRead,
+    ErrorWriter: Write + ?Sized,
+    OutputWriter: Write + ?Sized,
+    InstructionWriter: Write + ?Sized,
+>(
     passwords: &Vec<&Password>,
     with_numbers: bool,
     prompt: &str,
+    reader: &mut ReaderManager<R>,
+    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
 ) -> usize {
-    print_list_of_passwords(passwords, with_numbers, OutputStream::Stderr);
-    println!();
-    request_password_index_from_stdin(passwords, prompt)
+    print_list_of_passwords(passwords, with_numbers, writer);
+    writer.output().newline();
+    request_password_index_from_stdin(passwords, prompt, reader, writer)
 }
 
-pub fn search_and_choose_password<'a>(
-    store: &'a PasswordStore,
+pub fn search_and_choose_password<
+    'a,
+    'b,
+    'c,
+    R: BufRead,
+    ErrorWriter: Write + ?Sized,
+    OutputWriter: Write + ?Sized,
+    InstructionWriter: Write + ?Sized,
+>(
+    store: &'c PasswordStore,
     query: &str,
     with_numbers: bool,
     prompt: &str,
-) -> Option<&'a Password> {
+    reader: &mut ReaderManager<'b, R>,
+    writer: &mut WriterManager<'a, ErrorWriter, OutputWriter, InstructionWriter>,
+) -> Option<&'c Password> {
     let passwords = store.search_passwords(query);
     if passwords.len() == 0 {
-        show_error(format!("Woops, I can't find any passwords for \"{}\".", query).as_str());
+        writer
+            .error()
+            .error(format!("Woops, I can't find any passwords for \"{}\".", query).as_str());
         return None;
     }
 
@@ -179,7 +206,7 @@ pub fn search_and_choose_password<'a>(
         return Some(&password);
     }
 
-    let index = choose_password_in_list(&passwords, with_numbers, prompt);
+    let index = choose_password_in_list(&passwords, with_numbers, prompt, reader, writer);
     Some(passwords[index])
 }
 

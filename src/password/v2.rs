@@ -35,7 +35,7 @@ extern "C" {
         passwdlen: usize,
         salt: *const u8,
         saltlen: usize,
-        N: u64,
+        n: u64,
         r: u32,
         p: u32,
         buf: *mut u8,

@@ -58,6 +58,17 @@ mod safe_vec;
 #[cfg(all(unix, not(target_os = "macos")))]
 mod shell_escape;
 
+fn validate_arg_digits(v: &str) -> Result<(), String> {
+    if v.chars()
+        .map(|c| char::is_ascii_digit(&c))
+        .collect::<Vec<bool>>()
+        .contains(&false)
+    {
+        return Err(String::from("The value must be made of digits"));
+    }
+    Ok(())
+}
+
 fn open_password_file(filename: &str) -> IoResult<File> {
     let mut options = std::fs::OpenOptions::new();
     options.read(true);
@@ -371,7 +382,8 @@ pub fn main_with_args<
                         .short('l')
                         .long("length")
                         .default_value("32")
-                        .about("Set a custom length for the generated password"),
+                        .about("Set a custom length for the generated password")
+                        .validator(validate_arg_digits),
                 ),
         )
         .subcommand(
@@ -399,7 +411,8 @@ pub fn main_with_args<
                         .short('l')
                         .long("length")
                         .default_value("32")
-                        .about("Set a custom length for the generated password"),
+                        .about("Set a custom length for the generated password")
+                        .validator(validate_arg_digits),
                 ),
         )
         .subcommand(
@@ -496,10 +509,27 @@ pub fn main_with_args<
                 .arg(
                     Arg::new("log2n")
                         .required(true)
-                        .about("The log2n parameter"),
+                        .about("The log2n parameter")
+                        .validator(validate_arg_digits),
                 )
-                .arg(Arg::new("r").required(true).about("The r parameter"))
-                .arg(Arg::new("p").required(true).about("The p parameter")),
+                .arg(
+                    Arg::new("r")
+                        .required(true)
+                        .about("The r parameter")
+                        .validator(validate_arg_digits),
+                )
+                .arg(
+                    Arg::new("p")
+                        .required(true)
+                        .about("The p parameter")
+                        .validator(validate_arg_digits),
+                )
+                .arg(
+                    Arg::new("force")
+                        .short('f')
+                        .long("force")
+                        .about("Disable parameter checks"),
+                ),
         )
         .get_matches_from(args);
 

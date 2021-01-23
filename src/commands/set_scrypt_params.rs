@@ -46,8 +46,20 @@ pub fn callback_exec<
         .parse::<u32>()
         .unwrap();
 
-    if log2_n > 20 || r > 8 || p > 1 {
-        writer.error().error("These parameters seem very high. You might be unable to open your password file ever again. Aborting.");
+    if log2_n <= 0 || r <= 0 || p <= 0 {
+        writer
+            .error()
+            .error(format!("The parameters must be > 0 ({}, {}, {})", log2_n, r, p).as_str());
+        return Err(1);
+    }
+
+    if !matches.is_present("force") && (log2_n > 20 || r > 8 || p > 1) {
+        writer
+            .error()
+            .error("These parameters seem very high. You might be unable to open your password file ever again. Aborting.");
+        writer
+            .error()
+            .error("Run with --force to force, but make a backup of your password file first.");
         return Err(1);
     }
 

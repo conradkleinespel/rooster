@@ -19,3 +19,4 @@ jobs:
         name: Run cargo test
         with:
           command: test
+          args: --all-targets --all-features

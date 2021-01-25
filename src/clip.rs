@@ -118,13 +118,13 @@ pub fn copy_to_clipboard(s: &SafeString) -> Result<(), ()> {
 }
 
 #[cfg(target_os = "macos")]
-pub fn paste_keys() -> String {
-    "Cmd+V".to_string()
+pub fn paste_keys() -> &'static str {
+    "Cmd+V"
 }
 
 #[cfg(not(target_os = "macos"))]
-pub fn paste_keys() -> String {
-    "Ctrl+V".to_string()
+pub fn paste_keys() -> &'static str {
+    "Ctrl+V"
 }
 
 pub fn confirm_password_retrieved<

@@ -35,8 +35,8 @@ pub fn copy_to_clipboard(s: &SafeString) -> Result<(), ()> {
 pub fn copy_to_clipboard(s: &SafeString) -> Result<(), ()> {
     use quale::which;
     use shell_escape;
-    use std::process::Command;
     use std::env;
+    use std::process::Command;
 
     let password = SafeString::new(shell_escape::escape(s.deref().into()).into());
 
@@ -101,7 +101,7 @@ pub fn copy_to_clipboard(s: &SafeString) -> Result<(), ()> {
                     }
                 }
                 None => Err(()),
-            }
+            },
         }
     }
 
@@ -110,7 +110,7 @@ pub fn copy_to_clipboard(s: &SafeString) -> Result<(), ()> {
             let s = wayland_clipboards(&password);
             match s {
                 Ok(_) => Ok(()),
-                Err(_) => x11_clipboards(&password)
+                Err(_) => x11_clipboards(&password),
             }
         }
         _ => x11_clipboards(&password),
@@ -173,4 +173,3 @@ pub fn confirm_password_retrieved<
         }
     }
 }
-

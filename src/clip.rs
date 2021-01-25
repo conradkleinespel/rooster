@@ -36,33 +36,17 @@ pub fn copy_to_clipboard(s: &SafeString) -> Result<(), ()> {
     use quale::which;
     use shell_escape;
     use std::process::Command;
+    use std::env;
 
     let password = SafeString::new(shell_escape::escape(s.deref().into()).into());
 
-    match which("xsel") {
-        Some(xsel) => {
-            let shell = format!(
-                "printf '%s' {} | {} -ib 2> /dev/null",
-                password.deref(),
-                xsel.to_string_lossy()
-            );
-            if Command::new("sh")
-                .args(&["-c", shell.as_str()])
-                .status()
-                .map_err(|_| ())?
-                .success()
-            {
-                Ok(())
-            } else {
-                Err(())
-            }
-        }
-        None => match which("xclip") {
-            Some(xclip) => {
+    fn wayland_clipboards(password: &SafeString) -> Result<(), ()> {
+        match which("wl-copy") {
+            Some(wl_copy) => {
                 let shell = format!(
-                    "printf '%s' {} | {} -selection clipboard 2> /dev/null",
+                    "printf '%s' {} | {} 2> /dev/null",
                     password.deref(),
-                    xclip.to_string_lossy()
+                    wl_copy.to_string_lossy()
                 );
                 if Command::new("sh")
                     .args(&["-c", shell.as_str()])
@@ -76,18 +60,71 @@ pub fn copy_to_clipboard(s: &SafeString) -> Result<(), ()> {
                 }
             }
             None => Err(()),
-        },
+        }
+    }
+
+    fn x11_clipboards(password: &SafeString) -> Result<(), ()> {
+        match which("xsel") {
+            Some(xsel) => {
+                let shell = format!(
+                    "printf '%s' {} | {} -ib 2> /dev/null",
+                    password.deref(),
+                    xsel.to_string_lossy()
+                );
+                if Command::new("sh")
+                    .args(&["-c", shell.as_str()])
+                    .status()
+                    .map_err(|_| ())?
+                    .success()
+                {
+                    Ok(())
+                } else {
+                    Err(())
+                }
+            }
+            None => match which("xclip") {
+                Some(xclip) => {
+                    let shell = format!(
+                        "printf '%s' {} | {} -selection clipboard 2> /dev/null",
+                        password.deref(),
+                        xclip.to_string_lossy()
+                    );
+                    if Command::new("sh")
+                        .args(&["-c", shell.as_str()])
+                        .status()
+                        .map_err(|_| ())?
+                        .success()
+                    {
+                        Ok(())
+                    } else {
+                        Err(())
+                    }
+                }
+                None => Err(()),
+            }
+        }
+    }
+
+    match env::var_os("XDG_SESSION_TYPE") {
+        Some(s) if s == "wayland" => {
+            let s = wayland_clipboards(&password);
+            match s {
+                Ok(_) => Ok(()),
+                Err(_) => x11_clipboards(&password)
+            }
+        }
+        _ => x11_clipboards(&password),
     }
 }
 
 #[cfg(target_os = "macos")]
-pub fn paste_keys() -> String {
-    "Cmd+V".to_string()
+pub fn paste_keys() -> &'static str {
+    "Cmd+V"
 }
 
 #[cfg(not(target_os = "macos"))]
-pub fn paste_keys() -> String {
-    "Ctrl+V".to_string()
+pub fn paste_keys() -> &'static str {
+    "Ctrl+V"
 }
 
 pub fn confirm_password_retrieved<
@@ -136,3 +173,4 @@ pub fn confirm_password_retrieved<
         }
     }
 }
+

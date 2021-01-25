@@ -74,6 +74,13 @@ curl https://sh.rustup.rs -sSf | sh -s -- -y
 cargo install --root /usr rooster
 ```
 
+On **Wayland**:
+
+install [wl-clipboard](https://github.com/bugaevc/wl-clipboard)
+
+Make sure you have the following environment variable set: `XDG_SESSION_TYPE=wayland`
+
+
 For other distributions, the various Docker files can help you find which dependencies you need.
 
 Once you have installed Rooster (see instructions below), you can view documentation with:
@@ -93,6 +100,7 @@ Here's a list of existing Rooster contributors:
 - [@dwrensha](https://github.com/dwrensha)
 - [@Eternity-Yarr](https://github.com/Eternity-Yarr)
 - [@jaezun](https://github.com/jaezun)
+- [@kamiyaa](https://github.com/kamiyaa)
 - [@maxjacobson](https://github.com/maxjacobson)
 - [@qmx](https://github.com/qmx)
 - [@yamnikov-oleg](https://github.com/yamnikov-oleg)

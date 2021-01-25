@@ -100,6 +100,7 @@ Here's a list of existing Rooster contributors:
 - [@dwrensha](https://github.com/dwrensha)
 - [@Eternity-Yarr](https://github.com/Eternity-Yarr)
 - [@jaezun](https://github.com/jaezun)
+- [@kamiyaa](https://github.com/kamiyaa)
 - [@maxjacobson](https://github.com/maxjacobson)
 - [@qmx](https://github.com/qmx)
 - [@yamnikov-oleg](https://github.com/yamnikov-oleg)

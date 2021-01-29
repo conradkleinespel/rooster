@@ -16,6 +16,7 @@ use ffi;
 use io::{ReaderManager, WriterManager};
 use password;
 use password::v2::{Password, PasswordStore};
+use serde::{Deserialize, Serialize};
 use serde_json;
 use std::fs::File;
 use std::io::{BufRead, Write};

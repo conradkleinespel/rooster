@@ -17,6 +17,7 @@ use io::{ReaderManager, WriterManager};
 use password;
 use password::v2::Password;
 use safe_string::SafeString;
+use serde::{Deserialize, Serialize};
 use serde_json;
 use std::io::{BufRead, Cursor, Write};
 use std::ops::Deref;

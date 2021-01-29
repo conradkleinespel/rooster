@@ -17,6 +17,7 @@ use aes;
 use ffi;
 use safe_string::SafeString;
 use safe_vec::SafeVec;
+use serde::{Deserialize, Serialize};
 use serde_json;
 
 use serde_json::Error;

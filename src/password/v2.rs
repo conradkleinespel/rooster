@@ -19,6 +19,7 @@ use password::PasswordError;
 use rand::{rngs::OsRng, RngCore};
 use safe_string::SafeString;
 use safe_vec::SafeVec;
+use serde::{Deserialize, Serialize};
 use serde_json;
 use serde_json::Error;
 use std::fs::File;

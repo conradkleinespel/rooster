@@ -104,6 +104,7 @@ impl<'de> Deserialize<'de> for SafeString {
 #[cfg(test)]
 mod test {
     use safe_string::SafeString;
+    use serde::{Deserialize, Serialize};
     use serde_json;
     use serde_json::Error;
 

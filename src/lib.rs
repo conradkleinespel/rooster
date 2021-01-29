@@ -27,9 +27,6 @@ extern crate rpassword;
 extern crate serde;
 extern crate serde_json;
 
-#[macro_use]
-extern crate serde_derive;
-
 use clap::{App, AppSettings, Arg, ArgMatches};
 use io::{ReaderManager, WriterManager};
 use password::v2::PasswordStore;

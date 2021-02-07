@@ -1,21 +1,7 @@
-// Copyright 2013-2017 The Rooster Developers
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+use crate::password;
+use crate::rclio::{CliInputOutput, OutputType};
+use crate::rutil::SafeString;
 
-use io::WriterManager;
-use password;
-use safe_string::SafeString;
-use std::io::Write;
 use std::ops::Deref;
 
 // On Windows and Mac, we'll use the native solutions provided by the OS libraries
@@ -33,12 +19,12 @@ pub fn copy_to_clipboard(s: &SafeString) -> Result<(), ()> {
 // and battle tested tools: xsel and xclip.
 #[cfg(all(unix, not(target_os = "macos")))]
 pub fn copy_to_clipboard(s: &SafeString) -> Result<(), ()> {
-    use quale::which;
-    use shell_escape;
+    use crate::quale::which;
+    use crate::shell_escape;
     use std::env;
     use std::process::Command;
 
-    let password = SafeString::new(shell_escape::escape(s.deref().into()).into());
+    let password = SafeString::from_string(shell_escape::escape(s.deref().into()).into());
 
     fn wayland_clipboards(password: &SafeString) -> Result<(), ()> {
         match which("wl-copy") {
@@ -127,48 +113,49 @@ pub fn paste_keys() -> &'static str {
     "Ctrl+V"
 }
 
-pub fn confirm_password_retrieved<
-    ErrorWriter: Write + ?Sized,
-    OutputWriter: Write + ?Sized,
-    InstructionWriter: Write + ?Sized,
->(
+pub fn confirm_password_retrieved(
     show: bool,
     password: &password::v2::Password,
-    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
+    io: &mut impl CliInputOutput,
 ) {
     if show {
-        writer
-            .output()
-            .success(format!("Alright! Here is your password for {}:", password.name).as_str());
-        writer
-            .output()
-            .success(format!("Username: {}", password.username).as_str());
-        writer
-            .output()
-            .success(format!("Password: {}", password.password.deref()).as_str());
+        io.success(
+            format!("Alright! Here is your password for {}:", password.name),
+            OutputType::Standard,
+        );
+        io.success(
+            format!("Username: {}", password.username),
+            OutputType::Standard,
+        );
+        io.success(
+            format!("Password: {}", password.password.deref()),
+            OutputType::Standard,
+        );
     } else {
         if copy_to_clipboard(&password.password).is_err() {
-            writer.output().success(
+            io.success(
                 format!(
                     "Hmm, I tried to copy your new password to your clipboard, but \
                      something went wrong. You can see it with `rooster get '{}' --show`",
                     password.name
-                )
-                .as_str(),
+                ),
+                OutputType::Standard,
             );
         } else {
-            writer
-                .output()
-                .success(format!("Alright! Here is your password for {}:", password.name).as_str());
-            writer
-                .output()
-                .success(format!("Username: {}", password.username).as_str());
-            writer.output().success(
+            io.success(
+                format!("Alright! Here is your password for {}:", password.name),
+                OutputType::Standard,
+            );
+            io.success(
+                format!("Username: {}", password.username),
+                OutputType::Standard,
+            );
+            io.success(
                 format!(
                     "Password: ******** (copied to clipboard, paste with {})",
                     paste_keys()
-                )
-                .as_str(),
+                ),
+                OutputType::Standard,
             );
         }
     }

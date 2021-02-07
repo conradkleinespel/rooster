@@ -1,6 +1,6 @@
 mod helpers;
 
-use helpers::prelude::*;
+use crate::helpers::prelude::*;
 use std::fs::File;
 use std::io::Write;
 
@@ -11,8 +11,7 @@ fn test_command_import_json() {
         0,
         main_with_args(
             &["rooster", "init", "--force-for-tests"],
-            input!("\nxxxx\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "\nxxxx\n"),
             &rooster_file
         )
     );
@@ -31,23 +30,17 @@ fn test_command_import_json() {
                 "json",
                 import_file_json.as_path().to_str().unwrap()
             ],
-            input!("xxxx\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "xxxx\n"),
             &rooster_file
         )
     );
 
-    let mut output = sink();
+    let mut io = CursorInputOutput::new("", "xxxx\n");
     assert_eq!(
         0,
-        main_with_args(
-            &["rooster", "get", "-s", "youtube"],
-            input!("xxxx\n"),
-            output!(&mut sink(), &mut output, &mut sink()),
-            &rooster_file
-        )
+        main_with_args(&["rooster", "get", "-s", "youtube"], &mut io, &rooster_file)
     );
-    let output_as_vecu8 = output.into_inner();
+    let output_as_vecu8 = io.stdout_cursor.into_inner();
     let output_as_string = String::from_utf8_lossy(output_as_vecu8.as_slice());
     assert!(output_as_string.contains("abcd"));
     assert!(output_as_string.contains("yt@example.com"));
@@ -68,23 +61,17 @@ fn test_command_import_json() {
                 "csv",
                 import_file_csv.as_path().to_str().unwrap()
             ],
-            input!("xxxx\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "xxxx\n"),
             &rooster_file
         )
     );
 
-    let mut output = sink();
+    let mut io = CursorInputOutput::new("", "xxxx\n");
     assert_eq!(
         0,
-        main_with_args(
-            &["rooster", "get", "-s", "youtube"],
-            input!("xxxx\n"),
-            output!(&mut sink(), &mut output, &mut sink()),
-            &rooster_file
-        )
+        main_with_args(&["rooster", "get", "-s", "youtube"], &mut io, &rooster_file)
     );
-    let output_as_vecu8 = output.into_inner();
+    let output_as_vecu8 = io.stdout_cursor.into_inner();
     let output_as_string = String::from_utf8_lossy(output_as_vecu8.as_slice());
     assert!(output_as_string.contains("abcd"));
     assert!(output_as_string.contains("yt@example.com"));
@@ -105,23 +92,17 @@ fn test_command_import_json() {
                 "1password",
                 import_file_1password.as_path().to_str().unwrap()
             ],
-            input!("xxxx\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "xxxx\n"),
             &rooster_file
         )
     );
 
-    let mut output = sink();
+    let mut io = CursorInputOutput::new("", "xxxx\n");
     assert_eq!(
         0,
-        main_with_args(
-            &["rooster", "get", "-s", "youtube"],
-            input!("xxxx\n"),
-            output!(&mut sink(), &mut output, &mut sink()),
-            &rooster_file
-        )
+        main_with_args(&["rooster", "get", "-s", "youtube"], &mut io, &rooster_file)
     );
-    let output_as_vecu8 = output.into_inner();
+    let output_as_vecu8 = io.stdout_cursor.into_inner();
     let output_as_string = String::from_utf8_lossy(output_as_vecu8.as_slice());
     assert!(output_as_string.contains("abcd"));
     assert!(output_as_string.contains("yt@example.com"));
@@ -135,8 +116,7 @@ fn test_command_import_csv() {
         0,
         main_with_args(
             &["rooster", "init", "--force-for-tests"],
-            input!("\nxxxx\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "\nxxxx\n"),
             &rooster_file
         )
     );
@@ -156,23 +136,17 @@ fn test_command_import_csv() {
                 "csv",
                 import_file_csv.as_path().to_str().unwrap()
             ],
-            input!("xxxx\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "xxxx\n"),
             &rooster_file
         )
     );
 
-    let mut output = sink();
+    let mut io = CursorInputOutput::new("", "xxxx\n");
     assert_eq!(
         0,
-        main_with_args(
-            &["rooster", "get", "-s", "youtube"],
-            input!("xxxx\n"),
-            output!(&mut sink(), &mut output, &mut sink()),
-            &rooster_file
-        )
+        main_with_args(&["rooster", "get", "-s", "youtube"], &mut io, &rooster_file)
     );
-    let output_as_vecu8 = output.into_inner();
+    let output_as_vecu8 = io.stdout_cursor.into_inner();
     let output_as_string = String::from_utf8_lossy(output_as_vecu8.as_slice());
     assert!(output_as_string.contains("abcd"));
     assert!(output_as_string.contains("yt@example.com"));
@@ -186,8 +160,7 @@ fn test_command_import_1password() {
         0,
         main_with_args(
             &["rooster", "init", "--force-for-tests"],
-            input!("\nxxxx\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "\nxxxx\n"),
             &rooster_file
         )
     );
@@ -207,23 +180,17 @@ fn test_command_import_1password() {
                 "1password",
                 import_file_1password.as_path().to_str().unwrap()
             ],
-            input!("xxxx\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "xxxx\n"),
             &rooster_file
         )
     );
 
-    let mut output = sink();
+    let mut io = CursorInputOutput::new("", "xxxx\n");
     assert_eq!(
         0,
-        main_with_args(
-            &["rooster", "get", "-s", "youtube"],
-            input!("xxxx\n"),
-            output!(&mut sink(), &mut output, &mut sink()),
-            &rooster_file
-        )
+        main_with_args(&["rooster", "get", "-s", "youtube"], &mut io, &rooster_file)
     );
-    let output_as_vecu8 = output.into_inner();
+    let output_as_vecu8 = io.stdout_cursor.into_inner();
     let output_as_string = String::from_utf8_lossy(output_as_vecu8.as_slice());
     assert!(output_as_string.contains("abcd"));
     assert!(output_as_string.contains("yt@example.com"));

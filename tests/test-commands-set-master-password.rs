@@ -1,6 +1,6 @@
 mod helpers;
 
-use helpers::prelude::*;
+use crate::helpers::prelude::*;
 
 #[test]
 fn test_command_set_master_password() {
@@ -9,8 +9,7 @@ fn test_command_set_master_password() {
         0,
         main_with_args(
             &["rooster", "init", "--force-for-tests"],
-            input!("\nxxxx\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "\nxxxx\n"),
             &rooster_file
         )
     );
@@ -19,8 +18,7 @@ fn test_command_set_master_password() {
         0,
         main_with_args(
             &["rooster", "set-master-password"],
-            input!("xxxx\nabcd\nabcd\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "xxxx\nabcd\nabcd\n"),
             &rooster_file
         )
     );
@@ -29,8 +27,7 @@ fn test_command_set_master_password() {
         1,
         main_with_args(
             &["rooster", "list"],
-            input!("xxxx\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "xxxx\n"),
             &rooster_file
         )
     );
@@ -38,8 +35,7 @@ fn test_command_set_master_password() {
         0,
         main_with_args(
             &["rooster", "list"],
-            input!("abcd\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "abcd\n"),
             &rooster_file
         )
     );

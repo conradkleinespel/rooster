@@ -4,13 +4,13 @@ FROM alpine:latest
 RUN apk add --no-cache libxmu-dev libx11-dev pkgconf rust cargo python3 make openssl-dev libsodium-dev xclip jq
 
 # run as non-root
-RUN adduser --system -u 1000 rooster
-WORKDIR /home/rooster/src
+RUN adduser --system -u 1000 rooster-user
+WORKDIR /home/rooster-docker-test/data
 ENTRYPOINT ["/usr/bin/rooster"]
 
 # compile
-ADD . /home/rooster/src
-RUN cargo install --debug --path /home/rooster/src --root /usr
+ADD . /home/rooster-docker-test/data
+RUN cargo install --debug --path /home/rooster-docker-test/data/rooster --root /usr
 
 # run as non-root
-USER rooster
+USER rooster-user

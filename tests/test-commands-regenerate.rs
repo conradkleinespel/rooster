@@ -1,6 +1,6 @@
 mod helpers;
 
-use helpers::prelude::*;
+use crate::helpers::prelude::*;
 
 #[test]
 fn test_command_regenerate() {
@@ -9,8 +9,7 @@ fn test_command_regenerate() {
         0,
         main_with_args(
             &["rooster", "init", "--force-for-tests"],
-            input!("\nxxxx\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "\nxxxx\n"),
             &rooster_file
         )
     );
@@ -19,8 +18,7 @@ fn test_command_regenerate() {
         0,
         main_with_args(
             &["rooster", "generate", "-s", "Youtube", "yt@example.com"],
-            input!("xxxx\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "xxxx\n"),
             &rooster_file
         )
     );
@@ -30,46 +28,42 @@ fn test_command_regenerate() {
         1,
         main_with_args(
             &["rooster", "generate", "-s", "Youtube", "yt@example.com"],
-            input!("xxxx\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "xxxx\n"),
             &rooster_file
         )
     );
 
-    let mut output_1 = sink();
+    let mut io_1 = CursorInputOutput::new("", "xxxx\n");
     assert_eq!(
         0,
         main_with_args(
             &["rooster", "get", "-s", "youtube"],
-            input!("xxxx\n"),
-            output!(&mut sink(), &mut output_1, &mut sink()),
+            &mut io_1,
             &rooster_file
         )
     );
-    let output_1_as_vecu8 = output_1.into_inner();
+    let output_1_as_vecu8 = io_1.stdout_cursor.into_inner();
     let output_1_as_string = String::from_utf8_lossy(output_1_as_vecu8.as_slice());
 
     assert_eq!(
         0,
         main_with_args(
             &["rooster", "regenerate", "-s", "Youtube"],
-            input!("xxxx\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "xxxx\n"),
             &rooster_file
         )
     );
 
-    let mut output_2 = sink();
+    let mut io_2 = CursorInputOutput::new("", "xxxx\n");
     assert_eq!(
         0,
         main_with_args(
             &["rooster", "get", "-s", "youtube"],
-            input!("xxxx\n"),
-            output!(&mut sink(), &mut output_2, &mut sink()),
+            &mut io_2,
             &rooster_file
         )
     );
-    let output_2_as_vecu8 = output_2.into_inner();
+    let output_2_as_vecu8 = io_2.stdout_cursor.into_inner();
     let output_2_as_string = String::from_utf8_lossy(output_2_as_vecu8.as_slice());
 
     assert_ne!(output_1_as_string, output_2_as_string);

@@ -2,8 +2,6 @@
 
 Rooster is a simple password manager for geeks (it works in the terminal).
 
-![CI](https://github.com/conradkleinespel/rooster/workflows/CI/badge.svg)
-
 [![asciicast](https://asciinema.org/a/9opp6uXiI2XFURj8yNHYV3xfb.svg)](https://asciinema.org/a/9opp6uXiI2XFURj8yNHYV3xfb)
 
 Rooster is made available free of charge. You can support its development through [Liberapay](https://liberapay.com/conradkleinespel/) 💪

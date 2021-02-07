@@ -1,41 +1,18 @@
-// Copyright 2014-2017 The Rooster Developers
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 // #![allow(useless_format, too_many_arguments)]
 
 extern crate ansi_term;
-extern crate byteorder;
-extern crate clap;
-extern crate clipboard;
-extern crate csv;
-extern crate dirs;
-extern crate libc;
-extern crate openssl;
-extern crate rand;
-extern crate rpassword;
-extern crate serde;
 extern crate serde_json;
 
-use clap::{App, AppSettings, Arg, ArgMatches};
-use io::{ReaderManager, WriterManager};
-use password::v2::PasswordStore;
-use safe_string::SafeString;
-use safe_vec::SafeVec;
+use crate::password::v2::PasswordStore;
+use crate::rclio::CliInputOutput;
+use crate::rclio::OutputType;
+use crate::rutil::SafeString;
+use crate::rutil::SafeVec;
+use clap::{App, AppSettings, Arg};
 use std::env;
 use std::fs::File;
-use std::io::{BufRead, Result as IoResult};
-use std::io::{Read, Write};
+use std::io::Read;
+use std::io::Result as IoResult;
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
 
@@ -44,15 +21,11 @@ mod clip;
 mod commands;
 mod ffi;
 mod generate;
-pub mod io;
 mod list;
 mod password;
 mod quale;
-mod safe_string;
-mod safe_vec;
-
-// We conditionally compile this module to avoid "unused function" warnings.
-#[cfg(all(unix, not(target_os = "macos")))]
+pub mod rclio;
+mod rutil;
 mod shell_escape;
 
 fn validate_arg_digits(v: &str) -> Result<(), String> {
@@ -82,79 +55,65 @@ fn create_password_file(filename: &str) -> IoResult<File> {
     options.open(&Path::new(filename))
 }
 
-fn sync_password_store<
-    ErrorWriter: Write + ?Sized,
-    OutputWriter: Write + ?Sized,
-    InstructionWriter: Write + ?Sized,
->(
+fn sync_password_store(
     store: &mut PasswordStore,
     file: &mut File,
-    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
+    io: &mut impl CliInputOutput,
 ) -> Result<(), i32> {
     if let Err(err) = store.sync(file) {
-        writer
-            .error()
-            .error(format!("I could not save the password file (reason: {:?}).", err).as_str());
+        io.error(
+            format!("I could not save the password file (reason: {:?}).", err),
+            OutputType::Error,
+        );
         return Err(1);
     }
 
     return Ok(());
 }
 
-fn get_password_store<
-    R: BufRead,
-    ErrorWriter: Write + ?Sized,
-    OutputWriter: Write + ?Sized,
-    InstructionWriter: Write + ?Sized,
->(
+fn get_password_store(
     file: &mut File,
-    reader: &mut ReaderManager<R>,
-    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
+    io: &mut impl CliInputOutput,
 ) -> Result<password::v2::PasswordStore, i32> {
     // Read the Rooster file contents.
     let mut input: SafeVec = SafeVec::new(Vec::new());
     file.read_to_end(input.inner_mut()).map_err(|_| 1)?;
 
-    return get_password_store_from_input_interactive(&input, 3, false, false, reader, writer)
-        .map_err(|_| 1);
+    return get_password_store_from_input_interactive(&input, 3, false, false, io).map_err(|_| 1);
 }
 
-fn get_password_store_from_input_interactive<
-    R: BufRead,
-    ErrorWriter: Write + ?Sized,
-    OutputWriter: Write + ?Sized,
-    InstructionWriter: Write + ?Sized,
->(
+fn get_password_store_from_input_interactive(
     input: &SafeVec,
     retries: i32,
     force_upgrade: bool,
     retry: bool,
-    reader: &mut ReaderManager<R>,
-    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
+    io: &mut impl CliInputOutput,
 ) -> Result<password::v2::PasswordStore, password::PasswordError> {
     if retries == 0 {
-        writer.error().error(
+        io.error(
             "Decryption of your Rooster file keeps failing. \
              Your Rooster file is probably corrupted.",
+            OutputType::Error,
         );
         return Err(password::PasswordError::CorruptionLikelyError);
     }
 
     if retry {
-        writer
-            .error()
-            .error("Woops, that's not the right password. Let's try again.");
+        io.error(
+            "Woops, that's not the right password. Let's try again.",
+            OutputType::Error,
+        );
     }
 
-    let master_password = match ask_master_password(reader, writer) {
+    let master_password = match ask_master_password(io) {
         Ok(p) => p,
         Err(err) => {
-            writer.error().error(
+            io.error(
                 format!(
                     "Woops, I could not read your master password (reason: {}).",
                     err
-                )
-                .as_str(),
+                ),
+                OutputType::Error,
             );
             return Err(password::PasswordError::Io(err));
         }
@@ -165,54 +124,54 @@ fn get_password_store_from_input_interactive<
             return Ok(store);
         }
         Err(password::PasswordError::CorruptionError) => {
-            writer.error().error("Your Rooster file is corrupted.");
+            io.error("Your Rooster file is corrupted.", OutputType::Error);
             return Err(password::PasswordError::CorruptionError);
         }
         Err(password::PasswordError::OutdatedRoosterBinaryError) => {
-            writer.error().error(
+            io.error(
                 "I could not open the Rooster file because your version of Rooster is outdated.",
+                OutputType::Error,
             );
-            writer
-                .error()
-                .error("Try upgrading Rooster to the latest version.");
+            io.error(
+                "Try upgrading Rooster to the latest version.",
+                OutputType::Error,
+            );
             return Err(password::PasswordError::OutdatedRoosterBinaryError);
         }
         Err(password::PasswordError::Io(err)) => {
-            writer
-                .error()
-                .error(format!("I couldn't open your Rooster file (reason: {:?})", err).as_str());
+            io.error(
+                format!("I couldn't open your Rooster file (reason: {:?})", err),
+                OutputType::Error,
+            );
             return Err(password::PasswordError::Io(err));
         }
         Err(password::PasswordError::NeedUpgradeErrorFromV1) => {
-            println!("Your Rooster file has version 1. You need to upgrade to version 2.");
-            println!();
-            println!(
-                "WARNING: If in doubt, it could mean you've been hacked. Only \
-                 proceed if you recently upgraded your Rooster installation."
+            io.error("Your Rooster file has version 1. You need to upgrade to version 2.\n\nWARNING: If in doubt, it could mean you've been hacked. Only \
+                 proceed if you recently upgraded your Rooster installation.\nUpgrade to version 2? [y/n]", OutputType::Error
             );
-            println!();
-            println!("Upgrade to version 2? [y/n]");
             loop {
-                match reader.read_line() {
+                match io.read_line() {
                     Ok(line) => {
                         if line.starts_with('y') {
                             // This time we'll try to upgrade
                             return get_password_store_from_input_interactive(
-                                &input, retries, true, false, reader, writer,
+                                &input, retries, true, false, io,
                             );
                         } else if line.starts_with('n') {
                             // The user doesn't want to upgrade, that's fine
                             return Err(password::PasswordError::NoUpgradeError);
                         } else {
-                            println!("I did not get that. Upgrade from v1 to v2? [y/n]");
+                            io.error(
+                                "I did not get that. Upgrade from v1 to v2? [y/n]",
+                                OutputType::Error,
+                            );
                         }
                     }
                     Err(io_err) => {
-                        writer.error().error(
-                            format!(
-                            "Woops, an error occured while reading your response (reason: {:?}).",
-                            io_err)
-                            .as_str(),
+                        io.error(format!(
+                                "Woops, an error occured while reading your response (reason: {:?}).",
+                                io_err
+                            ), OutputType::Error,
                         );
                         return Err(password::PasswordError::Io(io_err));
                     }
@@ -220,14 +179,7 @@ fn get_password_store_from_input_interactive<
             }
         }
         _ => {
-            return get_password_store_from_input_interactive(
-                &input,
-                retries - 1,
-                false,
-                true,
-                reader,
-                writer,
-            );
+            return get_password_store_from_input_interactive(&input, retries - 1, false, true, io);
         }
     }
 }
@@ -269,31 +221,16 @@ fn get_password_store_from_input(
     }
 }
 
-fn ask_master_password<
-    R: BufRead,
-    ErrorWriter: ?Sized + Write,
-    OutputWriter: ?Sized + Write,
-    InstructionWriter: ?Sized + Write,
->(
-    reader: &mut ReaderManager<R>,
-    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
-) -> IoResult<SafeString> {
-    writer.instruction().prompt("Type your master password: ");
-    reader.read_password()
+fn ask_master_password(io: &mut impl CliInputOutput) -> IoResult<SafeString> {
+    io.prompt_password("Type your master password: ")
 }
 
-pub fn main_with_args<
-    R: BufRead,
-    ErrorWriter: ?Sized + Write,
-    OutputWriter: ?Sized + Write,
-    InstructionWriter: ?Sized + Write,
->(
+pub fn main_with_args(
     args: &[&str],
-    reader: &mut ReaderManager<R>,
-    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
+    io: &mut impl CliInputOutput,
     rooster_file_path: &PathBuf,
 ) -> i32 {
-    let matches: ArgMatches = App::new("rooster")
+    let matches = App::new("rooster")
         .global_setting(AppSettings::HelpRequired)
         .global_setting(AppSettings::DisableHelpSubcommand)
         .setting(AppSettings::SubcommandRequiredElseHelp)
@@ -535,7 +472,7 @@ pub fn main_with_args<
     let command_matches = matches.subcommand_matches(subcommand).unwrap();
 
     if subcommand == "init" {
-        match commands::init::callback_exec(command_matches, reader, writer, rooster_file_path) {
+        match commands::init::callback_exec(command_matches, io, rooster_file_path) {
             Err(i) => return i,
             _ => return 0,
         }
@@ -544,18 +481,20 @@ pub fn main_with_args<
     let password_file_path_as_string = rooster_file_path.to_string_lossy().into_owned();
 
     if !rooster_file_path.exists() {
-        writer.output().title("First time user");
-        writer.output().newline();
-        writer.output().info("Try `rooster init`.");
-        writer.output().newline();
-        writer.output().title("Long time user");
-        writer.output().newline();
-        writer
-            .output()
-            .info("Set the ROOSTER_FILE environment variable. For instance:");
-        writer
-            .output()
-            .info("    export ROOSTER_FILE=path/to/passwords.rooster");
+        io.title("First time user", OutputType::Standard);
+        io.nl(OutputType::Standard);
+        io.info("Try `rooster init`.", OutputType::Standard);
+        io.nl(OutputType::Standard);
+        io.title("Long time user", OutputType::Standard);
+        io.nl(OutputType::Standard);
+        io.info(
+            "Set the ROOSTER_FILE environment variable. For instance:",
+            OutputType::Standard,
+        );
+        io.info(
+            "    export ROOSTER_FILE=path/to/passwords.rooster",
+            OutputType::Standard,
+        );
         return 1;
     }
 
@@ -564,18 +503,18 @@ pub fn main_with_args<
         Err(err) => {
             match err.kind() {
                 std::io::ErrorKind::NotFound => {
-                    writer.error().error(
-                        "Woops, I can't find your password file\
-                     . Run `rooster init` to create one.",
+                    io.error(
+                        "Woops, I can't find your password file. Run `rooster init` to create one.",
+                        OutputType::Error,
                     );
                 }
                 _ => {
-                    writer.error().error(
+                    io.error(
                         format!(
                             "Woops, I couldn't read your password file ({} for \"{}\").",
                             err, password_file_path_as_string
-                        )
-                        .as_str(),
+                        ),
+                        OutputType::Error,
                     );
                 }
             }
@@ -583,7 +522,7 @@ pub fn main_with_args<
         }
     };
 
-    let mut store = match get_password_store(&mut file, reader, writer) {
+    let mut store = match get_password_store(&mut file, io) {
         Err(code) => return code,
         Ok(store) => store,
     };
@@ -605,11 +544,11 @@ pub fn main_with_args<
         _ => unreachable!("Validation should have been done by `clap` before"),
     };
 
-    if let Err(code) = callback(command_matches, &mut store, reader, writer) {
+    if let Err(code) = callback(command_matches, &mut store, io) {
         return code;
     }
 
-    if let Err(code) = sync_password_store(&mut store, &mut file, writer) {
+    if let Err(code) = sync_password_store(&mut store, &mut file, io) {
         return code;
     }
 

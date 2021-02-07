@@ -12,13 +12,13 @@ RUN chmod 555 /usr/bin/rustup-init
 RUN /usr/bin/rustup-init -y
 
 # prepare to run as non-root
-RUN adduser --system --home=/home/rooster -u 1000 rooster
-WORKDIR /home/rooster/src
+RUN adduser --system --home=/home/rooster -u 1000 rooster-user
+WORKDIR /home/rooster-docker-test/data
 ENTRYPOINT ["/usr/bin/rooster"]
 
 # make files findable by non-root
-ADD . /home/rooster/src
-RUN cargo install --debug --path /home/rooster/src --root /usr
+ADD . /home/rooster-docker-test/data
+RUN cargo install --debug --path /home/rooster-docker-test/data/rooster --root /usr
 
 # run as non-root
-USER rooster
+USER rooster-user

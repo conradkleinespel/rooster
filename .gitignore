@@ -1,11 +1,2 @@
-# compiled files
-/target
-
-# intellij idea files
-/.idea
-
-# cargo-fmt backup files
-*.rs.bk
-
-# python cache in vendored crates
-__pycache__
+/target/
+/Cargo.lock

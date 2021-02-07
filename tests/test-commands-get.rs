@@ -1,6 +1,6 @@
 mod helpers;
 
-use helpers::prelude::*;
+use crate::helpers::prelude::*;
 
 #[test]
 fn test_command_get() {
@@ -9,8 +9,7 @@ fn test_command_get() {
         0,
         main_with_args(
             &["rooster", "init", "--force-for-tests"],
-            input!("\nxxxx\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "\nxxxx\n"),
             &rooster_file
         )
     );
@@ -19,8 +18,7 @@ fn test_command_get() {
         0,
         main_with_args(
             &["rooster", "add", "-s", "First Website", "first@example.com"],
-            input!("xxxx\nabcd\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "xxxx\nabcd\n"),
             &rooster_file
         )
     );
@@ -34,40 +32,29 @@ fn test_command_get() {
                 "Second Website",
                 "second@example.com"
             ],
-            input!("xxxx\nefgh\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "xxxx\nefgh\n"),
             &rooster_file
         )
     );
 
     // Checking fuzzy-search and password selection
-    let mut output = sink();
+    let mut io = CursorInputOutput::new("", "xxxx\n1\n");
     assert_eq!(
         0,
-        main_with_args(
-            &["rooster", "get", "-s", "wbst"],
-            input!("xxxx\n1\n"),
-            output!(&mut sink(), &mut output, &mut sink()),
-            &rooster_file
-        )
+        main_with_args(&["rooster", "get", "-s", "wbst"], &mut io, &rooster_file)
     );
-    let output_as_vecu8 = output.into_inner();
+    let output_as_vecu8 = io.stdout_cursor.into_inner();
     let output_as_string = String::from_utf8_lossy(output_as_vecu8.as_slice());
     assert!(output_as_string.contains("abcd"));
     assert!(output_as_string.contains("first@example.com"));
 
     // Checking fuzzy-search and password selection
-    let mut output = sink();
+    let mut io = CursorInputOutput::new("", "xxxx\n2\n");
     assert_eq!(
         0,
-        main_with_args(
-            &["rooster", "get", "-s", "wbst"],
-            input!("xxxx\n2\n"),
-            output!(&mut sink(), &mut output, &mut sink()),
-            &rooster_file
-        )
+        main_with_args(&["rooster", "get", "-s", "wbst"], &mut io, &rooster_file)
     );
-    let output_as_vecu8 = output.into_inner();
+    let output_as_vecu8 = io.stdout_cursor.into_inner();
     let output_as_string = String::from_utf8_lossy(output_as_vecu8.as_slice());
     assert!(output_as_string.contains("efgh"));
     assert!(output_as_string.contains("second@example.com"));

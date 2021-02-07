@@ -1,24 +1,10 @@
-// Copyright 2014-2017 The Rooster Developers
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-use aes;
+use crate::aes;
+use crate::ffi;
+use crate::password::PasswordError;
+use crate::rutil::SafeString;
+use crate::rutil::SafeVec;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use ffi;
-use password::PasswordError;
 use rand::{rngs::OsRng, RngCore};
-use safe_string::SafeString;
-use safe_vec::SafeVec;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use serde_json::Error;
@@ -279,7 +265,7 @@ pub struct PasswordStore {
 /// - signature:       512 bits HMAC-SHA512
 /// - encrypted blob:  variable length
 impl PasswordStore {
-    pub fn new<D: Deref<Target = str>>(master_password: D) -> IoResult<PasswordStore> {
+    pub fn new(master_password: SafeString) -> IoResult<PasswordStore> {
         let salt = generate_random_salt()?;
         let key = generate_encryption_key(
             master_password.deref(),
@@ -296,7 +282,7 @@ impl PasswordStore {
             scrypt_p: SCRYPT_PARAM_P,
             salt: salt,
             schema: Schema::new(),
-            master_password: master_password.deref().into(),
+            master_password: master_password.into_inner(),
         })
     }
 
@@ -367,8 +353,9 @@ impl PasswordStore {
         // Decrypt the data.
         let passwords = match aes::decrypt(blob.deref(), key.as_ref(), iv.as_ref()) {
             Ok(decrypted) => {
-                let encoded =
-                    SafeString::new(String::from_utf8_lossy(decrypted.as_ref()).into_owned());
+                let encoded = SafeString::from_string(
+                    String::from_utf8_lossy(decrypted.as_ref()).into_owned(),
+                );
                 let s: Result<Schema, Error> = serde_json::from_str(encoded.deref());
                 match s {
                     Ok(json) => json.passwords,
@@ -426,7 +413,7 @@ impl PasswordStore {
                 return Err(PasswordError::InvalidJsonError);
             }
         };
-        let json_schema = SafeString::new(json_schema);
+        let json_schema = SafeString::from_string(json_schema);
 
         // Encrypt the data with a new salt and a new IV.
         let iv = generate_random_iv()?;
@@ -635,11 +622,12 @@ impl PasswordStore {
 
 #[cfg(test)]
 mod test {
-    use password::v2::{
+    use crate::password::v2::{
         generate_encryption_key, generate_random_iv, generate_random_salt, Password, PasswordStore,
         SCRYPT_PARAM_LOG2_N, SCRYPT_PARAM_P, SCRYPT_PARAM_R,
     };
-    use password::PasswordError;
+    use crate::password::PasswordError;
+    use crate::rutil::SafeString;
 
     #[test]
     fn test_generate_random_iv_has_right_length() {
@@ -668,13 +656,13 @@ mod test {
 
     #[test]
     fn test_create_password_store() {
-        let store = PasswordStore::new("****").unwrap();
+        let store = PasswordStore::new(SafeString::from_string("****".to_owned())).unwrap();
         assert_eq!(store.get_all_passwords().len(), 0);
     }
 
     #[test]
     fn test_add_password() {
-        let mut store = PasswordStore::new("****").unwrap();
+        let mut store = PasswordStore::new(SafeString::from_string("****".to_owned())).unwrap();
 
         assert!(store
             .add_password(Password::new("name", "username", "password"))
@@ -701,7 +689,7 @@ mod test {
         }
 
         // empty password => not allowed
-        let mut store = PasswordStore::new("****").unwrap();
+        let mut store = PasswordStore::new(SafeString::from_string("****".to_owned())).unwrap();
         assert!(store
             .add_password(Password::new("name", "username", ""))
             .is_err());
@@ -709,7 +697,7 @@ mod test {
 
     #[test]
     fn test_change_password() {
-        let mut store = PasswordStore::new("****").unwrap();
+        let mut store = PasswordStore::new(SafeString::from_string("****".to_owned())).unwrap();
 
         assert!(store
             .add_password(Password::new("name", "username", "password"))
@@ -739,7 +727,7 @@ mod test {
         assert_eq!(store.get_all_passwords()[0].password, "newpassword".into());
 
         // empty password => do not change anything
-        let mut store = PasswordStore::new("****").unwrap();
+        let mut store = PasswordStore::new(SafeString::from_string("****".to_owned())).unwrap();
         assert!(store
             .add_password(Password::new("name", "username", "password"))
             .is_ok());
@@ -756,7 +744,7 @@ mod test {
 
     #[test]
     fn test_delete_password() {
-        let mut store = PasswordStore::new("****").unwrap();
+        let mut store = PasswordStore::new(SafeString::from_string("****".to_owned())).unwrap();
 
         assert!(store
             .add_password(Password::new("name1", "username", "password"))
@@ -783,7 +771,7 @@ mod test {
 
     #[test]
     fn test_get_password() {
-        let mut store = PasswordStore::new("****").unwrap();
+        let mut store = PasswordStore::new(SafeString::from_string("****".to_owned())).unwrap();
 
         assert_eq!(store.get_password("name"), None);
         assert!(store
@@ -801,7 +789,7 @@ mod test {
 
     #[test]
     fn test_has_password() {
-        let mut store = PasswordStore::new("****").unwrap();
+        let mut store = PasswordStore::new(SafeString::from_string("****".to_owned())).unwrap();
 
         assert!(!store.has_password("name"));
         assert!(store

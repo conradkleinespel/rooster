@@ -1,20 +1,5 @@
-// Copyright 2014-2017 The Rooster Developers
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-use io::{ReaderManager, WriterManager};
-use password::v2::{Password, PasswordStore};
-use std::io::{BufRead, Write};
+use crate::password::v2::{Password, PasswordStore};
+use crate::rclio::{CliInputOutput, OutputType};
 
 /// Used to indicate lists should have a number, ie: 23 Google my.account@gmail.com
 pub const WITH_NUMBERS: bool = true;
@@ -72,59 +57,51 @@ fn get_list_of_passwords(passwords: &Vec<&Password>, with_numbers: bool) -> Vec<
     list
 }
 
-pub fn print_list_of_passwords<
-    ErrorWriter: Write + ?Sized,
-    OutputWriter: Write + ?Sized,
-    InstructionWriter: Write + ?Sized,
->(
+pub fn print_list_of_passwords(
     passwords: &Vec<&Password>,
     with_numbers: bool,
-    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
+    io: &mut impl CliInputOutput,
 ) {
     let list = get_list_of_passwords(passwords, with_numbers);
 
     for s in list {
-        writer.output().info(s.as_str());
+        io.info(s, OutputType::Standard);
     }
 }
 
-fn request_password_index_from_stdin<
-    R: BufRead,
-    ErrorWriter: Write + ?Sized,
-    OutputWriter: Write + ?Sized,
-    InstructionWriter: Write + ?Sized,
->(
+fn request_password_index_from_stdin(
     passwords: &Vec<&Password>,
     prompt: &str,
-    reader: &mut ReaderManager<R>,
-    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
+    io: &mut impl CliInputOutput,
 ) -> usize {
     assert!(!passwords.is_empty());
 
     // Read the index from the command line and convert to a number
     loop {
         if passwords.len() > 1 {
-            writer.instruction().info(prompt);
-            writer
-                .instruction()
-                .prompt(format!("Type a number from 1 to {}: ", passwords.len()).as_str());
+            io.info(prompt, OutputType::Standard);
+            io.write(
+                format!("Type a number from 1 to {}: ", passwords.len()),
+                OutputType::Standard,
+            );
         } else if passwords.len() == 1 {
-            writer
-                .instruction()
-                .prompt("If this is the password you mean, type \"1\" and hit ENTER: ");
+            io.write(
+                "If this is the password you mean, type \"1\" and hit ENTER: ",
+                OutputType::Standard,
+            );
         }
 
-        match reader.read_line() {
+        match io.read_line() {
             Ok(line) => {
                 match line.trim().parse::<usize>() {
                     Ok(index) => {
                         if index == 0 || index > passwords.len() {
-                            writer.instruction().prompt(
+                            io.write(
                                 format!(
                                     "I need a number between 1 and {}. Let's try again:",
                                     passwords.len()
-                                )
-                                .as_str(),
+                                ),
+                                OutputType::Standard,
                             );
                             continue;
                         }
@@ -132,70 +109,51 @@ fn request_password_index_from_stdin<
                         return index - 1;
                     }
                     Err(err) => {
-                        writer.instruction().prompt(
-                            format!(
-                            "This isn't a valid number (reason: {}). Let's try again (1 to {}): ",
-                            err,
-                            passwords.len()
-                        )
-                            .as_str(),
+                        io.write(
+                            format!("This isn't a valid number (reason: {}). Let's try again (1 to {}): ", err, passwords.len()), OutputType::Standard,
                         );
                         continue;
                     }
                 };
             }
             Err(err) => {
-                writer.instruction().prompt(
+                io.write(
                     format!(
                         "I couldn't read that (reason: {}). Let's try again (1 to {}): ",
                         err,
                         passwords.len()
-                    )
-                    .as_str(),
+                    ),
+                    OutputType::Standard,
                 );
             }
         }
     }
 }
 
-fn choose_password_in_list<
-    R: BufRead,
-    ErrorWriter: Write + ?Sized,
-    OutputWriter: Write + ?Sized,
-    InstructionWriter: Write + ?Sized,
->(
+fn choose_password_in_list(
     passwords: &Vec<&Password>,
     with_numbers: bool,
     prompt: &str,
-    reader: &mut ReaderManager<R>,
-    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
+    io: &mut impl CliInputOutput,
 ) -> usize {
-    print_list_of_passwords(passwords, with_numbers, writer);
-    writer.output().newline();
-    request_password_index_from_stdin(passwords, prompt, reader, writer)
+    print_list_of_passwords(passwords, with_numbers, io);
+    io.nl(OutputType::Standard);
+    request_password_index_from_stdin(passwords, prompt, io)
 }
 
-pub fn search_and_choose_password<
-    'a,
-    'b,
-    'c,
-    R: BufRead,
-    ErrorWriter: Write + ?Sized,
-    OutputWriter: Write + ?Sized,
-    InstructionWriter: Write + ?Sized,
->(
-    store: &'c PasswordStore,
+pub fn search_and_choose_password<'a>(
+    store: &'a PasswordStore,
     query: &str,
     with_numbers: bool,
     prompt: &str,
-    reader: &mut ReaderManager<'b, R>,
-    writer: &mut WriterManager<'a, ErrorWriter, OutputWriter, InstructionWriter>,
-) -> Option<&'c Password> {
+    io: &mut impl CliInputOutput,
+) -> Option<&'a Password> {
     let passwords = store.search_passwords(query);
     if passwords.len() == 0 {
-        writer
-            .error()
-            .error(format!("Woops, I can't find any passwords for \"{}\".", query).as_str());
+        io.error(
+            format!("Woops, I can't find any passwords for \"{}\".", query),
+            OutputType::Error,
+        );
         return None;
     }
 
@@ -206,30 +164,30 @@ pub fn search_and_choose_password<
         return Some(&password);
     }
 
-    let index = choose_password_in_list(&passwords, with_numbers, prompt, reader, writer);
+    let index = choose_password_in_list(&passwords, with_numbers, prompt, io);
     Some(passwords[index])
 }
 
 #[cfg(test)]
 mod test {
     use super::get_list_of_passwords;
-    use list::{WITHOUT_NUMBERS, WITH_NUMBERS};
-    use password::v2::Password;
-    use safe_string::SafeString;
+    use crate::list::{WITHOUT_NUMBERS, WITH_NUMBERS};
+    use crate::password::v2::Password;
+    use crate::rutil::SafeString;
 
     // Creates a list of at least two passwords, and more if specified
     fn get_passwords(mut additional: i32) -> Vec<Password> {
         let google = Password::new(
             format!("google"),
             format!("short un"),
-            SafeString::new(format!("xxxx")),
+            SafeString::from_string(format!("xxxx")),
         );
 
         let mut list = vec![
             Password::new(
                 format!("youtube.com"),
                 format!("that long username"),
-                SafeString::new(format!("xxxx")),
+                SafeString::from_string(format!("xxxx")),
             ),
             google.clone(),
         ];

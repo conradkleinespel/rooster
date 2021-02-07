@@ -1,21 +1,8 @@
-// Copyright 2014-2017 The Rooster Developers
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-use io::WriterManager;
+use crate::rclio::CliInputOutput;
+use crate::rclio::OutputType;
+use crate::rutil::SafeString;
 use rand::{rngs::OsRng, Rng};
-use safe_string::SafeString;
-use std::io::{Result as IoResult, Write};
+use std::io::Result as IoResult;
 
 fn generate_password(alnum: bool, len: usize) -> IoResult<SafeString> {
     let mut password_as_string = String::new();
@@ -35,7 +22,7 @@ fn generate_password(alnum: bool, len: usize) -> IoResult<SafeString> {
             password_as_string.push(rng.gen_range(33, 127) as u8 as char);
         }
     }
-    Ok(SafeString::new(password_as_string))
+    Ok(SafeString::from_string(password_as_string))
 }
 
 /// Returns true if the password contains at least one digit, one uppercase letter and one
@@ -72,14 +59,7 @@ impl PasswordSpec {
     }
 }
 
-pub fn check_password_len<
-    ErrorWriter: Write + ?Sized,
-    OutputWriter: Write + ?Sized,
-    InstructionWriter: Write + ?Sized,
->(
-    opt: Option<usize>,
-    writer: &mut WriterManager<ErrorWriter, OutputWriter, InstructionWriter>,
-) -> Option<usize> {
+pub fn check_password_len(opt: Option<usize>, io: &mut impl CliInputOutput) -> Option<usize> {
     match opt {
         Some(len) => {
             // We want passwords to contain at least one uppercase letter, one lowercase
@@ -88,21 +68,17 @@ pub fn check_password_len<
             // a password of length < 4 with 4 different kinds of characters (uppercase,
             // lowercase, numeric, punctuation).
             if len < 4 {
-                writer
-                    .error()
-                    .error("Woops! The length of the password must be at least 4. This");
-                writer
-                    .error()
-                    .error("allows us to make sure your password is secure.");
+                io.error("Woops! The length of the password must be at least 4. This allows us to make sure your password is secure.", OutputType::Error);
                 None
             } else {
                 Some(len)
             }
         }
         None => {
-            writer
-                .error()
-                .error("Woops! The length option must be a valid number, for instance 8 or 16.");
+            io.error(
+                "Woops! The length option must be a valid number, for instance 8 or 16.",
+                OutputType::Error,
+            );
             None
         }
     }
@@ -110,7 +86,7 @@ pub fn check_password_len<
 
 #[cfg(test)]
 mod test {
-    use generate::PasswordSpec;
+    use crate::generate::PasswordSpec;
     use std::ops::Deref;
 
     #[test]

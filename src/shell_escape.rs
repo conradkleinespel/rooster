@@ -7,6 +7,7 @@
 // <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
+
 //! Escape characters that may have special meaning in a shell.
 #![doc(html_root_url = "https://docs.rs/shell-escape/0.1")]
 

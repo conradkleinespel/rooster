@@ -1,6 +1,9 @@
+extern crate serde_json;
+
 mod helpers;
 
-use helpers::prelude::*;
+use crate::helpers::prelude::*;
+use serde_json::Value;
 
 #[test]
 fn test_command_export_json() {
@@ -9,8 +12,7 @@ fn test_command_export_json() {
         0,
         main_with_args(
             &["rooster", "init", "--force-for-tests"],
-            input!("\nxxxx\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "\nxxxx\n"),
             &rooster_file
         )
     );
@@ -19,27 +21,42 @@ fn test_command_export_json() {
         0,
         main_with_args(
             &["rooster", "add", "-s", "Youtube", "yt@example.com"],
-            input!("xxxx\nabcd\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "xxxx\nabcd\n"),
             &rooster_file
         )
     );
 
-    let mut output = sink();
+    let mut io = CursorInputOutput::new("", "xxxx\n");
     assert_eq!(
         0,
-        main_with_args(
-            &["rooster", "export", "json"],
-            input!("xxxx\n"),
-            output!(&mut sink(), &mut output, &mut sink()),
-            &rooster_file
-        )
+        main_with_args(&["rooster", "export", "json"], &mut io, &rooster_file)
     );
-    let output_as_vecu8 = output.into_inner();
+    let output_as_vecu8 = io.stdout_cursor.into_inner();
     let output_as_string = String::from_utf8_lossy(output_as_vecu8.as_slice());
-    assert!(output_as_string.contains("\"password\":\"abcd\""));
-    assert!(output_as_string.contains("\"username\":\"yt@example.com\""));
-    assert!(output_as_string.contains("\"name\":\"Youtube\""));
+    let output_as_json = serde_json::from_str::<Value>(output_as_string.as_ref()).unwrap();
+    let saved_password = output_as_json
+        .as_object()
+        .unwrap()
+        .get("passwords")
+        .unwrap()
+        .as_array()
+        .unwrap()
+        .get(0)
+        .unwrap()
+        .as_object()
+        .unwrap();
+    assert_eq!(
+        saved_password.get("password").unwrap().as_str().unwrap(),
+        "abcd"
+    );
+    assert_eq!(
+        saved_password.get("username").unwrap().as_str().unwrap(),
+        "yt@example.com"
+    );
+    assert_eq!(
+        saved_password.get("name").unwrap().as_str().unwrap(),
+        "Youtube"
+    );
 }
 
 #[test]
@@ -49,8 +66,7 @@ fn test_command_export_csv() {
         0,
         main_with_args(
             &["rooster", "init", "--force-for-tests"],
-            input!("\nxxxx\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "\nxxxx\n"),
             &rooster_file
         )
     );
@@ -59,23 +75,17 @@ fn test_command_export_csv() {
         0,
         main_with_args(
             &["rooster", "add", "-s", "Youtube", "yt@example.com"],
-            input!("xxxx\nabcd\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "xxxx\nabcd\n"),
             &rooster_file
         )
     );
 
-    let mut output = sink();
+    let mut io = CursorInputOutput::new("", "xxxx\n");
     assert_eq!(
         0,
-        main_with_args(
-            &["rooster", "export", "csv"],
-            input!("xxxx\n"),
-            output!(&mut sink(), &mut output, &mut sink()),
-            &rooster_file
-        )
+        main_with_args(&["rooster", "export", "csv"], &mut io, &rooster_file)
     );
-    let output_as_vecu8 = output.into_inner();
+    let output_as_vecu8 = io.stdout_cursor.into_inner();
     let output_as_string = String::from_utf8_lossy(output_as_vecu8.as_slice());
     assert_eq!(output_as_string, "Youtube,yt@example.com,abcd\n");
 }
@@ -87,8 +97,7 @@ fn test_command_export_1password() {
         0,
         main_with_args(
             &["rooster", "init", "--force-for-tests"],
-            input!("\nxxxx\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "\nxxxx\n"),
             &rooster_file
         )
     );
@@ -97,23 +106,17 @@ fn test_command_export_1password() {
         0,
         main_with_args(
             &["rooster", "add", "-s", "Youtube", "yt@example.com"],
-            input!("xxxx\nabcd\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "xxxx\nabcd\n"),
             &rooster_file
         )
     );
 
-    let mut output = sink();
+    let mut io = CursorInputOutput::new("", "xxxx\n");
     assert_eq!(
         0,
-        main_with_args(
-            &["rooster", "export", "1password"],
-            input!("xxxx\n"),
-            output!(&mut sink(), &mut output, &mut sink()),
-            &rooster_file
-        )
+        main_with_args(&["rooster", "export", "1password"], &mut io, &rooster_file)
     );
-    let output_as_vecu8 = output.into_inner();
+    let output_as_vecu8 = io.stdout_cursor.into_inner();
     let output_as_string = String::from_utf8_lossy(output_as_vecu8.as_slice());
     assert_eq!(output_as_string, "Youtube,yt@example.com,abcd\n");
 }

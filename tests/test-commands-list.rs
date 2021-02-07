@@ -1,6 +1,6 @@
 mod helpers;
 
-use helpers::prelude::*;
+use crate::helpers::prelude::*;
 
 #[test]
 fn test_command_list() {
@@ -9,23 +9,17 @@ fn test_command_list() {
         0,
         main_with_args(
             &["rooster", "init", "--force-for-tests"],
-            input!("\nxxxx\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "\nxxxx\n"),
             &rooster_file
         )
     );
 
-    let mut output = sink();
+    let mut io = CursorInputOutput::new("", "xxxx\n");
     assert_eq!(
         0,
-        main_with_args(
-            &["rooster", "list"],
-            input!("xxxx\n"),
-            output!(&mut sink(), &mut output, &mut sink()),
-            &rooster_file
-        )
+        main_with_args(&["rooster", "list"], &mut io, &rooster_file)
     );
-    let output_as_vecu8 = output.into_inner();
+    let output_as_vecu8 = io.stdout_cursor.into_inner();
     let output_as_string = String::from_utf8_lossy(output_as_vecu8.as_slice());
     assert!(output_as_string.contains("No passwords on record yet"));
 
@@ -33,8 +27,7 @@ fn test_command_list() {
         0,
         main_with_args(
             &["rooster", "generate", "Youtube", "yt@example.com"],
-            input!("xxxx\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "xxxx\n"),
             &rooster_file
         )
     );
@@ -42,23 +35,17 @@ fn test_command_list() {
         0,
         main_with_args(
             &["rooster", "generate", "Google", "google@example.com"],
-            input!("xxxx\n"),
-            output!(&mut sink(), &mut sink(), &mut sink()),
+            &mut CursorInputOutput::new("", "xxxx\n"),
             &rooster_file
         )
     );
 
-    let mut output = sink();
+    let mut io = CursorInputOutput::new("", "xxxx\n");
     assert_eq!(
         0,
-        main_with_args(
-            &["rooster", "list"],
-            input!("xxxx\n"),
-            output!(&mut sink(), &mut output, &mut sink()),
-            &rooster_file
-        )
+        main_with_args(&["rooster", "list"], &mut io, &rooster_file)
     );
-    let output_as_vecu8 = output.into_inner();
+    let output_as_vecu8 = io.stdout_cursor.into_inner();
     let output_as_string = String::from_utf8_lossy(output_as_vecu8.as_slice());
     assert!(output_as_string.contains("Youtube"));
     assert!(output_as_string.contains("yt@example.com"));

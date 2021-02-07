@@ -1,6 +1,6 @@
 mod helpers;
 
-use helpers::prelude::*;
+use crate::helpers::prelude::*;
 use std::fs::File;
 use std::io::Write;
 
@@ -33,17 +33,12 @@ fn test_corruption() {
         ])
         .unwrap();
 
-    let mut output = sink();
+    let mut io = CursorInputOutput::new("", "xxxx\n");
     assert_eq!(
         1,
-        main_with_args(
-            &["rooster", "list"],
-            input!("xxxx\n"),
-            output!(&mut output, &mut sink(), &mut sink()),
-            &rooster_file
-        )
+        main_with_args(&["rooster", "list"], &mut io, &rooster_file)
     );
-    let output_as_vecu8 = output.into_inner();
+    let output_as_vecu8 = io.stderr_cursor.into_inner();
     let output_as_string = String::from_utf8_lossy(output_as_vecu8.as_slice());
     assert!(output_as_string.contains("Your Rooster file is corrupted"));
 }

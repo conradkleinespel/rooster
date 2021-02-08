@@ -6,7 +6,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use crate::rutil::SafeVec;
+use crate::rutil::safe_vec::SafeVec;
 
 pub fn encrypt(data: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>, ()> {
     openssl::symm::encrypt(openssl::symm::Cipher::aes_256_cbc(), key, Some(iv), data)

@@ -2,7 +2,7 @@ use crate::password;
 use crate::password::v2::Password;
 use crate::rclio::CliInputOutput;
 use crate::rclio::OutputType;
-use crate::rutil::SafeString;
+use crate::rutil::safe_string::SafeString;
 use csv::Writer;
 use serde::{Deserialize, Serialize};
 use serde_json;

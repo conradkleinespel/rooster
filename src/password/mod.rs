@@ -1,8 +1,8 @@
 pub mod v1;
 pub mod v2;
 
-use crate::rutil::SafeString;
-use crate::rutil::SafeVec;
+use crate::rutil::safe_string::SafeString;
+use crate::rutil::safe_vec::SafeVec;
 use std::convert::From;
 use std::io::Error as IoError;
 use std::ops::Deref;

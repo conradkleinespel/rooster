@@ -1,5 +1,3 @@
-extern crate serde_json;
-
 mod helpers;
 
 use crate::helpers::prelude::*;

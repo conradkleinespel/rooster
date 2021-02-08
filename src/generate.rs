@@ -1,6 +1,6 @@
 use crate::rclio::CliInputOutput;
 use crate::rclio::OutputType;
-use crate::rutil::SafeString;
+use crate::rutil::safe_string::SafeString;
 use rand::{rngs::OsRng, Rng};
 use std::io::Result as IoResult;
 

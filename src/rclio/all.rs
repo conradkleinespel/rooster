@@ -1,4 +1,5 @@
-use crate::rutil::{atty, SafeString};
+use crate::rutil::atty;
+use crate::rutil::safe_string::SafeString;
 use ansi_term::Color::{Green, Red, Yellow};
 use ansi_term::Style as AnsiTermStyle;
 use rpassword::{

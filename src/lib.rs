@@ -1,13 +1,10 @@
 // #![allow(useless_format, too_many_arguments)]
 
-extern crate ansi_term;
-extern crate serde_json;
-
 use crate::password::v2::PasswordStore;
 use crate::rclio::CliInputOutput;
 use crate::rclio::OutputType;
-use crate::rutil::SafeString;
-use crate::rutil::SafeVec;
+use crate::rutil::safe_string::SafeString;
+use crate::rutil::safe_vec::SafeVec;
 use clap::{App, AppSettings, Arg};
 use std::env;
 use std::fs::File;
@@ -24,7 +21,9 @@ mod generate;
 mod list;
 mod password;
 mod quale;
+#[allow(unused)]
 pub mod rclio;
+#[allow(unused)]
 mod rutil;
 mod shell_escape;
 

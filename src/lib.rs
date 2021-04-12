@@ -24,6 +24,10 @@ mod quale;
 #[allow(unused)]
 pub mod rclio;
 #[allow(unused)]
+mod rpassword;
+#[allow(unused)]
+mod rprompt;
+#[allow(unused)]
 mod rutil;
 mod shell_escape;
 

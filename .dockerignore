@@ -1,7 +1,0 @@
-/target
-/README.md
-/LICENSE-APACHE
-/Dockerfile.*
-/.dockerignore
-/.git
-/.idea

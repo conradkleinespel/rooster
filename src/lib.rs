@@ -234,238 +234,238 @@ pub fn main_with_args(
     rooster_file_path: &PathBuf,
 ) -> i32 {
     let matches = App::new("rooster")
-        .global_setting(AppSettings::HelpRequired)
+        .global_setting(AppSettings::HelpExpected)
         .global_setting(AppSettings::DisableHelpSubcommand)
         .setting(AppSettings::SubcommandRequiredElseHelp)
-        .about("Welcome to Rooster, the simple password manager for geeks :-)")
+        .override_help("Welcome to Rooster, the simple password manager for geeks :-)")
         .version(env!("CARGO_PKG_VERSION"))
         .subcommand(
-            App::new("init").about("Create a new password file").arg(
+            App::new("init").override_help("Create a new password file").arg(
                 Arg::new("force-for-tests")
                     .long("force-for-tests")
-                    .hidden(true)
-                    .about("Forces initializing the file, used in integration tests only"),
+                    .hide(true)
+                    .help("Forces initializing the file, used in integration tests only"),
             ),
         )
         .subcommand(
             App::new("add")
-                .about("Add a new password manually")
+                .override_help("Add a new password manually")
                 .arg(
                     Arg::new("app")
                         .required(true)
-                        .about("The name of the app (fuzzy-matched)"),
+                        .help("The name of the app (fuzzy-matched)"),
                 )
                 .arg(
                     Arg::new("username")
                         .required(true)
-                        .about("Your username for this account"),
+                        .help("Your username for this account"),
                 )
                 .arg(
                     Arg::new("show")
                         .short('s')
                         .long("show")
-                        .about("Show the password instead of copying it to the clipboard"),
+                        .help("Show the password instead of copying it to the clipboard"),
                 ),
         )
         .subcommand(
             App::new("change")
-                .about("Change a password manually")
+                .override_help("Change a password manually")
                 .arg(
                     Arg::new("app")
                         .required(true)
-                        .about("The name of the app (fuzzy-matched)"),
+                        .help("The name of the app (fuzzy-matched)"),
                 )
                 .arg(
                     Arg::new("show")
                         .short('s')
                         .long("show")
-                        .about("Show the password instead of copying it to the clipboard"),
+                        .help("Show the password instead of copying it to the clipboard"),
                 ),
         )
         .subcommand(
-            App::new("delete").about("Delete a password").arg(
+            App::new("delete").override_help("Delete a password").arg(
                 Arg::new("app")
                     .required(true)
-                    .about("The name of the app (fuzzy-matched)"),
+                    .help("The name of the app (fuzzy-matched)"),
             ),
         )
         .subcommand(
             App::new("generate")
-                .about("Generate a password")
+                .override_help("Generate a password")
                 .arg(
                     Arg::new("app")
                         .required(true)
-                        .about("The name of the app (fuzzy-matched)"),
+                        .help("The name of the app (fuzzy-matched)"),
                 )
                 .arg(
                     Arg::new("username")
                         .required(true)
-                        .about("Your username for this account"),
+                        .help("Your username for this account"),
                 )
                 .arg(
                     Arg::new("show")
                         .short('s')
                         .long("show")
-                        .about("Show the password instead of copying it to the clipboard"),
+                        .help("Show the password instead of copying it to the clipboard"),
                 )
                 .arg(
                     Arg::new("alnum")
                         .short('a')
                         .long("alnum")
-                        .about("Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords"),
+                        .help("Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords"),
                 )
                 .arg(
                     Arg::new("length")
                         .short('l')
                         .long("length")
                         .default_value("32")
-                        .about("Set a custom length for the generated password")
+                        .help("Set a custom length for the generated password")
                         .validator(validate_arg_digits),
                 ),
         )
         .subcommand(
             App::new("regenerate")
-                .about("Regenerate a previously existing password")
+                .override_help("Regenerate a previously existing password")
                 .arg(
                     Arg::new("app")
                         .required(true)
-                        .about("The name of the app (fuzzy-matched)"),
+                        .help("The name of the app (fuzzy-matched)"),
                 )
                 .arg(
                     Arg::new("show")
                         .short('s')
                         .long("show")
-                        .about("Show the password instead of copying it to the clipboard"),
+                        .help("Show the password instead of copying it to the clipboard"),
                 )
                 .arg(
                     Arg::new("alnum")
                         .short('a')
                         .long("alnum")
-                        .about("Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords"),
+                        .help("Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords"),
                 )
                 .arg(
                     Arg::new("length")
                         .short('l')
                         .long("length")
                         .default_value("32")
-                        .about("Set a custom length for the generated password")
+                        .help("Set a custom length for the generated password")
                         .validator(validate_arg_digits),
                 ),
         )
         .subcommand(
             App::new("get")
-                .about("Retrieve a password")
+                .override_help("Retrieve a password")
                 .arg(
                     Arg::new("app")
                         .required(true)
-                        .about("The name of the app (fuzzy-matched)"),
+                        .help("The name of the app (fuzzy-matched)"),
                 )
                 .arg(
                     Arg::new("show")
                         .short('s')
                         .long("show")
-                        .about("Show the password instead of copying it to the clipboard"),
+                        .help("Show the password instead of copying it to the clipboard"),
                 ),
         )
         .subcommand(
             App::new("rename")
-                .about("Rename the app for a password")
+                .override_help("Rename the app for a password")
                 .arg(
                     Arg::new("app")
                         .required(true)
-                        .about("The current name of the app (fuzzy-matched)"),
+                        .help("The current name of the app (fuzzy-matched)"),
                 )
                 .arg(
                     Arg::new("new_name")
                         .required(true)
-                        .about("The new name of the app"),
+                        .help("The new name of the app"),
                 ),
         )
         .subcommand(
             App::new("transfer")
-                .about("Change the username for a password")
+                .override_help("Change the username for a password")
                 .arg(
                     Arg::new("app")
                         .required(true)
-                        .about("The current name of the app (fuzzy-matched)"),
+                        .help("The current name of the app (fuzzy-matched)"),
                 )
                 .arg(
                     Arg::new("new_username")
                         .required(true)
-                        .about("Your new username for this account"),
+                        .help("Your new username for this account"),
                 ),
         )
-        .subcommand(App::new("list").about("List all apps and usernames"))
+        .subcommand(App::new("list").override_help("List all apps and usernames"))
         .subcommand(
             App::new("import")
                 .setting(AppSettings::SubcommandRequiredElseHelp)
-                .about("Import all your existing passwords from elsewhere")
+                .override_help("Import all your existing passwords from elsewhere")
                 .subcommand(
                     App::new("json")
-                        .about("Import a file generated with `rooster export json`")
+                        .override_help("Import a file generated with `rooster export json`")
                         .arg(
                             Arg::new("path")
                                 .required(true)
-                                .about("The path to the file you want to import"),
+                                .help("The path to the file you want to import"),
                         ),
                 )
                 .subcommand(
                     App::new("csv")
-                        .about("Import a file generated with `rooster export csv`")
+                        .override_help("Import a file generated with `rooster export csv`")
                         .arg(
                             Arg::new("path")
                                 .required(true)
-                                .about("The path to the file you want to import"),
+                                .help("The path to the file you want to import"),
                         ),
                 )
                 .subcommand(
                     App::new("1password")
-                        .about("Import a \"Common Fields\" CSV export from 1Password")
+                        .override_help("Import a \"Common Fields\" CSV export from 1Password")
                         .arg(
                             Arg::new("path")
                                 .required(true)
-                                .about("The path to the file you want to import"),
+                                .help("The path to the file you want to import"),
                         ),
                 ),
         )
         .subcommand(
             App::new("export")
                 .setting(AppSettings::SubcommandRequiredElseHelp)
-                .about("Export raw password data")
-                .subcommand(App::new("json").about("Export raw password data in JSON format"))
-                .subcommand(App::new("csv").about("Export raw password data in CSV format"))
+                .override_help("Export raw password data")
+                .subcommand(App::new("json").override_help("Export raw password data in JSON format"))
+                .subcommand(App::new("csv").override_help("Export raw password data in CSV format"))
                 .subcommand(
                     App::new("1password")
-                        .about("Export raw password data in 1Password compatible CSV format"),
+                        .override_help("Export raw password data in 1Password compatible CSV format"),
                 ),
         )
-        .subcommand(App::new("set-master-password").about("Set your master password"))
+        .subcommand(App::new("set-master-password").override_help("Set your master password"))
         .subcommand(
             App::new("set-scrypt-params")
-                .about("Set the key derivation parameters")
+                .override_help("Set the key derivation parameters")
                 .arg(
                     Arg::new("log2n")
                         .required(true)
-                        .about("The log2n parameter")
+                        .help("The log2n parameter")
                         .validator(validate_arg_digits),
                 )
                 .arg(
                     Arg::new("r")
                         .required(true)
-                        .about("The r parameter")
+                        .help("The r parameter")
                         .validator(validate_arg_digits),
                 )
                 .arg(
                     Arg::new("p")
                         .required(true)
-                        .about("The p parameter")
+                        .help("The p parameter")
                         .validator(validate_arg_digits),
                 )
                 .arg(
                     Arg::new("force")
                         .short('f')
                         .long("force")
-                        .about("Disable parameter checks"),
+                        .help("Disable parameter checks"),
                 ),
         )
         .get_matches_from(args);

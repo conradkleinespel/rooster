@@ -9,17 +9,17 @@ fn generate_password(alnum: bool, len: usize) -> IoResult<SafeString> {
     let mut rng = OsRng::default();
     for _ in 0..len {
         if alnum {
-            match rng.gen_range(0, 3) {
+            match rng.gen_range(0..3) {
                 // Numbers 0-9
-                0 => password_as_string.push(rng.gen_range(48, 58) as u8 as char),
+                0 => password_as_string.push(rng.gen_range(48..58) as u8 as char),
                 // Uppercase A-Z
-                1 => password_as_string.push(rng.gen_range(65, 91) as u8 as char),
+                1 => password_as_string.push(rng.gen_range(65..91) as u8 as char),
                 // Lowercase a-z
-                2 => password_as_string.push(rng.gen_range(97, 123) as u8 as char),
+                2 => password_as_string.push(rng.gen_range(97..123) as u8 as char),
                 _ => unreachable!(),
             }
         } else {
-            password_as_string.push(rng.gen_range(33, 127) as u8 as char);
+            password_as_string.push(rng.gen_range(33..127) as u8 as char);
         }
     }
     Ok(SafeString::from_string(password_as_string))

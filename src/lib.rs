@@ -237,10 +237,10 @@ pub fn main_with_args(
         .global_setting(AppSettings::HelpExpected)
         .global_setting(AppSettings::DisableHelpSubcommand)
         .setting(AppSettings::SubcommandRequiredElseHelp)
-        .override_help("Welcome to Rooster, the simple password manager for geeks :-)")
+        .about("Welcome to Rooster, the simple password manager for geeks :-)")
         .version(env!("CARGO_PKG_VERSION"))
         .subcommand(
-            App::new("init").override_help("Create a new password file").arg(
+            App::new("init").about("Create a new password file").arg(
                 Arg::new("force-for-tests")
                     .long("force-for-tests")
                     .hide(true)
@@ -249,7 +249,7 @@ pub fn main_with_args(
         )
         .subcommand(
             App::new("add")
-                .override_help("Add a new password manually")
+                .about("Add a new password manually")
                 .arg(
                     Arg::new("app")
                         .required(true)
@@ -269,7 +269,7 @@ pub fn main_with_args(
         )
         .subcommand(
             App::new("change")
-                .override_help("Change a password manually")
+                .about("Change a password manually")
                 .arg(
                     Arg::new("app")
                         .required(true)
@@ -283,7 +283,7 @@ pub fn main_with_args(
                 ),
         )
         .subcommand(
-            App::new("delete").override_help("Delete a password").arg(
+            App::new("delete").about("Delete a password").arg(
                 Arg::new("app")
                     .required(true)
                     .help("The name of the app (fuzzy-matched)"),
@@ -291,7 +291,7 @@ pub fn main_with_args(
         )
         .subcommand(
             App::new("generate")
-                .override_help("Generate a password")
+                .about("Generate a password")
                 .arg(
                     Arg::new("app")
                         .required(true)
@@ -325,7 +325,7 @@ pub fn main_with_args(
         )
         .subcommand(
             App::new("regenerate")
-                .override_help("Regenerate a previously existing password")
+                .about("Regenerate a previously existing password")
                 .arg(
                     Arg::new("app")
                         .required(true)
@@ -354,7 +354,7 @@ pub fn main_with_args(
         )
         .subcommand(
             App::new("get")
-                .override_help("Retrieve a password")
+                .about("Retrieve a password")
                 .arg(
                     Arg::new("app")
                         .required(true)
@@ -369,7 +369,7 @@ pub fn main_with_args(
         )
         .subcommand(
             App::new("rename")
-                .override_help("Rename the app for a password")
+                .about("Rename the app for a password")
                 .arg(
                     Arg::new("app")
                         .required(true)
@@ -383,7 +383,7 @@ pub fn main_with_args(
         )
         .subcommand(
             App::new("transfer")
-                .override_help("Change the username for a password")
+                .about("Change the username for a password")
                 .arg(
                     Arg::new("app")
                         .required(true)
@@ -395,14 +395,14 @@ pub fn main_with_args(
                         .help("Your new username for this account"),
                 ),
         )
-        .subcommand(App::new("list").override_help("List all apps and usernames"))
+        .subcommand(App::new("list").about("List all apps and usernames"))
         .subcommand(
             App::new("import")
                 .setting(AppSettings::SubcommandRequiredElseHelp)
-                .override_help("Import all your existing passwords from elsewhere")
+                .about("Import all your existing passwords from elsewhere")
                 .subcommand(
                     App::new("json")
-                        .override_help("Import a file generated with `rooster export json`")
+                        .about("Import a file generated with `rooster export json`")
                         .arg(
                             Arg::new("path")
                                 .required(true)
@@ -411,7 +411,7 @@ pub fn main_with_args(
                 )
                 .subcommand(
                     App::new("csv")
-                        .override_help("Import a file generated with `rooster export csv`")
+                        .about("Import a file generated with `rooster export csv`")
                         .arg(
                             Arg::new("path")
                                 .required(true)
@@ -420,7 +420,7 @@ pub fn main_with_args(
                 )
                 .subcommand(
                     App::new("1password")
-                        .override_help("Import a \"Common Fields\" CSV export from 1Password")
+                        .about("Import a \"Common Fields\" CSV export from 1Password")
                         .arg(
                             Arg::new("path")
                                 .required(true)
@@ -431,18 +431,18 @@ pub fn main_with_args(
         .subcommand(
             App::new("export")
                 .setting(AppSettings::SubcommandRequiredElseHelp)
-                .override_help("Export raw password data")
-                .subcommand(App::new("json").override_help("Export raw password data in JSON format"))
-                .subcommand(App::new("csv").override_help("Export raw password data in CSV format"))
+                .about("Export raw password data")
+                .subcommand(App::new("json").about("Export raw password data in JSON format"))
+                .subcommand(App::new("csv").about("Export raw password data in CSV format"))
                 .subcommand(
                     App::new("1password")
-                        .override_help("Export raw password data in 1Password compatible CSV format"),
+                        .about("Export raw password data in 1Password compatible CSV format"),
                 ),
         )
-        .subcommand(App::new("set-master-password").override_help("Set your master password"))
+        .subcommand(App::new("set-master-password").about("Set your master password"))
         .subcommand(
             App::new("set-scrypt-params")
-                .override_help("Set the key derivation parameters")
+                .about("Set the key derivation parameters")
                 .arg(
                     Arg::new("log2n")
                         .required(true)

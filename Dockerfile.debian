@@ -18,7 +18,7 @@ ENTRYPOINT ["/usr/bin/rooster"]
 
 # make files findable by non-root
 ADD . /home/rooster-docker-test/data
-RUN cargo install --debug --path /home/rooster-docker-test/data/rooster --root /usr
+RUN cargo install --all-features --debug --path /home/rooster-docker-test/data/rooster --root /usr
 
 # run as non-root
 USER rooster-user

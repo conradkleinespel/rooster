@@ -38,7 +38,7 @@ dnf update -y
 dnf install -y curl gcc unzip pkgconfig libX11-devel libXmu-devel python3 openssl-devel libsodium-devel
 curl https://sh.rustup.rs -sSf | sh -s -- -y
 source $HOME/.cargo/env
-cargo install --root /usr rooster
+cargo install --all-features --root /usr rooster
 ```
 
 On **CentOS**: instructions should be similar to Fedora, but it seems like `libsodium` is not available on CentOS and I
@@ -51,7 +51,7 @@ apt-get update -y
 apt-get install -y curl gcc unzip pkg-config libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libx11-dev libxmu-dev python3 libssl-dev libsodium-dev xsel
 curl https://sh.rustup.rs -sSf | sh -s -- -y
 source $HOME/.cargo/env
-cargo install --root /usr rooster
+cargo install --all-features --root /usr rooster
 ```
 
 On **Ubuntu 16.04/18.04**:
@@ -61,7 +61,7 @@ apt update -y
 apt install -y curl unzip pkg-config libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libx11-dev libxmu-dev python3 libssl-dev libsodium-dev xsel
 curl https://sh.rustup.rs -sSf | sh -s -- -y
 source $HOME/.cargo/env
-cargo install --root /usr rooster
+cargo install --all-features --root /usr rooster
 ```
 
 On **OSX**:
@@ -69,7 +69,7 @@ On **OSX**:
 ```shell
 brew install curl libsodium openssl
 curl https://sh.rustup.rs -sSf | sh -s -- -y
-cargo install --root /usr rooster
+cargo install --all-features --root /usr rooster
 ```
 
 If you use **Wayland** instead of X11, install [wl-clipboard](https://github.com/bugaevc/wl-clipboard) and make sure you have the following

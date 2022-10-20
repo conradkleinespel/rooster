@@ -1,4 +1,4 @@
-use crate::rutil::fix_new_line::fix_new_line;
+use crate::rutil::fix_line_issues::fix_line_issues;
 use crate::rutil::print_tty::{print_tty, print_writer};
 use std::io::{BufRead, BufReader, Write};
 
@@ -13,7 +13,7 @@ pub fn read_reply_from_bufread(reader: &mut impl BufRead) -> std::io::Result<Str
 
     reader.read_line(&mut reply)?;
 
-    fix_new_line(reply)
+    fix_line_issues(reply)
 }
 
 /// Displays a message on the TTY, then reads user input from stdin

@@ -44,7 +44,7 @@ pub struct PasswordSpec {
 impl PasswordSpec {
     pub fn new(alnum: bool, password_len: Option<usize>) -> PasswordSpec {
         PasswordSpec {
-            alnum: alnum,
+            alnum,
             len: password_len.unwrap_or(32),
         }
     }
@@ -59,28 +59,17 @@ impl PasswordSpec {
     }
 }
 
-pub fn check_password_len(opt: Option<usize>, io: &mut impl CliInputOutput) -> Option<usize> {
-    match opt {
-        Some(len) => {
-            // We want passwords to contain at least one uppercase letter, one lowercase
-            // letter and one digit. So we need at least 4 characters for each password.
-            // This checks makes sure we don't run into an infinite loop trying to generate
-            // a password of length < 4 with 4 different kinds of characters (uppercase,
-            // lowercase, numeric, punctuation).
-            if len < 4 {
-                io.error("Woops! The length of the password must be at least 4. This allows us to make sure your password is secure.", OutputType::Error);
-                None
-            } else {
-                Some(len)
-            }
-        }
-        None => {
-            io.error(
-                "Woops! The length option must be a valid number, for instance 8 or 16.",
-                OutputType::Error,
-            );
-            None
-        }
+pub fn check_password_len(len: usize, io: &mut impl CliInputOutput) -> Option<usize> {
+    // We want passwords to contain at least one uppercase letter, one lowercase
+    // letter and one digit. So we need at least 4 characters for each password.
+    // This checks makes sure we don't run into an infinite loop trying to generate
+    // a password of length < 4 with 4 different kinds of characters (uppercase,
+    // lowercase, numeric, punctuation).
+    if len < 4 {
+        io.error("Woops! The length of the password must be at least 4. This allows us to make sure your password is secure.", OutputType::Error);
+        None
+    } else {
+        Some(len)
     }
 }
 

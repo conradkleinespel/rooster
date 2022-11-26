@@ -81,7 +81,7 @@ fn create_imported_passwords_from_csv(
     matches: &clap::ArgMatches,
     io: &mut impl CliInputOutput,
 ) -> Result<(Vec<Password>, Vec<Password>), i32> {
-    let path_str = matches.value_of("path").unwrap();
+    let path_str = matches.get_one::<String>("path").unwrap();
     let mut reader = csv::ReaderBuilder::new()
         .has_headers(false)
         .from_path(path_str)
@@ -113,7 +113,7 @@ fn create_imported_passwords_from_1password(
     matches: &clap::ArgMatches,
     io: &mut impl CliInputOutput,
 ) -> Result<(Vec<Password>, Vec<Password>), i32> {
-    let path_str = matches.value_of("path").unwrap();
+    let path_str = matches.get_one::<String>("path").unwrap();
     let mut reader = csv::ReaderBuilder::new()
         .has_headers(false)
         .from_path(path_str)
@@ -158,7 +158,7 @@ fn create_imported_passwords_from_json(
     matches: &clap::ArgMatches,
     io: &mut impl CliInputOutput,
 ) -> Result<(Vec<Password>, Vec<Password>), i32> {
-    let path_str = matches.value_of("path").unwrap();
+    let path_str = matches.get_one::<String>("path").unwrap();
     let dump_file = File::open(path_str).map_err(|err| {
         io.error(
             format!("Uh oh, could not open the file (reason: {})", err),

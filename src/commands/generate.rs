@@ -11,22 +11,20 @@ pub fn callback_exec(
     store: &mut password::v2::PasswordStore,
     io: &mut impl CliInputOutput,
 ) -> Result<(), i32> {
-    let app_name = matches.value_of("app").unwrap();
-    let username = matches.value_of("username").unwrap();
+    let app_name = matches.get_one::<String>("app").unwrap();
+    let username = matches.get_one::<String>("username").unwrap();
 
     if store.has_password(app_name.deref()) {
         io.error(
-            "Woops, there is already an app with that name.",
+            "Woops: alnum, there is already an app with that name.",
             OutputType::Error,
         );
         return Err(1);
     }
 
     let pwspec = PasswordSpec::new(
-        matches.is_present("alnum"),
-        matches
-            .value_of("length")
-            .and_then(|len| check_password_len(len.parse::<usize>().ok(), io)),
+        matches.get_flag("alnum"),
+        check_password_len(*matches.get_one::<usize>("length").unwrap(), io),
     );
 
     let password_as_string = match pwspec.generate_hard_password() {
@@ -49,7 +47,7 @@ pub fn callback_exec(
 
     match store.add_password(password) {
         Ok(_) => {
-            if matches.is_present("show") {
+            if matches.get_flag("show") {
                 io.success(
                     format!(
                         "Alright! Here is your password: {}",

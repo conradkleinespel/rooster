@@ -1,7 +1,7 @@
 // #![allow(useless_format, too_many_arguments)]
 
 use crate::password::v2::PasswordStore;
-use clap::{App, AppSettings, Arg};
+use clap::{Arg, ArgAction, Command};
 use rclio::CliInputOutput;
 use rclio::OutputType;
 use rtoolbox::safe_string::SafeString;
@@ -23,15 +23,32 @@ mod password;
 mod quale;
 mod shell_escape;
 
-fn validate_arg_digits(v: &str) -> Result<(), String> {
-    if v.chars()
+fn only_digits(s: &str) -> bool {
+    s.chars()
         .map(|c| char::is_ascii_digit(&c))
         .collect::<Vec<bool>>()
         .contains(&false)
-    {
+}
+
+fn validate_arg_usize(v: &str) -> Result<usize, String> {
+    if only_digits(v) {
         return Err(String::from("The value must be made of digits"));
     }
-    Ok(())
+    Ok(v.parse::<usize>().unwrap())
+}
+
+fn validate_arg_u8(v: &str) -> Result<u8, String> {
+    if only_digits(v) {
+        return Err(String::from("The value must be made of digits"));
+    }
+    Ok(v.parse::<u8>().unwrap())
+}
+
+fn validate_arg_u32(v: &str) -> Result<u32, String> {
+    if only_digits(v) {
+        return Err(String::from("The value must be made of digits"));
+    }
+    Ok(v.parse::<u32>().unwrap())
 }
 
 fn open_password_file(filename: &str) -> IoResult<File> {
@@ -225,22 +242,25 @@ pub fn main_with_args(
     io: &mut impl CliInputOutput,
     rooster_file_path: &PathBuf,
 ) -> i32 {
-    let matches = App::new("rooster")
-        .global_setting(AppSettings::HelpExpected)
-        .global_setting(AppSettings::DisableHelpSubcommand)
-        .setting(AppSettings::SubcommandRequiredElseHelp)
+    let matches = Command::new("rooster")
+        .help_expected(true)
+        .disable_help_subcommand(true)
+        .subcommand_required(true)
+        .arg_required_else_help(true)
         .about("Welcome to Rooster, the simple password manager for geeks :-)")
         .version(env!("CARGO_PKG_VERSION"))
         .subcommand(
-            App::new("init").about("Create a new password file").arg(
-                Arg::new("force-for-tests")
-                    .long("force-for-tests")
-                    .hide(true)
-                    .help("Forces initializing the file, used in integration tests only"),
-            ),
+            Command::new("init")
+                .about("Create a new password file")
+                .arg(
+                    Arg::new("force-for-tests")
+                        .long("force-for-tests")
+                        .hide(true)
+                        .help("Forces initializing the file, used in integration tests only"),
+                ),
         )
         .subcommand(
-            App::new("add")
+            Command::new("add")
                 .about("Add a new password manually")
                 .arg(
                     Arg::new("app")
@@ -254,13 +274,14 @@ pub fn main_with_args(
                 )
                 .arg(
                     Arg::new("show")
+                        .action(ArgAction::SetTrue)
                         .short('s')
                         .long("show")
                         .help("Show the password instead of copying it to the clipboard"),
                 ),
         )
         .subcommand(
-            App::new("change")
+            Command::new("change")
                 .about("Change a password manually")
                 .arg(
                     Arg::new("app")
@@ -269,20 +290,21 @@ pub fn main_with_args(
                 )
                 .arg(
                     Arg::new("show")
+                        .action(ArgAction::SetTrue)
                         .short('s')
                         .long("show")
                         .help("Show the password instead of copying it to the clipboard"),
                 ),
         )
         .subcommand(
-            App::new("delete").about("Delete a password").arg(
+            Command::new("delete").about("Delete a password").arg(
                 Arg::new("app")
                     .required(true)
                     .help("The name of the app (fuzzy-matched)"),
             ),
         )
         .subcommand(
-            App::new("generate")
+            Command::new("generate")
                 .about("Generate a password")
                 .arg(
                     Arg::new("app")
@@ -296,12 +318,14 @@ pub fn main_with_args(
                 )
                 .arg(
                     Arg::new("show")
+                        .action(ArgAction::SetTrue)
                         .short('s')
                         .long("show")
                         .help("Show the password instead of copying it to the clipboard"),
                 )
                 .arg(
                     Arg::new("alnum")
+                        .action(ArgAction::SetTrue)
                         .short('a')
                         .long("alnum")
                         .help("Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords"),
@@ -312,11 +336,11 @@ pub fn main_with_args(
                         .long("length")
                         .default_value("32")
                         .help("Set a custom length for the generated password")
-                        .validator(validate_arg_digits),
+                        .value_parser(validate_arg_usize),
                 ),
         )
         .subcommand(
-            App::new("regenerate")
+            Command::new("regenerate")
                 .about("Regenerate a previously existing password")
                 .arg(
                     Arg::new("app")
@@ -325,12 +349,14 @@ pub fn main_with_args(
                 )
                 .arg(
                     Arg::new("show")
+                        .action(ArgAction::SetTrue)
                         .short('s')
                         .long("show")
                         .help("Show the password instead of copying it to the clipboard"),
                 )
                 .arg(
                     Arg::new("alnum")
+                        .action(ArgAction::SetTrue)
                         .short('a')
                         .long("alnum")
                         .help("Only use alpha numeric (a-z, A-Z, 0-9) in generated passwords"),
@@ -341,11 +367,11 @@ pub fn main_with_args(
                         .long("length")
                         .default_value("32")
                         .help("Set a custom length for the generated password")
-                        .validator(validate_arg_digits),
+                        .value_parser(validate_arg_usize),
                 ),
         )
         .subcommand(
-            App::new("get")
+            Command::new("get")
                 .about("Retrieve a password")
                 .arg(
                     Arg::new("app")
@@ -354,13 +380,14 @@ pub fn main_with_args(
                 )
                 .arg(
                     Arg::new("show")
+                        .action(ArgAction::SetTrue)
                         .short('s')
                         .long("show")
                         .help("Show the password instead of copying it to the clipboard"),
                 ),
         )
         .subcommand(
-            App::new("rename")
+            Command::new("rename")
                 .about("Rename the app for a password")
                 .arg(
                     Arg::new("app")
@@ -374,7 +401,7 @@ pub fn main_with_args(
                 ),
         )
         .subcommand(
-            App::new("transfer")
+            Command::new("transfer")
                 .about("Change the username for a password")
                 .arg(
                     Arg::new("app")
@@ -387,13 +414,14 @@ pub fn main_with_args(
                         .help("Your new username for this account"),
                 ),
         )
-        .subcommand(App::new("list").about("List all apps and usernames"))
+        .subcommand(Command::new("list").about("List all apps and usernames"))
         .subcommand(
-            App::new("import")
-                .setting(AppSettings::SubcommandRequiredElseHelp)
+            Command::new("import")
+                .subcommand_required(true)
+                .arg_required_else_help(true)
                 .about("Import all your existing passwords from elsewhere")
                 .subcommand(
-                    App::new("json")
+                    Command::new("json")
                         .about("Import a file generated with `rooster export json`")
                         .arg(
                             Arg::new("path")
@@ -402,7 +430,7 @@ pub fn main_with_args(
                         ),
                 )
                 .subcommand(
-                    App::new("csv")
+                    Command::new("csv")
                         .about("Import a file generated with `rooster export csv`")
                         .arg(
                             Arg::new("path")
@@ -411,7 +439,7 @@ pub fn main_with_args(
                         ),
                 )
                 .subcommand(
-                    App::new("1password")
+                    Command::new("1password")
                         .about("Import a \"Common Fields\" CSV export from 1Password")
                         .arg(
                             Arg::new("path")
@@ -421,40 +449,42 @@ pub fn main_with_args(
                 ),
         )
         .subcommand(
-            App::new("export")
-                .setting(AppSettings::SubcommandRequiredElseHelp)
+            Command::new("export")
+                .subcommand_required(true)
+                .arg_required_else_help(true)
                 .about("Export raw password data")
-                .subcommand(App::new("json").about("Export raw password data in JSON format"))
-                .subcommand(App::new("csv").about("Export raw password data in CSV format"))
+                .subcommand(Command::new("json").about("Export raw password data in JSON format"))
+                .subcommand(Command::new("csv").about("Export raw password data in CSV format"))
                 .subcommand(
-                    App::new("1password")
+                    Command::new("1password")
                         .about("Export raw password data in 1Password compatible CSV format"),
                 ),
         )
-        .subcommand(App::new("set-master-password").about("Set your master password"))
+        .subcommand(Command::new("set-master-password").about("Set your master password"))
         .subcommand(
-            App::new("set-scrypt-params")
+            Command::new("set-scrypt-params")
                 .about("Set the key derivation parameters")
                 .arg(
                     Arg::new("log2n")
                         .required(true)
                         .help("The log2n parameter")
-                        .validator(validate_arg_digits),
+                        .value_parser(validate_arg_u8),
                 )
                 .arg(
                     Arg::new("r")
                         .required(true)
                         .help("The r parameter")
-                        .validator(validate_arg_digits),
+                        .value_parser(validate_arg_u32),
                 )
                 .arg(
                     Arg::new("p")
                         .required(true)
                         .help("The p parameter")
-                        .validator(validate_arg_digits),
+                        .value_parser(validate_arg_u32),
                 )
                 .arg(
                     Arg::new("force")
+                        .action(ArgAction::SetTrue)
                         .short('f')
                         .long("force")
                         .help("Disable parameter checks"),

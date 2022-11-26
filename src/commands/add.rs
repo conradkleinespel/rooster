@@ -9,8 +9,8 @@ pub fn callback_exec(
     store: &mut password::v2::PasswordStore,
     io: &mut impl CliInputOutput,
 ) -> Result<(), i32> {
-    let app_name = matches.value_of("app").unwrap();
-    let username = matches.value_of("username").unwrap();
+    let app_name = matches.get_one::<String>("app").unwrap();
+    let username = matches.get_one::<String>("username").unwrap();
 
     if store.has_password(app_name.deref()) {
         io.error(
@@ -27,7 +27,7 @@ pub fn callback_exec(
                 password::v2::Password::new(app_name.clone(), username, password_as_string);
             match store.add_password(password) {
                 Ok(_) => {
-                    if matches.is_present("show") {
+                    if matches.get_flag("show") {
                         io.success(
                             format!(
                                 "Alright! Here is your password: {}",

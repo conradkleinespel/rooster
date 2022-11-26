@@ -9,8 +9,8 @@ pub fn callback_exec(
     store: &mut password::v2::PasswordStore,
     io: &mut impl CliInputOutput,
 ) -> Result<(), i32> {
-    let show = matches.is_present("show");
-    let query = matches.value_of("app").unwrap();
+    let show = matches.get_flag("show");
+    let query = matches.get_one::<String>("app").unwrap();
 
     let prompt = format!(
         "Which password would you like {}? ",

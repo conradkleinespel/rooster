@@ -3,7 +3,7 @@ use crate::password::v2::Password;
 use csv::Writer;
 use rclio::CliInputOutput;
 use rclio::OutputType;
-use rutil::rutil::safe_string::SafeString;
+use rutil::safe_string::SafeString;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::io::Cursor;

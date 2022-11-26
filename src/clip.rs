@@ -1,6 +1,6 @@
 use crate::password;
 use rclio::{CliInputOutput, OutputType};
-use rutil::rutil::safe_string::SafeString;
+use rutil::safe_string::SafeString;
 
 use std::ops::Deref;
 

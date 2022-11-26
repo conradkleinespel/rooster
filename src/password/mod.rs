@@ -1,8 +1,8 @@
 pub mod v1;
 pub mod v2;
 
-use rutil::rutil::safe_string::SafeString;
-use rutil::rutil::safe_vec::SafeVec;
+use rutil::safe_string::SafeString;
+use rutil::safe_vec::SafeVec;
 use std::convert::From;
 use std::io::Error as IoError;
 use std::ops::Deref;

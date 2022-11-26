@@ -254,6 +254,7 @@ pub fn main_with_args(
                 .about("Create a new password file")
                 .arg(
                     Arg::new("force-for-tests")
+                        .action(ArgAction::SetTrue)
                         .long("force-for-tests")
                         .hide(true)
                         .help("Forces initializing the file, used in integration tests only"),

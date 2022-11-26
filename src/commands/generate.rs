@@ -1,8 +1,8 @@
 use crate::clip::{copy_to_clipboard, paste_keys};
 use crate::generate::{check_password_len, PasswordSpec};
 use crate::password;
-use crate::rclio::CliInputOutput;
-use crate::rclio::OutputType;
+use rclio::CliInputOutput;
+use rclio::OutputType;
 
 use std::ops::Deref;
 

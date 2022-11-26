@@ -1,7 +1,7 @@
 use crate::clip::{copy_to_clipboard, paste_keys};
 use crate::password;
-use crate::rclio::CliInputOutput;
-use crate::rclio::OutputType;
+use rclio::CliInputOutput;
+use rclio::OutputType;
 use std::ops::Deref;
 
 pub fn callback_exec(

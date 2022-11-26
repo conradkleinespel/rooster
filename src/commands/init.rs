@@ -1,5 +1,5 @@
-use crate::rclio::CliInputOutput;
-use crate::rclio::OutputType;
+use rclio::CliInputOutput;
+use rclio::OutputType;
 use std::path::PathBuf;
 
 pub fn callback_exec(

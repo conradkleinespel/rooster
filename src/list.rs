@@ -1,5 +1,5 @@
 use crate::password::v2::{Password, PasswordStore};
-use crate::rclio::{CliInputOutput, OutputType};
+use rclio::{CliInputOutput, OutputType};
 
 /// Used to indicate lists should have a number, ie: 23 Google my.account@gmail.com
 pub const WITH_NUMBERS: bool = true;
@@ -173,7 +173,7 @@ mod test {
     use super::get_list_of_passwords;
     use crate::list::{WITHOUT_NUMBERS, WITH_NUMBERS};
     use crate::password::v2::Password;
-    use crate::rutil::safe_string::SafeString;
+    use rutil::rutil::safe_string::SafeString;
 
     // Creates a list of at least two passwords, and more if specified
     fn get_passwords(mut additional: i32) -> Vec<Password> {

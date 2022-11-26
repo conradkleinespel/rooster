@@ -28,5 +28,5 @@ ansi_term = "0.12"
 clap = "4.0"
 csv = "1.1"
 tempfile = "3.2"
-rclio = { path = "../rclio" }
-rtoolbox = { path = "../rtoolbox", features = ["serde"] }
+rclio = { path = "../rclio", version = "0.0" }
+rtoolbox = { path = "../rtoolbox", features = ["serde"], version = "0.0" }

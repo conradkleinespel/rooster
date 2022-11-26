@@ -29,6 +29,4 @@ clap = "3.2"
 csv = "1.1"
 tempfile = "3.2"
 rclio = { path = "../rclio" }
-rpassword = { path = "../rpassword" }
-rprompt = { path = "../rprompt" }
-rutil = { path = "../rutil", features = ["serde"] }
+rtoolbox = { path = "../rtoolbox", features = ["serde"] }

@@ -1,6 +1,6 @@
 use crate::password;
 use rclio::{CliInputOutput, OutputType};
-use rutil::safe_string::SafeString;
+use rtoolbox::safe_string::SafeString;
 
 use std::ops::Deref;
 

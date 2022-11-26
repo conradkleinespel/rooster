@@ -1,7 +1,7 @@
 use rand::{rngs::OsRng, Rng};
 use rclio::CliInputOutput;
 use rclio::OutputType;
-use rutil::safe_string::SafeString;
+use rtoolbox::safe_string::SafeString;
 use std::io::Result as IoResult;
 
 fn generate_password(alnum: bool, len: usize) -> IoResult<SafeString> {

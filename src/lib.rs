@@ -1,11 +1,11 @@
 // #![allow(useless_format, too_many_arguments)]
 
 use crate::password::v2::PasswordStore;
-use crate::rclio::CliInputOutput;
-use crate::rclio::OutputType;
-use crate::rutil::safe_string::SafeString;
-use crate::rutil::safe_vec::SafeVec;
 use clap::{App, AppSettings, Arg};
+use rclio::CliInputOutput;
+use rclio::OutputType;
+use rutil::rutil::safe_string::SafeString;
+use rutil::rutil::safe_vec::SafeVec;
 use std::env;
 use std::fs::File;
 use std::io::Read;
@@ -21,14 +21,6 @@ mod generate;
 mod list;
 mod password;
 mod quale;
-#[allow(unused)]
-pub mod rclio;
-#[allow(unused)]
-mod rpassword;
-#[allow(unused)]
-mod rprompt;
-#[allow(unused)]
-mod rutil;
 mod shell_escape;
 
 fn validate_arg_digits(v: &str) -> Result<(), String> {

@@ -1,7 +1,7 @@
 use crate::list;
 use crate::password;
-use crate::rclio::CliInputOutput;
-use crate::rclio::OutputType;
+use rclio::CliInputOutput;
+use rclio::OutputType;
 
 pub fn callback_exec(
     _matches: &clap::ArgMatches,

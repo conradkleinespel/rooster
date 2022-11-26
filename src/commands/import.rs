@@ -1,7 +1,7 @@
 use crate::ffi;
 use crate::password;
 use crate::password::v2::{Password, PasswordStore};
-use crate::rclio::{CliInputOutput, OutputType};
+use rclio::{CliInputOutput, OutputType};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::fs::File;

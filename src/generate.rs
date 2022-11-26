@@ -1,7 +1,7 @@
-use crate::rclio::CliInputOutput;
-use crate::rclio::OutputType;
-use crate::rutil::safe_string::SafeString;
 use rand::{rngs::OsRng, Rng};
+use rclio::CliInputOutput;
+use rclio::OutputType;
+use rutil::rutil::safe_string::SafeString;
 use std::io::Result as IoResult;
 
 fn generate_password(alnum: bool, len: usize) -> IoResult<SafeString> {

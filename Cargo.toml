@@ -25,6 +25,10 @@ clipboard = "0.5"
 dirs = "4.0"
 openssl = "0.10"
 ansi_term = "0.12"
-clap = "3.0.0-rc.7"
+clap = "3.2"
 csv = "1.1"
 tempfile = "3.2"
+rclio = { path = "../rclio" }
+rpassword = { path = "../rpassword" }
+rprompt = { path = "../rprompt" }
+rutil = { path = "../rutil", features = ["serde"] }

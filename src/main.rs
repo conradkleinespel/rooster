@@ -1,4 +1,4 @@
-use rooster::rclio::RegularInputOutput;
+use rclio::RegularInputOutput;
 use std::env::VarError;
 use std::path::PathBuf;
 

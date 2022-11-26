@@ -9,8 +9,8 @@ pub fn callback_exec(
     store: &mut password::v2::PasswordStore,
     io: &mut impl CliInputOutput,
 ) -> Result<(), i32> {
-    let query = matches.value_of("app").unwrap();
-    let new_username = matches.value_of("new_username").unwrap().to_owned();
+    let query = matches.get_one::<String>("app").unwrap();
+    let new_username = matches.get_one::<String>("new_username").unwrap();
 
     let password = list::search_and_choose_password(
         store,

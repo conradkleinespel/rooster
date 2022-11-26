@@ -11,7 +11,7 @@ pub fn callback_exec(
     store: &mut password::v2::PasswordStore,
     io: &mut impl CliInputOutput,
 ) -> Result<(), i32> {
-    let query = matches.value_of("app").unwrap();
+    let query = matches.get_one::<String>("app").unwrap();
 
     let password = list::search_and_choose_password(
         store,
@@ -24,10 +24,8 @@ pub fn callback_exec(
     .clone();
 
     let pwspec = PasswordSpec::new(
-        matches.is_present("alnum"),
-        matches
-            .value_of("length")
-            .and_then(|len| check_password_len(len.parse::<usize>().ok(), io)),
+        matches.get_flag("alnum"),
+        check_password_len(*matches.get_one::<usize>("length").unwrap(), io),
     );
 
     let password_as_string = match pwspec.generate_hard_password() {
@@ -57,7 +55,7 @@ pub fn callback_exec(
 
     match change_result {
         Ok(password) => {
-            let show = matches.is_present("show");
+            let show = matches.get_flag("show");
             clip::confirm_password_retrieved(show, &password, io);
             Ok(())
         }

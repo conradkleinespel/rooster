@@ -8,7 +8,7 @@ pub fn callback_exec(
     rooster_file_path: &PathBuf,
 ) -> Result<(), i32> {
     let filename_as_string = rooster_file_path.to_string_lossy().into_owned();
-    if rooster_file_path.exists() && !matches.is_present("force-for-tests") {
+    if rooster_file_path.exists() && !matches.get_flag("force-for-tests") {
         io.error(
             "Woops, there is already a Rooster file located at:",
             OutputType::Error,

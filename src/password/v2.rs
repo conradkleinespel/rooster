@@ -199,7 +199,7 @@ fn digest_blob_with_metadata(
     blob_with_metadata.write_all(scrypt_bytes_cursor.deref())?;
     blob_with_metadata.write_all(iv)?;
     blob_with_metadata.write_all(salt)?;
-    blob_with_metadata.write_all(blob.deref())?;
+    blob_with_metadata.write_all(blob)?;
     Ok(blob_with_metadata)
 }
 
@@ -583,7 +583,7 @@ impl PasswordStore {
         app_name: &str,
         closure: &dyn Fn(Password) -> Password,
     ) -> Result<Password, PasswordError> {
-        let old_password = self.delete_password(app_name.deref())?;
+        let old_password = self.delete_password(app_name)?;
         let new_password = closure(old_password.clone());
         match self.add_password(new_password.clone()) {
             Ok(_) => Ok(new_password),

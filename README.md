@@ -83,25 +83,6 @@ Once you have installed Rooster (see instructions below), you can view documenta
 rooster --help
 ```
 
-## Contributors
-
-We welcome contribution from everyone. Feel free to open an issue or a pull request at any time.
-
-Here's a list of existing Rooster contributors:
-
-- [@conradkleinespel](https://github.com/conradkleinespel)
-- [@cr6git](https://github.com/cr6git)
-- [@dwrensha](https://github.com/dwrensha)
-- [@Eternity-Yarr](https://github.com/Eternity-Yarr)
-- [@jaezun](https://github.com/jaezun)
-- [@kamiyaa](https://github.com/kamiyaa)
-- [@maxjacobson](https://github.com/maxjacobson)
-- [@qmx](https://github.com/qmx)
-- [@yamnikov-oleg](https://github.com/yamnikov-oleg)
-- Awesome Rustaceans from the [Rust Paris meetup](http://www.meetup.com/Rust-Paris/)
-
-Thank you very much for your help!  :smiley:  :heart:
-
 ## License
 
 The source code is released under the Apache 2.0 license.

@@ -1,19 +1,20 @@
 # Rooster
 
-Rooster is a simple password manager for geeks (it works in the terminal).
+Rooster is a simple password manager. It helps you securely save username/password combinations on MacOS and Linux
+through a friendly command-line interface.
 
-[![asciicast](https://asciinema.org/a/9opp6uXiI2XFURj8yNHYV3xfb.svg)](https://asciinema.org/a/9opp6uXiI2XFURj8yNHYV3xfb)
+![Rooster logo and headline](rooster.png)
 
 Rooster is made available free of charge. You can support its development through [Liberapay](https://liberapay.com/conradkleinespel/) 💪
 
 ## Features
 
-Rooster has some unique goals:
+Rooster has the following goals:
 
-- it is easy to maintain so that it **never becomes unmaintained**
-- it **works completely offline** by saving your password in a single local file
-- it stores **username/password combinations, nothing more, nothing less**
-- it can **import/export** passwords from and to 1Password/JSON/CSV
+- it is easy to maintain so that it **never becomes unmaintained**, it has existed since 2015;
+- it **works completely offline** by saving your password in a single local file;
+- it stores **username/password combinations, nothing more, nothing less**;
+- it can **import/export** passwords from and to 1Password/JSON/CSV.
 
 Rooster protects your passwords with state-of-the-art cryptography algorithms:
 
@@ -77,11 +78,15 @@ environment variable set: `XDG_SESSION_TYPE=wayland`.
 
 For other distributions, the various Docker files can help you find which dependencies you need.
 
-Once you have installed Rooster (see instructions below), you can view documentation with:
+## Usage
+
+Once you have installed Rooster, create a new password file:
 
 ```shell
-rooster --help
+rooster init
 ```
+
+Once setup is finished, see `rooster --help` for what you can do.
 
 ## License
 

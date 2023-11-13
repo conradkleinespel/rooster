@@ -24,7 +24,7 @@ pub fn callback_exec(
 
     io.title("Welcome to Rooster", OutputType::Standard);
     io.nl(OutputType::Standard);
-    io.info("Rooster is a simple password manager for geeks. Let's get started! Type ENTER to continue.", OutputType::Standard);
+    io.info("Rooster is a simple password manager. Let's get started! Type ENTER to continue.", OutputType::Standard);
 
     if let Err(err) = io.read_line() {
         io.error(

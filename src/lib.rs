@@ -247,7 +247,7 @@ pub fn main_with_args(
         .disable_help_subcommand(true)
         .subcommand_required(true)
         .arg_required_else_help(true)
-        .about("Welcome to Rooster, the simple password manager for geeks :-)")
+        .about("Welcome to Rooster, a simple password manager")
         .version(env!("CARGO_PKG_VERSION"))
         .subcommand(
             Command::new("init")

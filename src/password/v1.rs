@@ -8,16 +8,7 @@ use serde_json;
 
 use serde_json::Error;
 use std::ops::Deref;
-use std::ops::DerefMut;
-use std::os::raw::{c_uchar, c_ulonglong};
-
-extern "C" {
-    pub fn crypto_hash_sha256(
-        out: *mut libc::c_uchar,
-        in_: *const libc::c_uchar,
-        inlen: libc::c_ulonglong,
-    ) -> libc::c_int;
-}
+use openssl::hash::{hash, MessageDigest};
 
 /// The Rooster file format
 ///
@@ -46,9 +37,6 @@ extern "C" {
 /// compare with.
 const IV_LEN: usize = 16;
 
-/// The key is 256 bits long, which is 32 bytes.
-const KEY_LEN: usize = 32;
-
 /// The format of the encrypted JSON content in the password file v1.
 #[derive(Serialize, Deserialize)]
 pub struct Schema {
@@ -67,25 +55,12 @@ pub struct Password {
 
 /// Derives a 256 bits encryption key from the password.
 fn generate_encryption_key(master_password: &str) -> SafeVec {
-    let mut vec = Vec::<u8>::with_capacity(KEY_LEN);
-    for _ in 0..KEY_LEN {
-        vec.push(0u8);
-    }
-    let mut key = SafeVec::new(vec);
+    let result = hash(
+        MessageDigest::sha256(),
+        master_password.as_bytes()
+    ).unwrap();
 
-    let result = unsafe {
-        crypto_hash_sha256(
-            key.deref_mut().as_mut_ptr() as *mut c_uchar,
-            master_password.as_ptr() as *const c_uchar,
-            master_password.len() as c_ulonglong,
-        )
-    };
-
-    if result != 0 {
-        panic!("Deriving sha256 key failed: {:?}", result);
-    }
-
-    key
+    SafeVec::new(result.deref().to_vec())
 }
 
 pub fn get_all_passwords(

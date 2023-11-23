@@ -2,7 +2,7 @@ FROM debian:latest
 
 # install runtime dependencies
 RUN apt-get update -y
-RUN apt-get install -y curl gcc unzip pkg-config libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libx11-dev libxmu-dev python3 libssl-dev libsodium-dev xsel
+RUN apt-get install -y curl gcc unzip pkg-config libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libx11-dev libxmu-dev python3 libssl-dev xsel
 
 # install rustup-init
 ENV CARGO_HOME /usr

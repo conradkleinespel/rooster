@@ -53,7 +53,7 @@ fn test_command_set_scrypt_params() {
     assert_eq!(
         0,
         main_with_args(
-            &["rooster", "set-scrypt-params", "--force", "21", "9", "2"],
+            &["rooster", "set-scrypt-params", "--force", "6", "4", "2"],
             &mut CursorInputOutput::new("", "xxxx\n"),
             &rooster_file
         )
@@ -63,5 +63,5 @@ fn test_command_set_scrypt_params() {
         .unwrap()
         .read_to_end(&mut rooster_file_contents)
         .unwrap();
-    assert_eq!(&rooster_file_contents[4..13], &[21, 0, 0, 0, 9, 0, 0, 0, 2]);
+    assert_eq!(&rooster_file_contents[4..13], &[6, 0, 0, 0, 4, 0, 0, 0, 2]);
 }

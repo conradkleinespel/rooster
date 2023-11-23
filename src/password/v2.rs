@@ -13,36 +13,12 @@ use std::io::{
     Cursor, Error as IoError, ErrorKind as IoErrorKind, Read, Result as IoResult, Seek, SeekFrom,
     Write,
 };
+use scrypt::{scrypt, Params};
 use std::ops::Deref;
-use std::os::raw::{c_uchar, c_ulonglong};
+use hmac::{Hmac, Mac};
+use sha2::Sha512;
 
-extern "C" {
-    pub fn crypto_pwhash_scryptsalsa208sha256_ll(
-        passwd: *const u8,
-        passwdlen: usize,
-        salt: *const u8,
-        saltlen: usize,
-        n: u64,
-        r: u32,
-        p: u32,
-        buf: *mut u8,
-        buflen: usize,
-    ) -> libc::c_int;
-
-    pub fn crypto_auth_hmacsha512(
-        out: *mut libc::c_uchar,
-        in_: *const libc::c_uchar,
-        inlen: libc::c_ulonglong,
-        k: *const libc::c_uchar,
-    ) -> libc::c_int;
-
-    pub fn crypto_auth_hmacsha512_verify(
-        h: *const libc::c_uchar,
-        in_: *const libc::c_uchar,
-        inlen: libc::c_ulonglong,
-        k: *const libc::c_uchar,
-    ) -> libc::c_int;
-}
+type HmacSha512 = Hmac<Sha512>;
 
 /// The schema of the JSON content in the password file.
 ///
@@ -66,7 +42,7 @@ extern "C" {
 /// compare with.
 const IV_LEN: usize = 16;
 
-/// Length of the key derived ffrom the user password, in bytes
+/// Length of the key derived from the user password, in bytes
 const KEY_LEN: usize = 32;
 
 /// Length of the salt passed to the key derivation function, in bytes
@@ -76,7 +52,6 @@ const SALT_LEN: usize = 32;
 const SIGNATURE_LEN: usize = 64;
 
 /// Scrypt parameters
-/// TODO: increase parameter strength by putting the parameters inside the Rooster file
 const SCRYPT_PARAM_LOG2_N: u8 = 12;
 const SCRYPT_PARAM_R: u32 = 8;
 const SCRYPT_PARAM_P: u32 = 1;
@@ -114,30 +89,18 @@ fn generate_encryption_key(
     }
     let mut output = SafeVec::new(vec);
 
-    let result = unsafe {
-        // We use the low-level API because previous code was based off the unmaintained
-        // crate rust-crypto, which used custom N, R and P parameters. These parameters are
-        // only available in the low level libsodium API.
-        crypto_pwhash_scryptsalsa208sha256_ll(
-            master_password.as_ptr(),
-            master_password.len(),
-            salt.as_ptr(),
-            salt.len(),
-            1 << scrypt_log2_n as u64,
-            scrypt_r,
-            scrypt_p,
-            output.as_mut_ptr(),
-            KEY_LEN,
-        )
-    };
+    let result = scrypt(
+        master_password.as_bytes(),
+        salt.as_slice(),
+        &Params::new(scrypt_log2_n, scrypt_r, scrypt_p, KEY_LEN).unwrap(),
+        output.as_mut(),
+    );
 
-    if result != 0 {
+    if result.is_err() {
         panic!("Deriving scrypt key failed: {:?}", result);
     }
 
-    unsafe {
-        output.inner.set_len(KEY_LEN);
-    }
+    assert_eq!(output.len(), KEY_LEN);
 
     output
 }
@@ -145,37 +108,18 @@ fn generate_encryption_key(
 /// Creates a HMAC signature
 fn digest(
     key: &[u8],
-    version: u32,
-    scrypt_log2_n: u8,
-    scrypt_r: u32,
-    scrypt_p: u32,
-    iv: &[u8],
-    salt: &[u8],
     blob: &[u8],
 ) -> Result<Vec<u8>, PasswordError> {
-    let blob_with_metadata =
-        digest_blob_with_metadata(version, scrypt_log2_n, scrypt_r, scrypt_p, iv, salt, blob)?;
+    let mut mac = HmacSha512::new_from_slice(key).unwrap();
+    mac.update(blob);
+    Ok(mac.finalize().into_bytes().as_slice().to_vec())
+}
 
-    let mut digest: Vec<u8> = Vec::with_capacity(512 / 8);
-
-    let result = unsafe {
-        crypto_auth_hmacsha512(
-            digest.as_mut_ptr() as *mut c_uchar,
-            blob_with_metadata.as_ptr() as *const c_uchar,
-            blob_with_metadata.len() as c_ulonglong,
-            key.as_ptr() as *const c_uchar,
-        )
-    };
-
-    if result != 0 {
-        panic!("Creating HMAC-SHA512 signature failed: {:?}", result);
-    }
-
-    unsafe {
-        digest.set_len(512 / 8);
-    }
-
-    Ok(digest)
+/// Verifies an HMAC signature
+fn verify_signature(old_signature_mac: &[u8], blob: &[u8], key: &[u8]) -> bool {
+    let mut mac = HmacSha512::new_from_slice(key).unwrap();
+    mac.update(blob);
+    mac.verify_slice(old_signature_mac).is_ok()
 }
 
 /// Creates the data that is signed with HMAC
@@ -369,7 +313,6 @@ impl PasswordStore {
             }
         };
 
-        // Check the signature against what it should be.
         let blob = digest_blob_with_metadata(
             version,
             scrypt_log2_n,
@@ -378,17 +321,8 @@ impl PasswordStore {
             &iv,
             &salt,
             blob.deref(),
-        )?;
-
-        let verification = unsafe {
-            crypto_auth_hmacsha512_verify(
-                old_signature_mac.as_ptr() as *const c_uchar,
-                blob.as_ptr() as *const c_uchar,
-                blob.len() as c_ulonglong,
-                key.as_ptr() as *const c_uchar,
-            )
-        };
-        if verification != 0 {
+        ).unwrap();
+        if !verify_signature(old_signature_mac.as_slice(), blob.deref(), key.deref()) {
             return Err(PasswordError::CorruptionError);
         }
 
@@ -445,15 +379,19 @@ impl PasswordStore {
         file.write_all(&iv)?;
 
         // Write the file signature.
+        let blob_with_metadata =
+            digest_blob_with_metadata(
+                VERSION,
+                self.scrypt_log2_n,
+                self.scrypt_r,
+                self.scrypt_p,
+                &iv,
+                &self.salt,
+                encrypted.as_ref(),
+            )?;
         let signature = digest(
             self.key.deref(),
-            VERSION,
-            self.scrypt_log2_n,
-            self.scrypt_r,
-            self.scrypt_p,
-            &iv,
-            &self.salt,
-            encrypted.as_ref(),
+            blob_with_metadata.as_slice(),
         )?;
         file.write_all(signature.deref())?;
 
@@ -622,10 +560,7 @@ impl PasswordStore {
 
 #[cfg(test)]
 mod test {
-    use crate::password::v2::{
-        generate_encryption_key, generate_random_iv, generate_random_salt, Password, PasswordStore,
-        SCRYPT_PARAM_LOG2_N, SCRYPT_PARAM_P, SCRYPT_PARAM_R,
-    };
+    use crate::password::v2::{digest, generate_encryption_key, generate_random_iv, generate_random_salt, Password, PasswordStore, SCRYPT_PARAM_LOG2_N, SCRYPT_PARAM_P, SCRYPT_PARAM_R, verify_signature};
     use crate::password::PasswordError;
     use rtoolbox::safe_string::SafeString;
 
@@ -652,6 +587,23 @@ mod test {
             .len(),
             32
         );
+    }
+
+    #[test]
+    fn test_sign_and_verify() {
+        let salt = generate_random_salt().unwrap();
+        let key = generate_encryption_key(
+            "hello world",
+            salt,
+            SCRYPT_PARAM_LOG2_N,
+            SCRYPT_PARAM_R,
+            SCRYPT_PARAM_P
+        );
+
+
+        let blob = b"my bicycle is beautiful";
+        let signature = digest(&key, blob).unwrap();
+        assert_eq!(true, verify_signature(&signature, blob, &key));
     }
 
     #[test]

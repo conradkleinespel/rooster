@@ -32,24 +32,21 @@ On **Arch Linux**, install [Rooster from AUR](https://aur.archlinux.org/packages
 
 On **Void Linux**, install [Rooster from XBPS](https://github.com/void-linux/void-packages/blob/master/srcpkgs/rooster/template).
 
-On **Fedora**:
+On **Fedora** and **CentOS**:
 
 ```shell
 dnf update -y
-dnf install -y curl gcc unzip pkgconfig libX11-devel libXmu-devel python3 openssl-devel libsodium-devel
+dnf install -y curl gcc unzip pkgconfig libX11-devel libXmu-devel python3 openssl-devel
 curl https://sh.rustup.rs -sSf | sh -s -- -y
 source $HOME/.cargo/env
 cargo install --all-features --root /usr rooster
 ```
 
-On **CentOS**: instructions should be similar to Fedora, but it seems like `libsodium` is not available on CentOS and I
-haven't been able to figure out how to install it. If you know, please let me know.
-
 On **Debian**:
 
 ```shell
 apt-get update -y
-apt-get install -y curl gcc unzip pkg-config libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libx11-dev libxmu-dev python3 libssl-dev libsodium-dev xsel
+apt-get install -y curl gcc unzip pkg-config libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libx11-dev libxmu-dev python3 libssl-dev xsel
 curl https://sh.rustup.rs -sSf | sh -s -- -y
 source $HOME/.cargo/env
 cargo install --all-features --root /usr rooster
@@ -59,7 +56,7 @@ On **Ubuntu 16.04/18.04**:
 
 ```shell
 apt update -y
-apt install -y curl unzip pkg-config libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libx11-dev libxmu-dev python3 libssl-dev libsodium-dev xsel
+apt install -y curl unzip pkg-config libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libx11-dev libxmu-dev python3 libssl-dev xsel
 curl https://sh.rustup.rs -sSf | sh -s -- -y
 source $HOME/.cargo/env
 cargo install --all-features --root /usr rooster
@@ -68,7 +65,7 @@ cargo install --all-features --root /usr rooster
 On **OSX**:
 
 ```shell
-brew install curl libsodium openssl
+brew install curl openssl
 curl https://sh.rustup.rs -sSf | sh -s -- -y
 cargo install --all-features --root /usr rooster
 ```

@@ -36,7 +36,7 @@ On **Fedora** and **CentOS**:
 
 ```shell
 dnf update -y
-dnf install -y curl gcc unzip pkgconfig libX11-devel libXmu-devel python3 openssl-devel
+dnf install -y curl gcc unzip pkgconfig libX11-devel libXmu-devel python3
 curl https://sh.rustup.rs -sSf | sh -s -- -y
 source $HOME/.cargo/env
 cargo install --all-features --root /usr rooster
@@ -65,7 +65,7 @@ cargo install --all-features --root /usr rooster
 On **OSX**:
 
 ```shell
-brew install curl openssl
+brew install curl
 curl https://sh.rustup.rs -sSf | sh -s -- -y
 cargo install --all-features --root /usr rooster
 ```

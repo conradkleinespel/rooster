@@ -7,14 +7,22 @@
 // except according to those terms.
 
 use rtoolbox::safe_vec::SafeVec;
+use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
+
+type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
+type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
 
 pub fn encrypt(data: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>, ()> {
-    openssl::symm::encrypt(openssl::symm::Cipher::aes_256_cbc(), key, Some(iv), data)
-        .map_err(|_| ())
+    Ok(
+        Aes256CbcEnc::new(key.into(), iv.into())
+        .encrypt_padded_vec_mut::<Pkcs7>(data)
+    )
 }
 
 pub fn decrypt(data: &[u8], key: &[u8], iv: &[u8]) -> Result<SafeVec, ()> {
-    openssl::symm::decrypt(openssl::symm::Cipher::aes_256_cbc(), key, Some(iv), data)
+    let mut buf = data.to_vec();
+    Aes256CbcDec::new(key.into(), iv.into())
+        .decrypt_padded_vec_mut::<Pkcs7>(&mut buf)
         .map_err(|_| ())
         .map(|vec| SafeVec::new(vec))
 }

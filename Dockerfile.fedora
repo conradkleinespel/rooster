@@ -2,7 +2,7 @@ FROM fedora:latest
 
 # install runtime dependencies
 RUN dnf update -y
-RUN dnf install -y curl gcc unzip pkgconfig libX11-devel libXmu-devel python3 openssl-devel
+RUN dnf install -y curl gcc unzip pkgconfig libX11-devel libXmu-devel python3
 
 # install rustup-init
 ENV CARGO_HOME /usr

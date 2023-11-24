@@ -21,7 +21,8 @@ libc = "0.2"
 byteorder = "1.4"
 clipboard = "0.5"
 dirs = "5.0"
-openssl = "0.10"
+aes = "0.8"
+cbc = {  version = "0.1", features = ["std"] }
 scrypt = {  version = "0.11", default-features = false }
 hmac = "0.12"
 sha2 = "0.10"

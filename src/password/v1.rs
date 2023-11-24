@@ -8,7 +8,7 @@ use serde_json;
 
 use serde_json::Error;
 use std::ops::Deref;
-use openssl::hash::{hash, MessageDigest};
+use sha2::{Sha256, Digest};
 
 /// The Rooster file format
 ///
@@ -55,10 +55,9 @@ pub struct Password {
 
 /// Derives a 256 bits encryption key from the password.
 fn generate_encryption_key(master_password: &str) -> SafeVec {
-    let result = hash(
-        MessageDigest::sha256(),
-        master_password.as_bytes()
-    ).unwrap();
+    let mut hasher = Sha256::new();
+    hasher.update(master_password.as_bytes());
+    let result = hasher.finalize();
 
     SafeVec::new(result.deref().to_vec())
 }

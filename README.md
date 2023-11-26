@@ -1,7 +1,7 @@
 # Rooster
 
-Rooster is a simple password manager. It helps you save username/password combinations
-more through a friendly command-line interface.
+Rooster is a simple password manager. It helps you save username/password combinations 
+through a friendly command-line interface. Rooster runs on Windows, MacOS and Linux.
 
 ![Rooster logo and headline](rooster.png)
 
@@ -22,8 +22,6 @@ Rooster protects your passwords with state-of-the-art cryptography algorithms:
 - scrypt for key derivation (`n = 2^12, r = 8, p = 1` by default, customizable)
 - aes-256-cbc for encryption
 - hmac-sha512 for authentication
-
-Rooster runs on Windows, MacOS, Linux and probably more.
 
 ## Installation
 

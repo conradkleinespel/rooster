@@ -1,7 +1,7 @@
 # Rooster
 
-Rooster is a simple password manager. It helps you securely save username/password combinations on MacOS and Linux
-through a friendly command-line interface.
+Rooster is a simple password manager. It helps you save username/password combinations
+more through a friendly command-line interface.
 
 ![Rooster logo and headline](rooster.png)
 
@@ -14,7 +14,8 @@ Rooster has the following goals:
 - it is easy to maintain so that it **never becomes unmaintained**, it has existed since 2015;
 - it **works completely offline** by saving your password in a single local file;
 - it stores **username/password combinations, nothing more, nothing less**;
-- it can **import/export** passwords from and to 1Password/JSON/CSV.
+- it can **import/export** passwords from and to 1Password/JSON/CSV;
+- it can run on a wide range of operating systems.
 
 Rooster protects your passwords with state-of-the-art cryptography algorithms:
 
@@ -22,7 +23,7 @@ Rooster protects your passwords with state-of-the-art cryptography algorithms:
 - aes-256-cbc for encryption
 - hmac-sha512 for authentication
 
-Supported operating systems include Linux, BSD and OSX. Windows is not supported at this time.
+Rooster runs on Windows, MacOS, Linux and probably more.
 
 ## Installation
 
@@ -62,12 +63,17 @@ source $HOME/.cargo/env
 cargo install --all-features --root /usr rooster
 ```
 
-On **OSX**:
+On **MacOS**:
 
 ```shell
 brew install curl
 curl https://sh.rustup.rs -sSf | sh -s -- -y
-cargo install --all-features --root /usr rooster
+cargo install --all-features rooster
+```
+
+On **Windows**, [install Rust](https://www.rust-lang.org/tools/install) and then run:
+```shell
+cargo install --all-features rooster
 ```
 
 If you use **Wayland** instead of X11, install [wl-clipboard](https://github.com/bugaevc/wl-clipboard) and make sure you have the following

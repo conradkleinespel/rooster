@@ -20,8 +20,20 @@ mod ffi;
 mod generate;
 mod list;
 mod password;
+#[cfg(unix)]
 mod quale;
+#[cfg(unix)]
 mod shell_escape;
+
+#[cfg(windows)]
+fn example_environment_variable_configuration() -> &'static str {
+    return "set ROOSTER_FILE=C:\\Users\\my-user\\path\\to\\rooster.file"
+}
+
+#[cfg(unix)]
+fn example_environment_variable_configuration() -> &'static str {
+    return "export ROOSTER_FILE=$HOME/path/to/rooster.file"
+}
 
 fn only_digits(s: &str) -> bool {
     s.chars()
@@ -518,7 +530,7 @@ pub fn main_with_args(
             OutputType::Standard,
         );
         io.info(
-            "    export ROOSTER_FILE=path/to/passwords.rooster",
+            format!("    {}", example_environment_variable_configuration()),
             OutputType::Standard,
         );
         return 1;

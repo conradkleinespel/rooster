@@ -1,6 +1,7 @@
 use rclio::CliInputOutput;
 use rclio::OutputType;
 use std::path::PathBuf;
+use crate::example_environment_variable_configuration;
 
 pub fn callback_exec(
     matches: &clap::ArgMatches,
@@ -122,7 +123,7 @@ pub fn callback_exec(
         OutputType::Standard,
     );
     io.info(
-        "    export ROOSTER_FILE=path/to/passwords.rooster",
+        format!("    {}", example_environment_variable_configuration()),
         OutputType::Standard,
     );
     io.nl(OutputType::Standard);

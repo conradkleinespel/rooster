@@ -1,6 +1,6 @@
 [package]
 name = "rooster"
-version = "2.12.0"
+version = "2.13.0"
 authors = ["Conrad Kleinespel <conradk@conradk.com>"]
 license = "Apache-2.0"
 repository = "https://github.com/conradkleinespel/rooster"
@@ -22,6 +22,7 @@ byteorder = "1.4"
 clipboard = "0.5"
 dirs = "5.0"
 aes = "0.8"
+windows = { version = "0.52", features = ["Win32_Storage_FileSystem", "Win32_Foundation", "Win32_System_WindowsProgramming"] }
 cbc = {  version = "0.1", features = ["std"] }
 scrypt = {  version = "0.11", default-features = false }
 hmac = "0.12"

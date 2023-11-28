@@ -39,7 +39,12 @@ fn main() {
 
     std::process::exit(rooster::main_with_args(
         args_refs.as_slice(),
-        &mut RegularInputOutput::new(stdin.lock(), stdout.lock(), stderr.lock()),
+        &mut RegularInputOutput::new(
+            stdin.lock(),
+            stdout.lock(),
+            stderr.lock(),
+            false,
+        ),
         &rooster_file_path,
     ));
 }

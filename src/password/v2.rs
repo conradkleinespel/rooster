@@ -2,7 +2,7 @@ use crate::aes;
 use crate::ffi;
 use crate::password::PasswordError;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use rand::{rngs::OsRng, RngCore};
+use rand::RngCore;
 use rtoolbox::safe_string::SafeString;
 use rtoolbox::safe_vec::SafeVec;
 use serde::{Deserialize, Serialize};
@@ -62,7 +62,7 @@ const VERSION: u32 = 2;
 // Create a random IV.
 fn generate_random_iv() -> IoResult<[u8; IV_LEN]> {
     let mut bytes: [u8; IV_LEN] = [0; IV_LEN];
-    let mut rng = OsRng::default();
+    let mut rng = rand::rng();
     rng.fill_bytes(&mut bytes);
     Ok(bytes)
 }
@@ -70,7 +70,7 @@ fn generate_random_iv() -> IoResult<[u8; IV_LEN]> {
 // Create a random salt.
 fn generate_random_salt() -> IoResult<[u8; SALT_LEN]> {
     let mut bytes: [u8; SALT_LEN] = [0; SALT_LEN];
-    let mut rng = OsRng::default();
+    let mut rng = rand::rng();
     rng.fill_bytes(&mut bytes);
     Ok(bytes)
 }

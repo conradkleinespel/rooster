@@ -9,6 +9,7 @@ keywords = ["password", "security"]
 description = "A simple password manager"
 readme = "README.md"
 edition = "2018"
+exclude = ["rooster.png"]
 
 [features]
 serde = []

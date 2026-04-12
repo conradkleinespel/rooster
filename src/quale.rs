@@ -113,7 +113,11 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn test_sh() {
-        let expected = path::PathBuf::from("/usr/bin/env");
+        let mut expected = path::PathBuf::from("/usr/bin/env");
+        // On Nixos, /usr/bin/env is a symlink to a coreutils derivation
+        if expected.is_symlink() {
+            expected = expected.read_link().unwrap();
+        }
         let actual = which("env");
         assert_eq!(Some(expected), actual);
     }

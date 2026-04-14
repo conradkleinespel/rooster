@@ -5,6 +5,5 @@ pub mod prelude {
     pub fn tempfile() -> PathBuf {
         tempfile::NamedTempFile::new().unwrap().path().to_path_buf()
     }
-    pub use std::io::Cursor;
     use std::path::PathBuf;
 }

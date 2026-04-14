@@ -1,8 +1,8 @@
+use rand::RngExt;
 use rclio::CliInputOutput;
 use rclio::OutputType;
 use rtoolbox::safe_string::SafeString;
 use std::io::Result as IoResult;
-use rand::Rng;
 
 fn generate_password(alnum: bool, len: usize) -> IoResult<SafeString> {
     let mut password_as_string = String::new();

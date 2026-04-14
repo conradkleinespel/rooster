@@ -2,21 +2,21 @@ use crate::aes;
 use crate::ffi;
 use crate::password::PasswordError;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use rand::RngCore;
+use hmac::{Hmac, Mac};
+use rand::Rng;
 use rtoolbox::safe_string::SafeString;
 use rtoolbox::safe_vec::SafeVec;
+use scrypt::{scrypt, Params};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use serde_json::Error;
+use sha2::Sha512;
 use std::fs::File;
 use std::io::{
     Cursor, Error as IoError, ErrorKind as IoErrorKind, Read, Result as IoResult, Seek, SeekFrom,
     Write,
 };
-use scrypt::{scrypt, Params};
 use std::ops::Deref;
-use hmac::{Hmac, Mac};
-use sha2::Sha512;
 
 type HmacSha512 = Hmac<Sha512>;
 
@@ -106,10 +106,7 @@ fn generate_encryption_key(
 }
 
 /// Creates a HMAC signature
-fn digest(
-    key: &[u8],
-    blob: &[u8],
-) -> Result<Vec<u8>, PasswordError> {
+fn digest(key: &[u8], blob: &[u8]) -> Result<Vec<u8>, PasswordError> {
     let mut mac = HmacSha512::new_from_slice(key).unwrap();
     mac.update(blob);
     Ok(mac.finalize().into_bytes().as_slice().to_vec())
@@ -321,7 +318,8 @@ impl PasswordStore {
             &iv,
             &salt,
             blob.deref(),
-        ).unwrap();
+        )
+        .unwrap();
         if !verify_signature(old_signature_mac.as_slice(), blob.deref(), key.deref()) {
             return Err(PasswordError::CorruptionError);
         }
@@ -379,20 +377,16 @@ impl PasswordStore {
         file.write_all(&iv)?;
 
         // Write the file signature.
-        let blob_with_metadata =
-            digest_blob_with_metadata(
-                VERSION,
-                self.scrypt_log2_n,
-                self.scrypt_r,
-                self.scrypt_p,
-                &iv,
-                &self.salt,
-                encrypted.as_ref(),
-            )?;
-        let signature = digest(
-            self.key.deref(),
-            blob_with_metadata.as_slice(),
+        let blob_with_metadata = digest_blob_with_metadata(
+            VERSION,
+            self.scrypt_log2_n,
+            self.scrypt_r,
+            self.scrypt_p,
+            &iv,
+            &self.salt,
+            encrypted.as_ref(),
         )?;
+        let signature = digest(self.key.deref(), blob_with_metadata.as_slice())?;
         file.write_all(signature.deref())?;
 
         // Write the encrypted password data.
@@ -560,7 +554,11 @@ impl PasswordStore {
 
 #[cfg(test)]
 mod test {
-    use crate::password::v2::{digest, generate_encryption_key, generate_random_iv, generate_random_salt, Password, PasswordStore, SCRYPT_PARAM_LOG2_N, SCRYPT_PARAM_P, SCRYPT_PARAM_R, verify_signature};
+    use crate::password::v2::{
+        digest, generate_encryption_key, generate_random_iv, generate_random_salt,
+        verify_signature, Password, PasswordStore, SCRYPT_PARAM_LOG2_N, SCRYPT_PARAM_P,
+        SCRYPT_PARAM_R,
+    };
     use crate::password::PasswordError;
     use rtoolbox::safe_string::SafeString;
 
@@ -597,9 +595,8 @@ mod test {
             salt,
             SCRYPT_PARAM_LOG2_N,
             SCRYPT_PARAM_R,
-            SCRYPT_PARAM_P
+            SCRYPT_PARAM_P,
         );
-
 
         let blob = b"my bicycle is beautiful";
         let signature = digest(&key, blob).unwrap();

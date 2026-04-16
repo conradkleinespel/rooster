@@ -2,6 +2,7 @@
 pkgs.mkShell {
   buildInputs = with pkgs; [
     rustup
+    python3
   ];
   shellHook = ''
     rustup default stable

@@ -279,8 +279,8 @@ impl PasswordStore {
         })?;
 
         // The encrypted password data.
-        let mut blob: Vec<u8> = Vec::new();
-        reader.read_to_end(&mut blob)?;
+        let mut cipher_blob: Vec<u8> = Vec::new();
+        reader.read_to_end(&mut cipher_blob)?;
 
         // Derive a 256 bits encryption key from the password.
         let key = generate_encryption_key(
@@ -291,8 +291,22 @@ impl PasswordStore {
             scrypt_p,
         );
 
+        // Verify the HMAC, must be done before decrypting
+        let hmac_blob = digest_blob_with_metadata(
+            version,
+            scrypt_log2_n,
+            scrypt_r,
+            scrypt_p,
+            &iv,
+            &salt,
+            cipher_blob.deref(),
+        )?;
+        if !verify_signature(old_signature_mac.as_slice(), hmac_blob.deref(), key.deref()) {
+            return Err(PasswordError::InvalidPasswordError);
+        }
+
         // Decrypt the data.
-        let passwords = match aes::decrypt(blob.deref(), key.as_ref(), iv.as_ref()) {
+        let passwords = match aes::decrypt(cipher_blob.deref(), key.as_ref(), iv.as_ref()) {
             Ok(decrypted) => {
                 let encoded = SafeString::from_string(
                     String::from_utf8_lossy(decrypted.as_ref()).into_owned(),
@@ -306,23 +320,9 @@ impl PasswordStore {
                 }
             }
             Err(_) => {
-                return Err(PasswordError::DecryptionError);
+                return Err(PasswordError::InvalidPasswordError);
             }
         };
-
-        let blob = digest_blob_with_metadata(
-            version,
-            scrypt_log2_n,
-            scrypt_r,
-            scrypt_p,
-            &iv,
-            &salt,
-            blob.deref(),
-        )
-        .unwrap();
-        if !verify_signature(old_signature_mac.as_slice(), blob.deref(), key.deref()) {
-            return Err(PasswordError::CorruptionError);
-        }
 
         Ok(PasswordStore {
             key: key,

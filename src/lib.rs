@@ -103,32 +103,15 @@ fn get_password_store(
     let mut input: SafeVec = SafeVec::new(Vec::new());
     file.read_to_end(input.inner_mut()).map_err(|_| 1)?;
 
-    return get_password_store_from_input_interactive(&input, 3, false, false, io).map_err(|_| 1);
+    return get_password_store_from_input_interactive(&input, 3, false, io).map_err(|_| 1);
 }
 
 fn get_password_store_from_input_interactive(
     input: &SafeVec,
     retries: i32,
     force_upgrade: bool,
-    retry: bool,
     io: &mut impl CliInputOutput,
 ) -> Result<password::v2::PasswordStore, password::PasswordError> {
-    if retries == 0 {
-        io.error(
-            "Decryption of your Rooster file keeps failing. \
-             Your Rooster file is probably corrupted.",
-            OutputType::Error,
-        );
-        return Err(password::PasswordError::CorruptionLikelyError);
-    }
-
-    if retry {
-        io.error(
-            "Woops, that's not the right password. Let's try again.",
-            OutputType::Error,
-        );
-    }
-
     let master_password = match ask_master_password(io) {
         Ok(p) => p,
         Err(err) => {
@@ -147,10 +130,6 @@ fn get_password_store_from_input_interactive(
         Ok(store) => {
             return Ok(store);
         }
-        Err(password::PasswordError::CorruptionError) => {
-            io.error("Your Rooster file is corrupted.", OutputType::Error);
-            return Err(password::PasswordError::CorruptionError);
-        }
         Err(password::PasswordError::OutdatedRoosterBinaryError) => {
             io.error(
                 "I could not open the Rooster file because your version of Rooster is outdated.",
@@ -162,7 +141,7 @@ fn get_password_store_from_input_interactive(
             );
             return Err(password::PasswordError::OutdatedRoosterBinaryError);
         }
-        Err(password::PasswordError::Io(err)) => {
+        Err(password::PasswordError::Io(err))  => {
             io.error(
                 format!("I couldn't open your Rooster file (reason: {:?})", err),
                 OutputType::Error,
@@ -179,7 +158,7 @@ fn get_password_store_from_input_interactive(
                         if line.starts_with('y') {
                             // This time we'll try to upgrade
                             return get_password_store_from_input_interactive(
-                                &input, retries, true, false, io,
+                                &input, retries, true, io,
                             );
                         } else if line.starts_with('n') {
                             // The user doesn't want to upgrade, that's fine
@@ -202,8 +181,26 @@ fn get_password_store_from_input_interactive(
                 }
             }
         }
-        _ => {
-            return get_password_store_from_input_interactive(&input, retries - 1, false, true, io);
+        Err(password::PasswordError::InvalidPasswordError) => {
+            if retries - 1 <= 0 {
+                io.error(
+                    "Woops, that's not the right password. Aborting.",
+                    OutputType::Error,
+                );
+                return Err(password::PasswordError::InvalidPasswordError);
+            }
+            io.error(
+                "Woops, that's not the right password. Let's try again.",
+                OutputType::Error,
+            );
+            return get_password_store_from_input_interactive(&input, retries - 1, false, io);
+        }
+        Err(err) => {
+            io.error(
+                format!("I couldn't open your Rooster file (reason: {:?})", err),
+                OutputType::Error,
+            );
+            return Err(err);
         }
     }
 }
@@ -218,8 +215,8 @@ fn get_password_store_from_input(
         Ok(store) => {
             return Ok(store);
         }
-        Err(password::PasswordError::CorruptionError) => {
-            return Err(password::PasswordError::CorruptionError);
+        Err(password::PasswordError::InvalidPasswordError) => {
+            return Err(password::PasswordError::InvalidPasswordError);
         }
         Err(password::PasswordError::OutdatedRoosterBinaryError) => {
             return Err(password::PasswordError::OutdatedRoosterBinaryError);

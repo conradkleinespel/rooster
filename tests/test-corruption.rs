@@ -40,5 +40,5 @@ fn test_corruption() {
     );
     let output_as_vecu8 = io.stderr_cursor.into_inner();
     let output_as_string = String::from_utf8_lossy(output_as_vecu8.as_slice());
-    assert!(output_as_string.contains("Your Rooster file is corrupted"));
+    assert!(output_as_string.contains("Woops, that's not the right password. Let's try again."));
 }

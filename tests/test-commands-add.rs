@@ -14,14 +14,13 @@ fn test_command_add() {
         )
     );
 
-    assert_eq!(
-        0,
-        main_with_args(
-            &["rooster", "add", "-s", "Youtube", "yt@example.com"],
-            &mut CursorInputOutput::new("", "xxxx\nabcd\n"),
-            &rooster_file
-        )
+    let mut inout = CursorInputOutput::new("", "xxxx\nabcd\n");
+    let result = main_with_args(
+        &["rooster", "add", "-s", "Youtube", "yt@example.com"],
+        &mut inout,
+        &rooster_file
     );
+    assert_eq!(0, result);
 
     // Password exists
     assert_eq!(

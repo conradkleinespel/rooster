@@ -8,7 +8,7 @@ homepage = "https://github.com/conradkleinespel/rooster"
 keywords = ["password", "security"]
 description = "A simple password manager"
 readme = "README.md"
-edition = "2021"
+edition = "2024"
 exclude = ["rooster.png"]
 
 [features]

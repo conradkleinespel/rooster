@@ -5,7 +5,7 @@ use std::ptr;
 pub type time_t = libc::c_uint;
 
 mod internal {
-    extern "C" {
+    unsafe extern "C" {
         pub fn time(t: *mut super::time_t) -> super::time_t;
     }
 }

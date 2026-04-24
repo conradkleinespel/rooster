@@ -1,7 +1,6 @@
 use crate::ffi;
-use crate::password;
-use crate::password::v2::{Password, PasswordStore};
 use crate::io::{CliInputOutput, OutputType};
+use crate::password::v2::{Password, PasswordStore};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::fs::File;
@@ -13,7 +12,7 @@ pub struct JsonExport {
 
 pub fn callback_exec(
     matches: &clap::ArgMatches,
-    store: &mut password::v2::PasswordStore,
+    store: &mut PasswordStore,
     io: &mut impl CliInputOutput,
 ) -> Result<(), i32> {
     let subcommand_name = matches.subcommand_name().unwrap();
@@ -49,7 +48,7 @@ fn import_passwords(
         errors += 1;
     }
     for password in valid {
-        if let Some(_) = store.get_password(&password.name) {
+        if store.get_password(&password.name).is_some() {
             io.warning(
                 format!("{}, already in password store, skipping", password.name),
                 OutputType::Error,
@@ -106,7 +105,7 @@ fn create_imported_passwords_from_csv(
             return Err(1);
         }
     }
-    return Ok((valid, vec![]));
+    Ok((valid, vec![]))
 }
 
 fn create_imported_passwords_from_1password(
@@ -151,7 +150,7 @@ fn create_imported_passwords_from_1password(
             return Err(1);
         }
     }
-    return Ok((valid, invalid));
+    Ok((valid, invalid))
 }
 
 fn create_imported_passwords_from_json(

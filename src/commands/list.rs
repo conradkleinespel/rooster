@@ -10,7 +10,7 @@ pub fn callback_exec(
 ) -> Result<(), i32> {
     let passwords = store.get_all_passwords();
 
-    if passwords.len() == 0 {
+    if passwords.is_empty() {
         io.info(
             "No passwords on record yet. Add one with `rooster add <app> <username>`.",
             OutputType::Standard,

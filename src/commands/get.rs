@@ -23,7 +23,7 @@ pub fn callback_exec(
     let password =
         list::search_and_choose_password(store, query, list::WITH_NUMBERS, &prompt, io).ok_or(1)?;
 
-    clip::confirm_password_retrieved(show, &password, io);
+    clip::confirm_password_retrieved(show, password, io);
 
     Ok(())
 }

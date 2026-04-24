@@ -20,9 +20,9 @@ pub fn encrypt(data: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>, ()> {
 }
 
 pub fn decrypt(data: &[u8], key: &[u8], iv: &[u8]) -> Result<SafeVec, ()> {
-    let mut buf = data.to_vec();
+    let buf = data.to_vec();
     Aes256CbcDec::new(key.into(), iv.into())
-        .decrypt_padded_vec_mut::<Pkcs7>(&mut buf)
+        .decrypt_padded_vec_mut::<Pkcs7>(&buf)
         .map_err(|_| ())
-        .map(|vec| SafeVec::new(vec))
+        .map(SafeVec::new)
 }

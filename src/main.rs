@@ -2,8 +2,8 @@ use rooster::RegularInputOutput;
 use std::env::VarError;
 use std::path::PathBuf;
 
-const ROOSTER_FILE_ENV_VAR: &'static str = "ROOSTER_FILE";
-const ROOSTER_FILE_DEFAULT: &'static str = ".passwords.rooster";
+const ROOSTER_FILE_ENV_VAR: &str = "ROOSTER_FILE";
+const ROOSTER_FILE_DEFAULT: &str = ".passwords.rooster";
 
 fn get_password_file_path() -> Result<PathBuf, i32> {
     // First, look for the ROOSTER_FILE environment variable.

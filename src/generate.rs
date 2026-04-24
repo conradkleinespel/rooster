@@ -1,6 +1,6 @@
-use rand::RngExt;
 use crate::io::CliInputOutput;
 use crate::io::OutputType;
+use rand::RngExt;
 use rtoolbox::safe_string::SafeString;
 use std::io::Result as IoResult;
 
@@ -25,7 +25,7 @@ fn generate_password(alnum: bool, len: usize) -> IoResult<SafeString> {
     Ok(SafeString::from_string(password_as_string))
 }
 
-/// Returns true if the password contains at least one digit, one uppercase letter and one
+/// Returns true if the password contains at least one digit, one uppercase letter, and one
 /// lowercase letter.
 fn password_is_hard(password: &str, alnum: bool) -> bool {
     let is_punctuation = |c| -> bool { "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~".find(c).is_some() };

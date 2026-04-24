@@ -1,7 +1,7 @@
+use crate::example_environment_variable_configuration;
 use crate::io::CliInputOutput;
 use crate::io::OutputType;
 use std::path::PathBuf;
-use crate::example_environment_variable_configuration;
 
 pub fn callback_exec(
     matches: &clap::ArgMatches,
@@ -25,7 +25,10 @@ pub fn callback_exec(
 
     io.title("Welcome to Rooster", OutputType::Standard);
     io.nl(OutputType::Standard);
-    io.info("Rooster is a simple password manager. Let's get started! Type ENTER to continue.", OutputType::Standard);
+    io.info(
+        "Rooster is a simple password manager. Let's get started! Type ENTER to continue.",
+        OutputType::Standard,
+    );
 
     if let Err(err) = io.read_line() {
         io.error(
@@ -54,7 +57,7 @@ pub fn callback_exec(
             1
         })?;
 
-    if master_password.len() == 0 {
+    if master_password.is_empty() {
         io.error("Your master password cannot be empty.", OutputType::Error);
         return Err(1);
     }
@@ -89,7 +92,7 @@ pub fn callback_exec(
     };
 
     if let Err(err) = store.sync(&mut file) {
-        if let Err(err) = ::std::fs::remove_file(rooster_file_path) {
+        if let Err(err) = std::fs::remove_file(rooster_file_path) {
             io.error(
                 format!(
                     "Woops, I was able to create a new password file but couldn't save \

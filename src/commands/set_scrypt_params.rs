@@ -1,5 +1,5 @@
-use crate::password;
 use crate::io::{CliInputOutput, OutputType};
+use crate::password;
 
 pub fn callback_exec(
     matches: &clap::ArgMatches,
@@ -10,7 +10,7 @@ pub fn callback_exec(
     let r = *matches.get_one::<u32>("r").unwrap();
     let p = *matches.get_one::<u32>("p").unwrap();
 
-    if log2_n <= 0 || r <= 0 || p <= 0 {
+    if log2_n == 0 || r == 0 || p == 0 {
         io.error(
             format!("The parameters must be > 0 ({}, {}, {})", log2_n, r, p),
             OutputType::Error,

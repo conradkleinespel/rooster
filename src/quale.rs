@@ -15,10 +15,7 @@ use std::{env, ffi, path, fs};
 pub fn which<S: AsRef<ffi::OsStr>>(name: S) -> Option<path::PathBuf> {
     let name: &ffi::OsStr = name.as_ref();
 
-    let var = match env::var_os("PATH") {
-        Some(var) => var,
-        None => return None,
-    };
+    let var = env::var_os("PATH")?;
 
     // Separate PATH value into paths
     let paths_iter = env::split_paths(&var);
@@ -94,7 +91,7 @@ mod unix {
         };
         let is_executable_by_user =
             unsafe { libc::access(file_path.into_raw(), libc::X_OK) == libc::EXIT_SUCCESS };
-        static EXECUTABLE_FLAGS: u32 = (libc::S_IEXEC | libc::S_IXGRP | libc::S_IXOTH) as u32;
+        static EXECUTABLE_FLAGS: u32 = libc::S_IEXEC | libc::S_IXGRP | libc::S_IXOTH;
         let has_executable_flag = file_metadata.permissions().mode() & EXECUTABLE_FLAGS != 0;
         is_executable_by_user && has_executable_flag && file_metadata.is_file()
     }

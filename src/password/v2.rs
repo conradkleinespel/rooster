@@ -6,33 +6,16 @@ use hmac::{Hmac, Mac};
 use rand::Rng;
 use rtoolbox::safe_string::SafeString;
 use rtoolbox::safe_vec::SafeVec;
-use scrypt::{scrypt, Params};
+use scrypt::{Params, scrypt};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use serde_json::Error;
 use sha2::Sha512;
 use std::fs::File;
-use std::io::{
-    Cursor, Error as IoError, ErrorKind as IoErrorKind, Read, Result as IoResult, Seek, SeekFrom,
-    Write,
-};
+use std::io::{Cursor, Error as IoError, Read, Result as IoResult, Seek, SeekFrom, Write};
 use std::ops::Deref;
 
 type HmacSha512 = Hmac<Sha512>;
-
-/// The schema of the JSON content in the password file.
-///
-/// ```json
-/// {
-///     "passwords": [
-///         "name": "YouTube",
-///         "username": "conradk",
-///         "password": "xxxxxxxx",
-///         "created_at": 23145436,
-///         "updated_at": 23145546,
-///     ]
-/// }
-/// ```
 
 /// The IV is 128 bits long.
 ///
@@ -75,7 +58,7 @@ fn generate_random_salt() -> IoResult<[u8; SALT_LEN]> {
     Ok(bytes)
 }
 
-/// Derives a 256 bits encryption key from the password.
+/// Derives a 256-bit encryption key from the password.
 fn generate_encryption_key(
     master_password: &str,
     salt: [u8; SALT_LEN],
@@ -83,11 +66,7 @@ fn generate_encryption_key(
     scrypt_r: u32,
     scrypt_p: u32,
 ) -> SafeVec {
-    let mut vec = Vec::<u8>::with_capacity(KEY_LEN);
-    for _ in 0..KEY_LEN {
-        vec.push(0u8);
-    }
-    let mut output = SafeVec::new(vec);
+    let mut output = SafeVec::new(vec![0u8; KEY_LEN]);
 
     let result = scrypt(
         master_password.as_bytes(),
@@ -119,7 +98,7 @@ fn verify_signature(old_signature_mac: &[u8], blob: &[u8], key: &[u8]) -> bool {
     mac.verify_slice(old_signature_mac).is_ok()
 }
 
-/// Creates the data that is signed with HMAC
+/// Creates the data signed with HMAC
 fn digest_blob_with_metadata(
     version: u32,
     scrypt_log2_n: u8,
@@ -145,6 +124,18 @@ fn digest_blob_with_metadata(
 }
 
 /// The format of the encrypted JSON content in the password file v1.
+///
+/// ```json
+/// {
+///     "passwords": [
+///         "name": "YouTube",
+///         "username": "conradk",
+///         "password": "xxxxxxxx",
+///         "created_at": 23145436,
+///         "updated_at": 23145546,
+///     ]
+/// }
+/// ```
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Schema {
     passwords: Vec<Password>,
@@ -201,9 +192,9 @@ pub struct PasswordStore {
 /// - scrypt log2n:    u8
 /// - scrypt r:        u32, big endian
 /// - scrypt p:        u32, big endian
-/// - salt:            256 bits
-/// - iv:              256 bits
-/// - signature:       512 bits HMAC-SHA512
+/// - salt:            256-bit
+/// - iv:              256-bit
+/// - signature:       512-bit HMAC-SHA512
 /// - encrypted blob:  variable length
 impl PasswordStore {
     pub fn new(master_password: SafeString) -> IoResult<PasswordStore> {
@@ -217,11 +208,11 @@ impl PasswordStore {
         );
 
         Ok(PasswordStore {
-            key: key,
+            key,
             scrypt_log2_n: SCRYPT_PARAM_LOG2_N,
             scrypt_r: SCRYPT_PARAM_R,
             scrypt_p: SCRYPT_PARAM_P,
-            salt: salt,
+            salt,
             schema: Schema::new(),
             master_password: master_password.into_inner(),
         })
@@ -237,9 +228,9 @@ impl PasswordStore {
         let version = reader.read_u32::<BigEndian>()?;
         if version != VERSION {
             if version > VERSION {
-                return Err(PasswordError::OutdatedRoosterBinaryError);
+                return Err(PasswordError::OutdatedRoosterBinary);
             } else if version < VERSION {
-                return Err(PasswordError::NeedUpgradeErrorFromV1);
+                return Err(PasswordError::NeedUpgradeFromV1);
             }
         }
 
@@ -254,7 +245,7 @@ impl PasswordStore {
             if num_bytes == SALT_LEN {
                 Ok(())
             } else {
-                Err(IoError::new(IoErrorKind::Other, "unexpected eof"))
+                Err(IoError::other("unexpected eof"))
             }
         })?;
 
@@ -264,7 +255,7 @@ impl PasswordStore {
             if num_bytes == IV_LEN {
                 Ok(())
             } else {
-                Err(IoError::new(IoErrorKind::Other, "unexpected eof"))
+                Err(IoError::other("unexpected eof"))
             }
         })?;
 
@@ -274,7 +265,7 @@ impl PasswordStore {
             if num_bytes == SIGNATURE_LEN {
                 Ok(())
             } else {
-                Err(IoError::new(IoErrorKind::Other, "unexpected eof"))
+                Err(IoError::other("unexpected eof"))
             }
         })?;
 
@@ -282,7 +273,7 @@ impl PasswordStore {
         let mut cipher_blob: Vec<u8> = Vec::new();
         reader.read_to_end(&mut cipher_blob)?;
 
-        // Derive a 256 bits encryption key from the password.
+        // Derive a 256-bit encryption key from the password.
         let key = generate_encryption_key(
             master_password.deref(),
             salt,
@@ -291,7 +282,7 @@ impl PasswordStore {
             scrypt_p,
         );
 
-        // Verify the HMAC, must be done before decrypting
+        // Verify the HMAC before decrypting
         let hmac_blob = digest_blob_with_metadata(
             version,
             scrypt_log2_n,
@@ -302,7 +293,7 @@ impl PasswordStore {
             cipher_blob.deref(),
         )?;
         if !verify_signature(old_signature_mac.as_slice(), hmac_blob.deref(), key.deref()) {
-            return Err(PasswordError::InvalidPasswordError);
+            return Err(PasswordError::InvalidPassword);
         }
 
         // Decrypt the data.
@@ -315,24 +306,22 @@ impl PasswordStore {
                 match s {
                     Ok(json) => json.passwords,
                     Err(_) => {
-                        return Err(PasswordError::InvalidJsonError);
+                        return Err(PasswordError::InvalidJson);
                     }
                 }
             }
             Err(_) => {
-                return Err(PasswordError::InvalidPasswordError);
+                return Err(PasswordError::InvalidPassword);
             }
         };
 
         Ok(PasswordStore {
-            key: key,
-            scrypt_log2_n: scrypt_log2_n,
-            scrypt_r: scrypt_r,
-            scrypt_p: scrypt_p,
-            salt: salt,
-            schema: Schema {
-                passwords: passwords,
-            },
+            key,
+            scrypt_log2_n,
+            scrypt_r,
+            scrypt_p,
+            salt,
+            schema: Schema { passwords },
             master_password: master_password.deref().into(),
         })
     }
@@ -342,7 +331,7 @@ impl PasswordStore {
         let json_schema = match serde_json::to_string(&self.schema) {
             Ok(json_schema) => json_schema,
             Err(_) => {
-                return Err(PasswordError::InvalidJsonError);
+                return Err(PasswordError::InvalidJson);
             }
         };
         let json_schema = SafeString::from_string(json_schema);
@@ -355,7 +344,7 @@ impl PasswordStore {
             iv.as_ref(),
         ) {
             Ok(val) => val,
-            Err(_) => return Err(PasswordError::EncryptionError),
+            Err(_) => return Err(PasswordError::Encryption),
         };
 
         // Reset the file pointer.
@@ -390,7 +379,7 @@ impl PasswordStore {
         file.write_all(signature.deref())?;
 
         // Write the encrypted password data.
-        file.write_all(&encrypted.as_ref())?;
+        file.write_all(encrypted.as_ref())?;
 
         file.sync_all()?;
         Ok(())
@@ -399,29 +388,25 @@ impl PasswordStore {
     pub fn get_all_passwords(&self) -> Vec<&Password> {
         let mut passwords: Vec<&Password> = self.schema.passwords.iter().collect();
 
-        passwords.sort_by_key(|p| {
-            return p.name.to_lowercase();
-        });
+        passwords.sort_by_key(|p| p.name.to_lowercase());
 
         passwords
     }
 
     /// Adds a password to the file.
     pub fn add_password(&mut self, password: Password) -> Result<(), PasswordError> {
-        if password.password.deref().len() == 0 {
-            return Err(PasswordError::EmptyPasswordError);
+        if password.password.deref().is_empty() {
+            return Err(PasswordError::EmptyPassword);
         }
         if self.has_password(password.name.deref()) {
-            return Err(PasswordError::AppExistsError);
+            return Err(PasswordError::AppExists);
         }
         self.schema.passwords.push(password);
         Ok(())
     }
 
     pub fn delete_password(&mut self, name: &str) -> Result<Password, PasswordError> {
-        let p = self
-            .get_password(name)
-            .ok_or(PasswordError::NoSuchAppError)?;
+        let p = self.get_password(name).ok_or(PasswordError::NoSuchApp)?;
 
         let mut i = 0;
         while i < self.schema.passwords.len() {
@@ -477,9 +462,7 @@ impl PasswordStore {
             }
         }
 
-        passwords.sort_by_key(|p| {
-            return p.name.to_lowercase();
-        });
+        passwords.sort_by_key(|p| p.name.to_lowercase());
 
         passwords
     }
@@ -554,12 +537,11 @@ impl PasswordStore {
 
 #[cfg(test)]
 mod test {
-    use crate::password::v2::{
-        digest, generate_encryption_key, generate_random_iv, generate_random_salt,
-        verify_signature, Password, PasswordStore, SCRYPT_PARAM_LOG2_N, SCRYPT_PARAM_P,
-        SCRYPT_PARAM_R,
-    };
     use crate::password::PasswordError;
+    use crate::password::v2::{
+        Password, PasswordStore, SCRYPT_PARAM_LOG2_N, SCRYPT_PARAM_P, SCRYPT_PARAM_R, digest,
+        generate_encryption_key, generate_random_iv, generate_random_salt, verify_signature,
+    };
     use rtoolbox::safe_string::SafeString;
 
     #[test]
@@ -613,9 +595,11 @@ mod test {
     fn test_add_password() {
         let mut store = PasswordStore::new(SafeString::from_string("****".to_owned())).unwrap();
 
-        assert!(store
-            .add_password(Password::new("name", "username", "password"))
-            .is_ok());
+        assert!(
+            store
+                .add_password(Password::new("name", "username", "password"))
+                .is_ok()
+        );
 
         // need a wrap around the immutable borrow so the borrow checker is happy
         {
@@ -633,24 +617,28 @@ mod test {
 
         // cant add two passwords with same app name
         match store.add_password(Password::new("name", "username", "password")) {
-            Err(PasswordError::AppExistsError) => {}
+            Err(PasswordError::AppExists) => {}
             _ => panic!(),
         }
 
         // empty password => not allowed
         let mut store = PasswordStore::new(SafeString::from_string("****".to_owned())).unwrap();
-        assert!(store
-            .add_password(Password::new("name", "username", ""))
-            .is_err());
+        assert!(
+            store
+                .add_password(Password::new("name", "username", ""))
+                .is_err()
+        );
     }
 
     #[test]
     fn test_change_password() {
         let mut store = PasswordStore::new(SafeString::from_string("****".to_owned())).unwrap();
 
-        assert!(store
-            .add_password(Password::new("name", "username", "password"))
-            .is_ok());
+        assert!(
+            store
+                .add_password(Password::new("name", "username", "password"))
+                .is_ok()
+        );
         assert_eq!(
             store
                 .change_password("name", &|p| {
@@ -665,7 +653,7 @@ mod test {
         assert_eq!(store.get_all_passwords()[0].username, "username");
         assert_eq!(store.get_all_passwords()[0].password, "newpassword".into());
 
-        // case insensitive works too
+        // case-insensitive works too
         assert_eq!(
             store.change_password("newname", &|p| p).unwrap(),
             Password::new("newname", "username", "newpassword")
@@ -677,15 +665,19 @@ mod test {
 
         // empty password => do not change anything
         let mut store = PasswordStore::new(SafeString::from_string("****".to_owned())).unwrap();
-        assert!(store
-            .add_password(Password::new("name", "username", "password"))
-            .is_ok());
-        assert!(store
-            .change_password("name", &|p| {
-                // change app name and password, keep username
-                Password::new(p.username.clone(), p.username.clone(), "")
-            })
-            .is_err());
+        assert!(
+            store
+                .add_password(Password::new("name", "username", "password"))
+                .is_ok()
+        );
+        assert!(
+            store
+                .change_password("name", &|p| {
+                    // change app name and password, keep username
+                    Password::new(p.username.clone(), p.username.clone(), "")
+                })
+                .is_err()
+        );
         assert_eq!(store.get_all_passwords()[0].name, "name");
         assert_eq!(store.get_all_passwords()[0].username, "username");
         assert_eq!(store.get_all_passwords()[0].password, "password".into());
@@ -695,12 +687,16 @@ mod test {
     fn test_delete_password() {
         let mut store = PasswordStore::new(SafeString::from_string("****".to_owned())).unwrap();
 
-        assert!(store
-            .add_password(Password::new("name1", "username", "password"))
-            .is_ok());
-        assert!(store
-            .add_password(Password::new("name2", "username", "password"))
-            .is_ok());
+        assert!(
+            store
+                .add_password(Password::new("name1", "username", "password"))
+                .is_ok()
+        );
+        assert!(
+            store
+                .add_password(Password::new("name2", "username", "password"))
+                .is_ok()
+        );
         assert_eq!(store.get_all_passwords().len(), 2);
 
         assert_eq!(
@@ -709,7 +705,7 @@ mod test {
         );
         assert!(store.get_password("name1").is_none());
         assert_eq!(store.get_all_passwords().len(), 1);
-        // case insensitive works too
+        // case-insensitive works too
         assert_eq!(
             store.delete_password("NAME2").unwrap(),
             Password::new("name2", "username", "password")
@@ -723,9 +719,11 @@ mod test {
         let mut store = PasswordStore::new(SafeString::from_string("****".to_owned())).unwrap();
 
         assert_eq!(store.get_password("name"), None);
-        assert!(store
-            .add_password(Password::new("name", "username", "password"))
-            .is_ok());
+        assert!(
+            store
+                .add_password(Password::new("name", "username", "password"))
+                .is_ok()
+        );
         assert_eq!(
             store.get_password("name").unwrap(),
             Password::new("name", "username", "password")
@@ -741,9 +739,11 @@ mod test {
         let mut store = PasswordStore::new(SafeString::from_string("****".to_owned())).unwrap();
 
         assert!(!store.has_password("name"));
-        assert!(store
-            .add_password(Password::new("name", "username", "password"))
-            .is_ok());
+        assert!(
+            store
+                .add_password(Password::new("name", "username", "password"))
+                .is_ok()
+        );
         assert!(store.has_password("name"));
     }
 }

@@ -1,13 +1,13 @@
-use crate::password::v2::{Password, PasswordStore};
 use crate::io::{CliInputOutput, OutputType};
+use crate::password::v2::{Password, PasswordStore};
 
-/// Used to indicate lists should have a number, ie: 23 Google my.account@gmail.com
+/// Used to indicate lists should have a number, i.e.: 23 Google my.account@gmail.com
 pub const WITH_NUMBERS: bool = true;
 
-/// Used to indicate lists should not have a number, ie: Google my.account@gmail.com
+/// Used to indicate lists should not have a number, i.e.: Google my.account@gmail.com
 pub const WITHOUT_NUMBERS: bool = false;
 
-fn get_list_of_passwords(passwords: &Vec<&Password>, with_numbers: bool) -> Vec<String> {
+fn get_list_of_passwords(passwords: &[&Password], with_numbers: bool) -> Vec<String> {
     // Find the app name column length
     let longest_app_name = passwords.iter().fold(0, |acc, p| {
         if p.name.len() > acc {
@@ -27,7 +27,7 @@ fn get_list_of_passwords(passwords: &Vec<&Password>, with_numbers: bool) -> Vec<
     });
 
     // Find the number column length
-    let i_width = ((passwords.len() as f64).log10() + 1 as f64).floor() as usize;
+    let i_width = ((passwords.len() as f64).log10() + 1_f64).floor() as usize;
 
     let mut list = Vec::new();
 
@@ -58,7 +58,7 @@ fn get_list_of_passwords(passwords: &Vec<&Password>, with_numbers: bool) -> Vec<
 }
 
 pub fn print_list_of_passwords(
-    passwords: &Vec<&Password>,
+    passwords: &[&Password],
     with_numbers: bool,
     io: &mut impl CliInputOutput,
 ) {
@@ -70,7 +70,7 @@ pub fn print_list_of_passwords(
 }
 
 fn request_password_index_from_stdin(
-    passwords: &Vec<&Password>,
+    passwords: &[&Password],
     prompt: &str,
     io: &mut impl CliInputOutput,
 ) -> usize {
@@ -131,7 +131,7 @@ fn request_password_index_from_stdin(
 }
 
 fn choose_password_in_list(
-    passwords: &Vec<&Password>,
+    passwords: &[&Password],
     with_numbers: bool,
     prompt: &str,
     io: &mut impl CliInputOutput,
@@ -149,7 +149,7 @@ pub fn search_and_choose_password<'a>(
     io: &mut impl CliInputOutput,
 ) -> Option<&'a Password> {
     let passwords = store.search_passwords(query);
-    if passwords.len() == 0 {
+    if passwords.is_empty() {
         io.error(
             format!("Woops, I can't find any passwords for \"{}\".", query),
             OutputType::Error,
@@ -161,33 +161,33 @@ pub fn search_and_choose_password<'a>(
         .iter()
         .find(|p| p.name.to_lowercase() == query.to_lowercase())
     {
-        return Some(&password);
+        return Some(password);
     }
 
-    let index = choose_password_in_list(&passwords, with_numbers, prompt, io);
+    let index = choose_password_in_list(passwords.as_slice(), with_numbers, prompt, io);
     Some(passwords[index])
 }
 
 #[cfg(test)]
 mod test {
     use super::get_list_of_passwords;
-    use crate::list::{WITHOUT_NUMBERS, WITH_NUMBERS};
+    use crate::list::{WITH_NUMBERS, WITHOUT_NUMBERS};
     use crate::password::v2::Password;
     use rtoolbox::safe_string::SafeString;
 
-    // Creates a list of at least two passwords, and more if specified
+    // Creates a list of at least two passwords and more if specified
     fn get_passwords(mut additional: i32) -> Vec<Password> {
         let google = Password::new(
-            format!("google"),
-            format!("short un"),
-            SafeString::from_string(format!("xxxx")),
+            "google".to_string(),
+            "short un".to_string(),
+            SafeString::from_string("xxxx".to_string()),
         );
 
         let mut list = vec![
             Password::new(
-                format!("youtube.com"),
-                format!("that long username"),
-                SafeString::from_string(format!("xxxx")),
+                "youtube.com".to_string(),
+                "that long username".to_string(),
+                SafeString::from_string("xxxx".to_string()),
             ),
             google.clone(),
         ];
@@ -204,7 +204,10 @@ mod test {
     fn password_list_has_right_format_with_numbers() {
         // With 2 passwords (number width 1)
         let passwords = get_passwords(0);
-        let list = get_list_of_passwords(&passwords.iter().collect(), WITH_NUMBERS);
+        let list = get_list_of_passwords(
+            passwords.iter().collect::<Vec<&Password>>().as_slice(),
+            WITH_NUMBERS,
+        );
 
         assert_eq!(
             list,
@@ -216,7 +219,10 @@ mod test {
 
         // Now with 10 passwords (number width 2)
         let passwords = get_passwords(8);
-        let list = get_list_of_passwords(&passwords.iter().collect(), WITH_NUMBERS);
+        let list = get_list_of_passwords(
+            passwords.iter().collect::<Vec<&Password>>().as_slice(),
+            WITH_NUMBERS,
+        );
 
         assert_eq!(
             list,
@@ -238,7 +244,10 @@ mod test {
     #[test]
     fn password_list_has_right_format_without_numbers() {
         let passwords = get_passwords(0);
-        let list = get_list_of_passwords(&passwords.iter().collect(), WITHOUT_NUMBERS);
+        let list = get_list_of_passwords(
+            passwords.iter().collect::<Vec<&Password>>().as_slice(),
+            WITHOUT_NUMBERS,
+        );
 
         assert_eq!(
             list,

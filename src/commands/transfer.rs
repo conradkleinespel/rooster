@@ -1,8 +1,8 @@
 use crate::ffi;
-use crate::list;
-use crate::password;
 use crate::io::CliInputOutput;
 use crate::io::OutputType;
+use crate::list;
+use crate::password;
 
 pub fn callback_exec(
     matches: &clap::ArgMatches,
@@ -38,7 +38,10 @@ pub fn callback_exec(
     match change_result {
         Ok(_) => {
             io.success(
-                format!("Done! I've transfered {} to {}", old_username, new_username),
+                format!(
+                    "Done! I've transferred {} to {}",
+                    old_username, new_username
+                ),
                 OutputType::Standard,
             );
             Ok(())

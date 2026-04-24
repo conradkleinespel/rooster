@@ -7,14 +7,22 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 
 use serde_json::Error;
+use sha2::{Digest, Sha256};
 use std::ops::Deref;
-use sha2::{Sha256, Digest};
 
-/// The Rooster file format
+/// The IV is 128 bits long.
+///
+/// This should be enough for it to be unique. Also, the password storage file
+/// is normally unique, so if an attacker gets it, having access to the IV
+/// doesn't help much, since there is no other data that uses the same IV to
+/// compare with.
+const IV_LEN: usize = 16;
+
+/// The format of the encrypted JSON content in the password file v1.
 ///
 /// encrypted blob: variable length
 /// iv: 128 bits
-
+///
 /// The schema of the JSON content in the password file.
 ///
 /// ```json
@@ -28,16 +36,6 @@ use sha2::{Sha256, Digest};
 ///     ]
 /// }
 /// ```
-
-/// The IV is 128 bits long.
-///
-/// This should be enough for it to be unique. Also, the password storage file
-/// is normally unique, so if an attacker gets it, having access to the IV
-/// doesn't help much, since there is no other data that uses the same IV to
-/// compare with.
-const IV_LEN: usize = 16;
-
-/// The format of the encrypted JSON content in the password file v1.
 #[derive(Serialize, Deserialize)]
 pub struct Schema {
     passwords: Vec<Password>,
@@ -53,7 +51,7 @@ pub struct Password {
     pub updated_at: ffi::time_t,
 }
 
-/// Derives a 256 bits encryption key from the password.
+/// Derives a 256-bit encryption key from the password.
 fn generate_encryption_key(master_password: &str) -> SafeVec {
     let mut hasher = Sha256::new();
     hasher.update(master_password.as_bytes());
@@ -68,14 +66,14 @@ pub fn get_all_passwords(
 ) -> Result<Vec<Password>, PasswordError> {
     // If there were already some password, we'll decrypt them. Otherwise, we'll
     // start off with an empty list of passwords.
-    let passwords: Vec<Password> = if encrypted.len() > 0 {
+    let passwords: Vec<Password> = if !encrypted.is_empty() {
         // Get previous IV. It is located after the encrypted data in the file.
         let iv = &encrypted[encrypted.len() - IV_LEN..];
 
-        // Derive a 256 bits encryption key from the password.
+        // Derive a 256-bit encryption key from the password.
         let key = generate_encryption_key(master_password);
 
-        // Remove the IV before decoding, otherwise, we cant decrypt the data.
+        // Remove the IV before decoding, or we can't decrypt the data.
         let encrypted = &encrypted[..encrypted.len() - IV_LEN];
 
         // Decrypt the data.
@@ -92,12 +90,12 @@ pub fn get_all_passwords(
                 match s {
                     Ok(schema) => schema.passwords,
                     Err(_) => {
-                        return Err(PasswordError::InvalidJsonError);
+                        return Err(PasswordError::InvalidJson);
                     }
                 }
             }
             Err(_) => {
-                return Err(PasswordError::DecryptionError);
+                return Err(PasswordError::Decryption);
             }
         }
     } else {
@@ -114,6 +112,6 @@ mod test {
 
     #[test]
     fn test_generate_encryption_key_is_256_bits() {
-        assert!(generate_encryption_key("test").deref().len() == (256 / 8));
+        assert_eq!(generate_encryption_key("test").deref().len(), 256 / 8);
     }
 }

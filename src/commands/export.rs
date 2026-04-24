@@ -1,8 +1,8 @@
+use crate::io::CliInputOutput;
+use crate::io::OutputType;
 use crate::password;
 use crate::password::v2::Password;
 use csv::Writer;
-use crate::io::CliInputOutput;
-use crate::io::OutputType;
 use rtoolbox::safe_string::SafeString;
 use serde::{Deserialize, Serialize};
 use serde_json;
@@ -22,14 +22,10 @@ pub fn callback_exec(
     let subcommand_name = matches.subcommand_name().unwrap();
     let subcommand_matches = matches.subcommand_matches(subcommand_name).unwrap();
 
-    if subcommand_name == "json" {
-        export_to_json(subcommand_matches, store, io)
-    } else if subcommand_name == "csv" {
-        export_to_csv(subcommand_matches, store, io)
-    } else if subcommand_name == "1password" {
-        export_to_csv(subcommand_matches, store, io)
-    } else {
-        unimplemented!("Invalid export destination")
+    match subcommand_name {
+        "json" => export_to_json(subcommand_matches, store, io),
+        "csv" | "1password" => export_to_csv(subcommand_matches, store, io),
+        _ => unimplemented!("Invalid export destination"),
     }
 }
 
@@ -42,7 +38,7 @@ fn export_to_csv(
     let output_cursor: Cursor<Vec<u8>> = Cursor::new(Vec::new());
     let mut csv_writer = Writer::from_writer(output_cursor);
     for password in passwords_ref {
-        match csv_writer.write_record(&[
+        match csv_writer.write_record([
             &password.name,
             &password.username,
             password.password.deref().as_str(),
@@ -56,7 +52,7 @@ fn export_to_csv(
         OutputType::Standard,
     );
 
-    return Ok(());
+    Ok(())
 }
 
 fn export_to_json(
@@ -65,11 +61,7 @@ fn export_to_json(
     io: &mut impl CliInputOutput,
 ) -> Result<(), i32> {
     let export = JsonExport {
-        passwords: store
-            .get_all_passwords()
-            .into_iter()
-            .map(|password| password.clone())
-            .collect(),
+        passwords: store.get_all_passwords().into_iter().cloned().collect(),
     };
     let passwords_json = match serde_json::to_string(&export) {
         Ok(passwords_json) => passwords_json,
@@ -86,6 +78,6 @@ fn export_to_json(
     };
 
     let passwords = SafeString::from_string(passwords_json);
-    io.write(format!("{}", passwords.deref()), OutputType::Standard);
-    return Ok(());
+    io.write(passwords.deref().to_string(), OutputType::Standard);
+    Ok(())
 }

@@ -25,7 +25,6 @@ pub fn escape(s: Cow<str>) -> Cow<str> {
 /// Windows-specific escaping.
 pub mod windows {
     use std::borrow::Cow;
-    use std::iter::repeat;
 
     /// Escape for the windows cmd.exe shell.
     ///
@@ -55,15 +54,15 @@ pub mod windows {
 
             match chars.next() {
                 Some('"') => {
-                    es.extend(repeat('\\').take(nslashes * 2 + 1));
+                    es.extend(std::iter::repeat_n('\\', nslashes * 2 + 1));
                     es.push('"');
                 }
                 Some(c) => {
-                    es.extend(repeat('\\').take(nslashes));
+                    es.extend(std::iter::repeat_n('\\', nslashes));
                     es.push(c);
                 }
                 None => {
-                    es.extend(repeat('\\').take(nslashes * 2));
+                    es.extend(std::iter::repeat_n('\\', nslashes * 2));
                     break;
                 }
             }
@@ -95,10 +94,7 @@ pub mod unix {
     use std::borrow::Cow;
 
     fn non_whitelisted(ch: char) -> bool {
-        match ch {
-            'a'..='z' | 'A'..='Z' | '0'..='9' | '-' | '_' | '=' | '/' | ',' | '.' | '+' => false,
-            _ => true,
-        }
+        !matches!(ch, 'a'..='z' | 'A'..='Z' | '0'..='9' | '-' | '_' | '=' | '/' | ',' | '.' | '+')
     }
 
     /// Escape characters that may have special meaning in a shell, including spaces.

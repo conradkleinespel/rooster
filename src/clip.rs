@@ -1,5 +1,5 @@
-use crate::password;
 use crate::io::{CliInputOutput, OutputType};
+use crate::password;
 use rtoolbox::safe_string::SafeString;
 
 use std::ops::Deref;
@@ -16,7 +16,7 @@ pub fn copy_to_clipboard(s: &SafeString) -> Result<(), ()> {
 }
 
 // On UNIX, the most stable way to copy to the clipboard is using one of the existing
-// and battle tested tools: xsel and xclip.
+// tools: xsel and xclip.
 #[cfg(all(unix, not(target_os = "macos")))]
 pub fn copy_to_clipboard(s: &SafeString) -> Result<(), ()> {
     use crate::quale::which;
@@ -35,7 +35,7 @@ pub fn copy_to_clipboard(s: &SafeString) -> Result<(), ()> {
                     wl_copy.to_string_lossy()
                 );
                 if Command::new("sh")
-                    .args(&["-c", shell.as_str()])
+                    .args(["-c", shell.as_str()])
                     .status()
                     .map_err(|_| ())?
                     .success()
@@ -58,7 +58,7 @@ pub fn copy_to_clipboard(s: &SafeString) -> Result<(), ()> {
                     xsel.to_string_lossy()
                 );
                 if Command::new("sh")
-                    .args(&["-c", shell.as_str()])
+                    .args(["-c", shell.as_str()])
                     .status()
                     .map_err(|_| ())?
                     .success()
@@ -76,7 +76,7 @@ pub fn copy_to_clipboard(s: &SafeString) -> Result<(), ()> {
                         xclip.to_string_lossy()
                     );
                     if Command::new("sh")
-                        .args(&["-c", shell.as_str()])
+                        .args(["-c", shell.as_str()])
                         .status()
                         .map_err(|_| ())?
                         .success()

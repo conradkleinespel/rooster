@@ -3,9 +3,9 @@
 use crate::password::v2::PasswordStore;
 use clap::{Arg, ArgAction, Command};
 use io::CliInputOutput;
-pub use io::RegularInputOutput;
 pub use io::CursorInputOutput;
 use io::OutputType;
+pub use io::RegularInputOutput;
 use rtoolbox::safe_string::SafeString;
 use rtoolbox::safe_vec::SafeVec;
 use std::env;
@@ -15,12 +15,12 @@ use std::io::Result as IoResult;
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
 
-mod io;
 mod aes;
 mod clip;
 mod commands;
 mod ffi;
 mod generate;
+mod io;
 mod list;
 mod password;
 #[cfg(unix)]
@@ -30,12 +30,12 @@ mod shell_escape;
 
 #[cfg(windows)]
 fn example_environment_variable_configuration() -> &'static str {
-    return "set ROOSTER_FILE=C:\\Users\\my-user\\path\\to\\rooster.file"
+    return "set ROOSTER_FILE=C:\\Users\\my-user\\path\\to\\rooster.file";
 }
 
 #[cfg(unix)]
 fn example_environment_variable_configuration() -> &'static str {
-    return "export ROOSTER_FILE=$HOME/path/to/rooster.file"
+    "export ROOSTER_FILE=$HOME/path/to/rooster.file"
 }
 
 fn only_digits(s: &str) -> bool {
@@ -71,7 +71,7 @@ fn open_password_file(filename: &str) -> IoResult<File> {
     options.read(true);
     options.write(true);
     options.create(false);
-    options.open(&Path::new(filename))
+    options.open(Path::new(filename))
 }
 
 fn create_password_file(filename: &str) -> IoResult<File> {
@@ -79,7 +79,7 @@ fn create_password_file(filename: &str) -> IoResult<File> {
     options.read(true);
     options.write(true);
     options.create(true);
-    options.open(&Path::new(filename))
+    options.open(Path::new(filename))
 }
 
 fn sync_password_store(
@@ -95,18 +95,15 @@ fn sync_password_store(
         return Err(1);
     }
 
-    return Ok(());
+    Ok(())
 }
 
-fn get_password_store(
-    file: &mut File,
-    io: &mut impl CliInputOutput,
-) -> Result<password::v2::PasswordStore, i32> {
+fn get_password_store(file: &mut File, io: &mut impl CliInputOutput) -> Result<PasswordStore, i32> {
     // Read the Rooster file contents.
     let mut input: SafeVec = SafeVec::new(Vec::new());
     file.read_to_end(input.inner_mut()).map_err(|_| 1)?;
 
-    return get_password_store_from_input_interactive(&input, 3, false, io).map_err(|_| 1);
+    get_password_store_from_input_interactive(&input, 3, false, io).map_err(|_| 1)
 }
 
 fn get_password_store_from_input_interactive(
@@ -114,7 +111,7 @@ fn get_password_store_from_input_interactive(
     retries: i32,
     force_upgrade: bool,
     io: &mut impl CliInputOutput,
-) -> Result<password::v2::PasswordStore, password::PasswordError> {
+) -> Result<PasswordStore, password::PasswordError> {
     let master_password = match ask_master_password(io) {
         Ok(p) => p,
         Err(err) => {
@@ -129,11 +126,9 @@ fn get_password_store_from_input_interactive(
         }
     };
 
-    match get_password_store_from_input(&input, &master_password, force_upgrade) {
-        Ok(store) => {
-            return Ok(store);
-        }
-        Err(password::PasswordError::OutdatedRoosterBinaryError) => {
+    match get_password_store_from_input(input, &master_password, force_upgrade) {
+        Ok(store) => Ok(store),
+        Err(password::PasswordError::OutdatedRoosterBinary) => {
             io.error(
                 "I could not open the Rooster file because your version of Rooster is outdated.",
                 OutputType::Error,
@@ -142,16 +137,16 @@ fn get_password_store_from_input_interactive(
                 "Try upgrading Rooster to the latest version.",
                 OutputType::Error,
             );
-            return Err(password::PasswordError::OutdatedRoosterBinaryError);
+            Err(password::PasswordError::OutdatedRoosterBinary)
         }
-        Err(password::PasswordError::Io(err))  => {
+        Err(password::PasswordError::Io(err)) => {
             io.error(
                 format!("I couldn't open your Rooster file (reason: {:?})", err),
                 OutputType::Error,
             );
-            return Err(password::PasswordError::Io(err));
+            Err(password::PasswordError::Io(err))
         }
-        Err(password::PasswordError::NeedUpgradeErrorFromV1) => {
+        Err(password::PasswordError::NeedUpgradeFromV1) => {
             io.error("Your Rooster file has version 1. You need to upgrade to version 2.\n\nWARNING: If in doubt, it could mean you've been hacked. Only \
                  proceed if you recently upgraded your Rooster installation.\nUpgrade to version 2? [y/n]", OutputType::Error
             );
@@ -161,11 +156,11 @@ fn get_password_store_from_input_interactive(
                         if line.starts_with('y') {
                             // This time we'll try to upgrade
                             return get_password_store_from_input_interactive(
-                                &input, retries, true, io,
+                                input, retries, true, io,
                             );
                         } else if line.starts_with('n') {
                             // The user doesn't want to upgrade, that's fine
-                            return Err(password::PasswordError::NoUpgradeError);
+                            return Err(password::PasswordError::NoUpgrade);
                         } else {
                             io.error(
                                 "I did not get that. Upgrade from v1 to v2? [y/n]",
@@ -184,26 +179,26 @@ fn get_password_store_from_input_interactive(
                 }
             }
         }
-        Err(password::PasswordError::InvalidPasswordError) => {
+        Err(password::PasswordError::InvalidPassword) => {
             if retries - 1 <= 0 {
                 io.error(
                     "Woops, that's not the right password. Aborting.",
                     OutputType::Error,
                 );
-                return Err(password::PasswordError::InvalidPasswordError);
+                return Err(password::PasswordError::InvalidPassword);
             }
             io.error(
                 "Woops, that's not the right password. Let's try again.",
                 OutputType::Error,
             );
-            return get_password_store_from_input_interactive(&input, retries - 1, false, io);
+            get_password_store_from_input_interactive(input, retries - 1, false, io)
         }
         Err(err) => {
             io.error(
                 format!("I couldn't open your Rooster file (reason: {:?})", err),
                 OutputType::Error,
             );
-            return Err(err);
+            Err(err)
         }
     }
 }
@@ -212,36 +207,28 @@ fn get_password_store_from_input(
     input: &SafeVec,
     master_password: &SafeString,
     upgrade: bool,
-) -> Result<password::v2::PasswordStore, password::PasswordError> {
+) -> Result<PasswordStore, password::PasswordError> {
     // Try to open the file as is.
-    match password::v2::PasswordStore::from_input(master_password.clone(), input.clone()) {
-        Ok(store) => {
-            return Ok(store);
+    match PasswordStore::from_input(master_password.clone(), input.clone()) {
+        Ok(store) => Ok(store),
+        Err(password::PasswordError::InvalidPassword) => {
+            Err(password::PasswordError::InvalidPassword)
         }
-        Err(password::PasswordError::InvalidPasswordError) => {
-            return Err(password::PasswordError::InvalidPasswordError);
+        Err(password::PasswordError::OutdatedRoosterBinary) => {
+            Err(password::PasswordError::OutdatedRoosterBinary)
         }
-        Err(password::PasswordError::OutdatedRoosterBinaryError) => {
-            return Err(password::PasswordError::OutdatedRoosterBinaryError);
-        }
-        Err(password::PasswordError::NeedUpgradeErrorFromV1) => {
+        Err(password::PasswordError::NeedUpgradeFromV1) => {
             if !upgrade {
-                return Err(password::PasswordError::NeedUpgradeErrorFromV1);
+                return Err(password::PasswordError::NeedUpgradeFromV1);
             }
 
             // If we can't open the file, we may need to upgrade its format first.
             match password::upgrade(master_password.clone(), input.clone()) {
-                Ok(store) => {
-                    return Ok(store);
-                }
-                Err(err) => {
-                    return Err(err);
-                }
+                Ok(store) => Ok(store),
+                Err(err) => Err(err),
             }
         }
-        Err(err) => {
-            return Err(err);
-        }
+        Err(err) => Err(err),
     }
 }
 
@@ -510,10 +497,10 @@ pub fn main_with_args(
     let command_matches = matches.subcommand_matches(subcommand).unwrap();
 
     if subcommand == "init" {
-        match commands::init::callback_exec(command_matches, io, rooster_file_path) {
-            Err(i) => return i,
-            _ => return 0,
-        }
+        return match commands::init::callback_exec(command_matches, io, rooster_file_path) {
+            Err(i) => i,
+            _ => 0,
+        };
     }
 
     let password_file_path_as_string = rooster_file_path.to_string_lossy().into_owned();
@@ -590,5 +577,5 @@ pub fn main_with_args(
         return code;
     }
 
-    return 0;
+    0
 }

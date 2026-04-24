@@ -8,7 +8,7 @@ use std::io::Write;
 fn test_corruption() {
     let rooster_file = tempfile();
 
-    // Creates corrupted file
+    // Creates a corrupted file
     //
     // Corrupting a file can be done with:
     //     bbe -e 'r 77 X' original.rooster > corrupted.rooster

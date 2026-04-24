@@ -9,17 +9,17 @@ use std::ops::Deref;
 
 #[derive(Debug)]
 pub enum PasswordError {
-    DecryptionError,
-    EncryptionError,
-    NoSuchAppError,
-    AppExistsError,
+    Decryption,
+    Encryption,
+    NoSuchApp,
+    AppExists,
     Io(IoError),
-    OutdatedRoosterBinaryError,
-    InvalidJsonError,
-    InvalidPasswordError,
-    NeedUpgradeErrorFromV1,
-    NoUpgradeError,
-    EmptyPasswordError,
+    OutdatedRoosterBinary,
+    InvalidJson,
+    InvalidPassword,
+    NeedUpgradeFromV1,
+    NoUpgrade,
+    EmptyPassword,
 }
 
 impl From<IoError> for PasswordError {
@@ -50,7 +50,7 @@ pub fn upgrade(
     master_password: SafeString,
     input: SafeVec,
 ) -> Result<v2::PasswordStore, PasswordError> {
-    // If we can't read v1 passwords, we have a hard error, because we previously tried
+    // If we can't read v1 passwords, we have a hard error because we previously tried
     // to read the passwords as v2. Which failed. That means we can't upgrade.
     let v1_passwords = v1::get_all_passwords(master_password.deref(), input.deref())?;
 

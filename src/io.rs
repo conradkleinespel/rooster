@@ -14,7 +14,7 @@ pub enum OutputType {
     Error,
 }
 
-/// Struct that reads and writes data from the TTY, stdin and stdout
+/// Struct that reads and writes data from the TTY, stdin, and stdout
 pub struct RegularInputOutput<'a> {
     stdin_lock: StdinLock<'a>,
     stdout_lock: StdoutLock<'a>,
@@ -123,11 +123,7 @@ impl<'a> CliInputOutput for RegularInputOutput<'a> {
                 panic!("Need a TTY to read a line");
             }
 
-            return prompt_reply_from_bufread(
-                &mut self.stdin_lock,
-                &mut self.stdout_lock,
-                prompt,
-            );
+            return prompt_reply_from_bufread(&mut self.stdin_lock, &mut self.stdout_lock, prompt);
         }
 
         prompt_reply(prompt)
@@ -139,8 +135,7 @@ impl<'a> CliInputOutput for RegularInputOutput<'a> {
                 panic!("Need a TTY to read password");
             }
 
-            return read_password_from_bufread(&mut self.stdin_lock)
-                .map(|p| SafeString::from_string(p));
+            return read_password_from_bufread(&mut self.stdin_lock).map(SafeString::from_string);
         }
 
         Ok(SafeString::from_string(read_password()?))
@@ -156,7 +151,8 @@ impl<'a> CliInputOutput for RegularInputOutput<'a> {
                 &mut self.stdin_lock,
                 &mut self.stdout_lock,
                 prompt,
-            ).map(|p| SafeString::from_string(p));
+            )
+            .map(SafeString::from_string);
         }
 
         Ok(SafeString::from_string(prompt_password(prompt)?))

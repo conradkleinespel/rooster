@@ -1,5 +1,5 @@
 use crate::password;
-use rclio::{CliInputOutput, OutputType};
+use crate::io::{CliInputOutput, OutputType};
 
 pub fn callback_exec(
     matches: &clap::ArgMatches,

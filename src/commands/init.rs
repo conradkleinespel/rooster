@@ -1,5 +1,5 @@
-use rclio::CliInputOutput;
-use rclio::OutputType;
+use crate::io::CliInputOutput;
+use crate::io::OutputType;
 use std::path::PathBuf;
 use crate::example_environment_variable_configuration;
 

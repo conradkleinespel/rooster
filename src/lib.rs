@@ -2,8 +2,10 @@
 
 use crate::password::v2::PasswordStore;
 use clap::{Arg, ArgAction, Command};
-use rclio::CliInputOutput;
-use rclio::OutputType;
+use io::CliInputOutput;
+pub use io::RegularInputOutput;
+pub use io::CursorInputOutput;
+use io::OutputType;
 use rtoolbox::safe_string::SafeString;
 use rtoolbox::safe_vec::SafeVec;
 use std::env;
@@ -13,6 +15,7 @@ use std::io::Result as IoResult;
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
 
+mod io;
 mod aes;
 mod clip;
 mod commands;

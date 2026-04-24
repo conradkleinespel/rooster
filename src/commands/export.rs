@@ -1,8 +1,8 @@
 use crate::password;
 use crate::password::v2::Password;
 use csv::Writer;
-use rclio::CliInputOutput;
-use rclio::OutputType;
+use crate::io::CliInputOutput;
+use crate::io::OutputType;
 use rtoolbox::safe_string::SafeString;
 use serde::{Deserialize, Serialize};
 use serde_json;

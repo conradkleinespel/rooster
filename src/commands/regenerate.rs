@@ -3,8 +3,8 @@ use crate::ffi;
 use crate::generate::{check_password_len, PasswordSpec};
 use crate::list;
 use crate::password;
-use rclio::CliInputOutput;
-use rclio::OutputType;
+use crate::io::CliInputOutput;
+use crate::io::OutputType;
 
 pub fn callback_exec(
     matches: &clap::ArgMatches,

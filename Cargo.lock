@@ -576,18 +576,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "63b8176103e19a2643978565ca18b50549f6101881c443590420e4dc998a3c69"
 
 [[package]]
-name = "rclio"
-version = "0.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c0d84114ab2d23337ca6afb6ed304fd80e60a6de059b01cbb488d5c64482f4cf"
-dependencies = [
- "ansi_term",
- "rpassword",
- "rprompt",
- "rtoolbox",
-]
-
-[[package]]
 name = "redox_users"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -603,6 +591,7 @@ name = "rooster"
 version = "2.14.0"
 dependencies = [
  "aes",
+ "ansi_term",
  "byteorder",
  "cbc",
  "clap",
@@ -612,7 +601,8 @@ dependencies = [
  "hmac",
  "libc",
  "rand",
- "rclio",
+ "rpassword",
+ "rprompt",
  "rtoolbox",
  "scrypt",
  "serde",

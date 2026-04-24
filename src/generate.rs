@@ -1,6 +1,6 @@
 use rand::RngExt;
-use rclio::CliInputOutput;
-use rclio::OutputType;
+use crate::io::CliInputOutput;
+use crate::io::OutputType;
 use rtoolbox::safe_string::SafeString;
 use std::io::Result as IoResult;
 

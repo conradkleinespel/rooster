@@ -30,8 +30,10 @@ sha2 = "0.10"
 clap = "4.6"
 csv = "1.4"
 tempfile = "3.27"
-rclio = "0.0"
 rtoolbox = { features = ["serde"], version = "0.0" }
+ansi_term = "0.12"
+rpassword = "7.4"
+rprompt = "2.2"
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.61", features = ["Win32_Storage_FileSystem", "Win32_Foundation", "Win32_System_WindowsProgramming"] }

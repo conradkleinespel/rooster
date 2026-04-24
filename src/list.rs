@@ -1,5 +1,5 @@
 use crate::password::v2::{Password, PasswordStore};
-use rclio::{CliInputOutput, OutputType};
+use crate::io::{CliInputOutput, OutputType};
 
 /// Used to indicate lists should have a number, ie: 23 Google my.account@gmail.com
 pub const WITH_NUMBERS: bool = true;

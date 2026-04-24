@@ -2,7 +2,7 @@ use crate::clip;
 
 use crate::list;
 use crate::password;
-use rclio::CliInputOutput;
+use crate::io::CliInputOutput;
 
 pub fn callback_exec(
     matches: &clap::ArgMatches,
